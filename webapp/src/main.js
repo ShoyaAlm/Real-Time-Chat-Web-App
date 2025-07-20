@@ -7,9 +7,7 @@ const Main = () => {
 
 return (<>
 
-    {/* <div className="window"> */}
         <ChatPreview/>
-    {/* </div> */}
 
 
 </>)

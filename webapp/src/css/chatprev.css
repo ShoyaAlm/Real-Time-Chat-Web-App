@@ -1,7 +1,14 @@
+.allChats{
+    position: relative;
+    top: 0px;
+}
+
 .chatPreview{
     width: 40%;
     height: 100px;
     position: relative;
+    left: 0px;
+    top: 0px;
 }
 
 .profile-img{
@@ -28,6 +35,12 @@
     /* bottom: 5px; */
     left: 75px;
 }
+
+/* .split-line{
+    position: absolute;
+    top: 0;
+    left: 50%;
+} */
 
 *{
     font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;

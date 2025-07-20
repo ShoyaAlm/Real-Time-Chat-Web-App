@@ -11,4 +11,24 @@ export const chats = [
         msg:"Not to be redundant or anything, but do any of you be...",
     img: 'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg'},
 
+    // {id: 4, name: "Martin", 
+    //     msg:"Not to be redundant or anything, but do any of you be...",
+    // img: 'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg'},
+
+    // {id: 5, name: "Joseph", 
+    //     msg:"Not to be redundant or anything, but do any of you be...",
+    // img: 'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg'},
+
+    // {id: 6, name: "Alex", 
+    //     msg:"Not to be redundant or anything, but do any of you be...",
+    // img: 'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg'},
+
+    // {id: 7, name: "Lucas", 
+    //     msg:"Not to be redundant or anything, but do any of you be...",
+    // img: 'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg'},
+
+    // {id: 8, name: "Penn", 
+    //     msg:"Not to be redundant or anything, but do any of you be...",
+    // img: 'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg'},
+
 ]
