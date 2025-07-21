@@ -5,7 +5,6 @@ import { useState } from "react"
 
 const Chat = (id) => {
     
-    const [myMsg, setMyMsg] = useState([])
     const [inputValue, setInputValue] = useState('')
 
     const {chatID} = id
@@ -30,37 +29,45 @@ const Chat = (id) => {
 
             <div className="chat-section">
 
-                <p>{user.msg}</p>
 
-                <div className="my-messages">
-                    {myMsg && <MyMessages messages={myMsg}/>}
-                </div>
                 
-                <div className="write-text">
-                    <input className="user-input" value={inputValue} style={{width:'90%'}}
-
-                        onChange={(e) => {
-
-                            setInputValue(e.target.value)
-                            console.log(inputValue)
-
-                        }}
-                    />
-                    
-                    <button className="send" onClick={() => {
-
-                        setMyMsg([...myMsg, inputValue])
-                        setInputValue('')
-                        console.log(myMsg)
-                        
-                        }}
-                    >Send</button>
-                </div>
+                    {<ShowMessages chat={user}/>}
+                
+                
 
 
 
             </div>
 
+
+
+                <div className="write-text">
+                    <input className="user-input" value={inputValue} style={{width:'90%'}}
+                        onChange={(e) => {
+                            setInputValue(e.target.value)
+                        }}
+                    />
+                    
+                    <button className="send" onClick={() => {
+
+                        if(inputValue !== ''){
+                            
+                            if(user.messages[1] === undefined){
+                                user.messages = [...user.messages, {from:"Shoya", msgs:[`${inputValue}`]}]
+                                console.log("user.messages: ", user.messages)
+                            }
+                             else {
+                                user.messages[1].msgs = [...user.messages[1].msgs, inputValue]
+                                console.log("user.messages[1].msgs: ", user.messages)
+                            }
+
+                            setInputValue('')
+
+                        }
+                        
+                        }}
+                    >Send</button>
+                </div>
 
 
     </div>
@@ -70,21 +77,75 @@ const Chat = (id) => {
 }
 
 
-const MyMessages = (setOfMsgs) => {
+const ShowMessages = (userChat) => {
 
-    const {messages} = setOfMsgs
+    const {chat} = userChat
+
+    const messagesFromOtherUser = chat.messages[0].msgs
+    
+    
+    
+    var messagesSentToUser
+    
+    if(chat.messages[1] !== undefined){
+        messagesSentToUser = chat.messages[1].msgs 
+    }
 
     return (
         <>
-            {messages.map((message) => {
+        {messagesFromOtherUser ?
+        
+        (
+            chat.messages[0].msgs.map((message) => {
                 return (
-                    <h5>
-                        {message}
-                        <br/>
-                    </h5>
+                    <div className="messages-received">
+                        <h4>
+                            {message}
+                            <br/>
+                        </h4>
+                    </div>
                 )
-            })}
-        </>
+            })
+
+        ) : (
+            <></>
+        )
+        
+        }
+
+        {messagesSentToUser ? (
+
+            messagesSentToUser.map((message) => {
+                return (
+                    <div className="messages-sent">
+                        <h4>
+                            {message}
+                            <br/>
+                        </h4>
+                    </div>
+                )
+            })
+
+        ) : (
+            <></>
+        )
+
+        }
+
+        {/* {!messagesFromOtherUser && !messagesSentToUser ? (
+            () => {
+                    return (
+                    <p style={{position:'absolute', left:'50%', right:'50%'}}>No messages...</p>
+                    )
+            }
+
+        ) : (
+            <></>
+        )} */}
+
+</>
+
+
     )
 }
 
