@@ -23,7 +23,6 @@ const Chat = (id) => {
                     <h2>{user.name}</h2>
                     <h5>Last seen recently</h5>
                 </div>
-                <hr/>
             </div>
 
 
@@ -52,13 +51,12 @@ const Chat = (id) => {
 
                         if(inputValue !== ''){
                             
-                            if(user.messages[1] === undefined){
-                                user.messages = [...user.messages, {from:"Shoya", msgs:[`${inputValue}`]}]
-                                console.log("user.messages: ", user.messages)
-                            }
-                             else {
-                                user.messages[1].msgs = [...user.messages[1].msgs, inputValue]
-                                console.log("user.messages[1].msgs: ", user.messages)
+                            if(user.messages == []){
+                                user.messages.push({from:"Shoya", msg:`${inputValue}`})
+                                console.log("first ever message: ", user.messages)
+                            
+                            } else {
+                                user.messages = [...user.messages, {from:"Shoya", msg:`${inputValue}`}]
                             }
 
                             setInputValue('')
@@ -81,69 +79,54 @@ const ShowMessages = (userChat) => {
 
     const {chat} = userChat
 
-    const messagesFromOtherUser = chat.messages[0].msgs
     
+    const messageExists = chat.messages.length > 0
     
-    
-    var messagesSentToUser
-    
-    if(chat.messages[1] !== undefined){
-        messagesSentToUser = chat.messages[1].msgs 
-    }
 
     return (
-        <>
-        {messagesFromOtherUser ?
+    <>
+        {messageExists ?
         
         (
-            chat.messages[0].msgs.map((message) => {
-                return (
-                    <div className="messages-received">
-                        <h4>
-                            {message}
-                            <br/>
-                        </h4>
-                    </div>
-                )
+            chat.messages.map((message, index) => {
+                if(message.from !== "Shoya"){
+                    
+                    return (
+                        <div className="message-wrapper left" key={index}>
+                            <div className="messages-received">
+                                <h4>
+                                    {message.msg}
+                                </h4>
+                            </div>
+                        </div>
+                    )
+
+                } else {
+
+                        return (
+                            <div className="message-wrapper right" key={index}>
+                                <div className="messages-sent">
+                                    <h4>
+                                        {message.msg}
+                                    </h4>
+                                </div>
+                            </div>
+                        )
+                    
+                    
+                }
+
             })
 
         ) : (
-            <></>
+            <div >
+                <p style={{left:"45%", top:"40%"}}>No messages...</p>
+            </div>
         )
         
         }
 
-        {messagesSentToUser ? (
-
-            messagesSentToUser.map((message) => {
-                return (
-                    <div className="messages-sent">
-                        <h4>
-                            {message}
-                            <br/>
-                        </h4>
-                    </div>
-                )
-            })
-
-        ) : (
-            <></>
-        )
-
-        }
-
-        {/* {!messagesFromOtherUser && !messagesSentToUser ? (
-            () => {
-                    return (
-                    <p style={{position:'absolute', left:'50%', right:'50%'}}>No messages...</p>
-                    )
-            }
-
-        ) : (
-            <></>
-        )} */}
-
-</>
+    </>
 
 
     )

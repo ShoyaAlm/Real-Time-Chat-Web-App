@@ -22,13 +22,11 @@ const ChatPreview = () => {
                 var lastMessage
                 var previewLastMessage
 
-                if(chat.messages[0].msgs.length !== 0){
+                if(chat.messages.length !== 0){
 
-                    lastMessage = chat.messages[0].msgs[chat.messages[0].msgs.length - 1]
+                    lastMessage = chat.messages[chat.messages.length - 1].msg
 
-                    previewLastMessage = lastMessage.length > 60 ? 
-
-                    lastMessage.slice(0, 60) + "..." : lastMessage;
+                    previewLastMessage = lastMessage.length > 65 ? lastMessage.slice(0, 65) + "..." : lastMessage;
 
                 } else {
                     previewLastMessage = "(empty chat)"
