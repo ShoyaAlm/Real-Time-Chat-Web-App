@@ -2,7 +2,9 @@ import { chats } from "./data";
 import './css/chatprev.css'
 import './css/chat.css'
 import Chat from "./chat";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { people } from "./people";
 
 const ChatPreview = () => {
 
@@ -11,12 +13,45 @@ const ChatPreview = () => {
     const [chatId, setChatId] = useState(0)
     const [showChat, setShowChat] = useState(false)
 
+    const [isLoadingUsers, setIsLoadingUsers] = useState(false)
+
+    const [searchInputValue, setSearchInputValue] = useState('')
+
+    const [searchedUsers, setSearchedUsers] = useState([])
     
+
+    useEffect(() => {
+
+        const users = people.filter((person) => {
+        
+            const personLCName = person.name.toLowerCase()
+            return personLCName.startsWith(searchInputValue)
+        
+        })
+        setSearchedUsers(users)
+        
+    }, [searchInputValue])
 
     return (
     
-        <div className="allChats">
+        <div className="front-end">
             
+            <div className="searchbar">
+                
+                <input type="text" onChange={(e) => {
+                        setSearchInputValue(e.target.value)
+                        setIsLoadingUsers(true)
+                    
+                }}/>
+                {/* <button onClick={() => searchUsers()}>Search</button> */}
+            </div>
+
+
+            {!isLoadingUsers ? (
+                <>
+
+            <div className="chatPreviews">
+
             {chats.map((chat) => {
 
                 var lastMessage
@@ -33,7 +68,7 @@ const ChatPreview = () => {
                 }                
                 
                 return (
-                    <div key={chat.id} className="chatPreview" onClick={() => {
+                    <div key={chat.id} className="preview" onClick={() => {
                         if(!showChat){
                             setShowChat(true)
                         }
@@ -50,8 +85,33 @@ const ChatPreview = () => {
             })}
 
 
+            </div>
+
+                </>
+            ) : (
+                <>
+
+                    <div className="searched-users">
+
+                        {searchedUsers.map((user) => {
+                            return (
+                                <div key={user.id}>
+                                    {user.name}
+                                    <hr/>
+                                </div>
+                            )
+                        })}
+
+
+                    </div>
+
+                </>
+            )}
+
                 
                 {showChat && <Chat chatID={chatId}/>}
+
+
 
         </div>
     )
