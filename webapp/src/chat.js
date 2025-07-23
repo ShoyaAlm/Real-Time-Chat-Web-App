@@ -1,7 +1,7 @@
 
 import { chats } from "./data"
 import './css/chat.css'
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 
 const Chat = (id) => {
     
@@ -10,8 +10,6 @@ const Chat = (id) => {
     const {chatID} = id
 
     const user = chats.find((chat) => chat.id === chatID)
-
-
 
     return (
 
@@ -32,7 +30,13 @@ const Chat = (id) => {
 
 
                 
-                    {<ShowMessages chat={user}/>}
+                    {<ShowMessages chat={user} onDeleteMessage={(theMessage) => {
+                     
+                    const filteredMessages = user.messages.filter((message) => message.msg !== theMessage)
+                    user.messages = filteredMessages
+                    }
+
+                    }/>}
                 
                 
 
@@ -58,7 +62,6 @@ const Chat = (id) => {
                             
                             } else {
                                 user.messages = [...user.messages, {from:"Shoya", msg:`${inputValue}`}]
-                                console.log("user: ", user)
                             }
 
                             setInputValue('')
@@ -77,20 +80,21 @@ const Chat = (id) => {
 }
 
 
-const ShowMessages = (userChat) => {
+const ShowMessages = ({chat, onDeleteMessage}) => {
     
-    const {chat} = userChat
+    const selectedChat = chat
     
-    const [allMessages, setAllMessages] = useState(chat.messages) 
+    console.log(selectedChat);
+    
+    
+    const [allMessages, setAllMessages] = useState(selectedChat.messages) 
     
     const [showThreeOptions, setShowThreeOptions] = useState(false)
     
     useEffect(() => {
            setAllMessages(chat.messages)
-    }, [chat])
-    
-    console.log(allMessages);
-    
+    }, [chat.messages])
+        
 
     var messageExists = allMessages.length > 0
     
@@ -99,10 +103,8 @@ const ShowMessages = (userChat) => {
 
         setShowThreeOptions(false)
         
-        const filteredMessages = allMessages.filter((message) => message.msg !== theMessage)
-
-        setAllMessages(filteredMessages)
-        
+        onDeleteMessage(theMessage)
+    
     }
     
     return (
