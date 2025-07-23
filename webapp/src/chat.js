@@ -1,7 +1,7 @@
 
 import { chats } from "./data"
 import './css/chat.css'
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 const Chat = (id) => {
     
@@ -10,6 +10,8 @@ const Chat = (id) => {
     const {chatID} = id
 
     const user = chats.find((chat) => chat.id === chatID)
+
+
 
     return (
 
@@ -52,11 +54,11 @@ const Chat = (id) => {
                         if(inputValue !== ''){
                             
                             if(user.messages == []){
-                                user.messages.push({from:"Shoya", msg:`${inputValue}`})
-                                console.log("first ever message: ", user.messages)
+                                user.messages = [{from:"Shoya", msg:`${inputValue}`}]
                             
                             } else {
                                 user.messages = [...user.messages, {from:"Shoya", msg:`${inputValue}`}]
+                                console.log("user: ", user)
                             }
 
                             setInputValue('')
@@ -76,19 +78,39 @@ const Chat = (id) => {
 
 
 const ShowMessages = (userChat) => {
-
+    
     const {chat} = userChat
-
     
-    const messageExists = chat.messages.length > 0
+    const [allMessages, setAllMessages] = useState(chat.messages) 
+    
+    const [showThreeOptions, setShowThreeOptions] = useState(false)
+    
+    useEffect(() => {
+           setAllMessages(chat.messages)
+    }, [chat])
+    
+    console.log(allMessages);
     
 
+    var messageExists = allMessages.length > 0
+    
+
+    const deleteMessage = (theMessage) => {
+
+        setShowThreeOptions(false)
+        
+        const filteredMessages = allMessages.filter((message) => message.msg !== theMessage)
+
+        setAllMessages(filteredMessages)
+        
+    }
+    
     return (
     <>
         {messageExists ?
         
         (
-            chat.messages.map((message, index) => {
+            allMessages.map((message, index) => {
                 if(message.from !== "Shoya"){
                     
                     return (
@@ -105,11 +127,41 @@ const ShowMessages = (userChat) => {
 
                         return (
                             <div className="message-wrapper right" key={index}>
+                                
+                                <div className="dot-container">
+                                    <button onClick={() => {
+                                        if(!showThreeOptions){
+                                            setShowThreeOptions(true)
+                                        } else {
+                                            setShowThreeOptions(false)
+                                        }
+                                    }} className="dot-button">...</button>
+                                    
+                                    {showThreeOptions ? (
+                                        <>
+                                            <div className="three-options">
+                                                <h5>Edit</h5>
+                                                <h5 onClick={() => deleteMessage(message.msg)}>Delete</h5>
+                                                <h5>Copy</h5>
+                                            
+                                            </div>
+                                        </>
+                                    )
+                                    : (
+                                        <></>
+                                    )}
+                                    
+
+                                </div>
+                                
                                 <div className="messages-sent">
                                     <h4>
                                         {message.msg}
                                     </h4>
                                 </div>
+                                
+
+
                             </div>
                         )
                     

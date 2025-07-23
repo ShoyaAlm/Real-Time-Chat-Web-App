@@ -43,7 +43,6 @@ const ChatPreview = () => {
                         setIsLoadingUsers(true)
                     
                 }}/>
-                {/* <button onClick={() => searchUsers()}>Search</button> */}
             </div>
 
 

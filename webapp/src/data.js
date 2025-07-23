@@ -5,7 +5,14 @@ export const chats = [
             msg:"This was the most helpful thing i have ever read to help me finish my thesis"},
             {from:"Peter",
                 msg:"To be honest, I think this works! I have my proof of work on me, so hit me when you have time"
-            }    
+            },
+            {from:"Shoya",
+                msg:"Hi there, I thought i'd say hello"
+            },
+            {from:"Peter",
+                msg:"To be honest, I think this works! I have my proof of work on me, so hit me when you have time"
+            },
+                
         ],
         img:'https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg',
         createdAt: new Date().toISOString()
@@ -25,7 +32,7 @@ export const chats = [
     {id: 3, name: "Maxim", 
         messages:[
             {from:"Maxim", 
-            msg:["Not to be redundant or anything, but do any of you suggest we regroup at a certain cafe?"]},
+            msg:"Not to be redundant or anything, but do any of you suggest we regroup at a certain cafe?"},
         {from:"Maxim",
             msg:"Just saying. There's a reason these start-ups raise so fast and manage to fail so quick."
         }],

@@ -137,9 +137,9 @@
 
 
 .write-text{
-    position: absolute;
-    bottom: -20px;
-    right: 10px;
+    position: relative;
+    bottom: -50px;
+    right: -20px;
     width: 90%;
     height: 60px;
 
