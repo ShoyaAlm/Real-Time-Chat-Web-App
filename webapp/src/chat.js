@@ -9,7 +9,12 @@ const Chat = (id) => {
 
     const {chatID} = id
 
-    const user = chats.find((chat) => chat.id === chatID)
+    const [user, setUser] = useState(chats.find((chat) => chat.id === chatID))
+
+    useEffect(() => {
+        const switchedChat = chats.find((chat) => chat.id === chatID)
+        setUser(switchedChat)
+    }, [chatID])
 
     return (
 
@@ -30,10 +35,11 @@ const Chat = (id) => {
 
 
                 
-                    {<ShowMessages chat={user} onDeleteMessage={(theMessage) => {
-                     
-                    const filteredMessages = user.messages.filter((message) => message.msg !== theMessage)
-                    user.messages = filteredMessages
+                    {<ShowMessages chat={user} onDeleteMessage={ theMessage => {
+                        setUser(prevUser => ({
+                            ...prevUser,
+                            messages: prevUser.messages.filter((message) => message.msg !== theMessage)
+                        }))
                     }
 
                     }/>}
@@ -57,15 +63,10 @@ const Chat = (id) => {
 
                         if(inputValue !== ''){
                             
-                            if(user.messages == []){
-                                user.messages = [{from:"Shoya", msg:`${inputValue}`}]
-                            
-                            } else {
-                                user.messages = [...user.messages, {from:"Shoya", msg:`${inputValue}`}]
-                            }
+                            setUser(prevUser => ({...prevUser, 
+                            messages: [...prevUser.messages, {from: "Shoya", msg: `${inputValue}`} ]}))
 
                             setInputValue('')
-
                         }
                         
                         }}
@@ -82,21 +83,21 @@ const Chat = (id) => {
 
 const ShowMessages = ({chat, onDeleteMessage}) => {
     
-    const selectedChat = chat
+    const messages = chat.messages
     
-    console.log(selectedChat);
+    console.log(messages);
     
     
-    const [allMessages, setAllMessages] = useState(selectedChat.messages) 
+    // const [allMessages, setAllMessages] = useState(selectedChat.messages) 
     
     const [showThreeOptions, setShowThreeOptions] = useState(false)
     
-    useEffect(() => {
-           setAllMessages(chat.messages)
-    }, [chat.messages])
+    // useEffect(() => {
+
+    // }, [chat.messages])
         
 
-    var messageExists = allMessages.length > 0
+    var messageExists = messages.length > 0
     
 
     const deleteMessage = (theMessage) => {
@@ -112,7 +113,7 @@ const ShowMessages = ({chat, onDeleteMessage}) => {
         {messageExists ?
         
         (
-            allMessages.map((message, index) => {
+            messages.map((message, index) => {
                 if(message.from !== "Shoya"){
                     
                     return (
