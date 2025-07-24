@@ -142,6 +142,8 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setInputValue, s
     
     }
     
+    const [optionsIndex, setOptionsIndex] = useState(null)
+
     return (
     <>
         {messageExists ?
@@ -168,13 +170,15 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setInputValue, s
                                 <div className="dot-container">
                                     <button onClick={() => {
                                         if(!showThreeOptions){
+                                            setOptionsIndex(index)
                                             setShowThreeOptions(true)
                                         } else {
+                                            setOptionsIndex(null)
                                             setShowThreeOptions(false)
                                         }
                                     }} className="dot-button">...</button>
                                     
-                                    {showThreeOptions ? (
+                                    {showThreeOptions && optionsIndex === index ? (
                                         <>
                                             <div className="three-options">
                                                 <h5 onClick={() => editMessage(message.msg)}>Edit</h5>
