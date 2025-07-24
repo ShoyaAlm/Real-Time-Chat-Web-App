@@ -20,6 +20,8 @@ const Chat = ({chatID, chats, setChats}) => {
     
     const [inputValue, setInputValue] = useState('')
 
+    const [sendStatus, setSendStatus] = useState('send')
+    const [messageToEdit, setMessageToEdit] = useState('')
 
 
     const user = chats.find((chat) => chat.id === chatID)
@@ -59,7 +61,10 @@ const Chat = ({chatID, chats, setChats}) => {
                         updatedMessages(filteredMessages)
                     }
 
-                    }/>}
+                    }
+                        setMessageToEdit={setMessageToEdit}
+                        setInputValue={setInputValue} setSendStatus={setSendStatus}
+                    />}
                 
                 
 
@@ -78,12 +83,22 @@ const Chat = ({chatID, chats, setChats}) => {
                     
                     <button className="send" onClick={() => {
 
-                        if(inputValue !== ''){
+                        if(inputValue !== '' && sendStatus === 'send'){
                             
                             const newMessages = [...user.messages, {from: "Shoya", msg: `${inputValue}`}]
                             updatedMessages(newMessages)
 
                             setInputValue('')
+                        
+                        } else if(inputValue !== '' && sendStatus === 'edit') {
+                            
+                            const selectedMessage = user.messages.find(
+                                (message) => message.msg === messageToEdit)
+                            
+                            selectedMessage.msg = inputValue
+
+                            setInputValue('')
+                            setSendStatus('send')
                         }
                         
                         }}
@@ -98,16 +113,26 @@ const Chat = ({chatID, chats, setChats}) => {
 }
 
 
-const ShowMessages = ({chat, onDeleteMessage}) => {
+const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setInputValue, setSendStatus}) => {
     
     const messages = chat.messages
-        
     
     const [showThreeOptions, setShowThreeOptions] = useState(false)
         
 
     var messageExists = messages.length > 0
     
+
+    const editMessage = (theMessage) => {
+
+        setShowThreeOptions(false)
+        
+        setMessageToEdit(theMessage)
+
+        setInputValue(theMessage)
+        
+        setSendStatus('edit')
+    }
 
     const deleteMessage = (theMessage) => {
 
@@ -152,7 +177,7 @@ const ShowMessages = ({chat, onDeleteMessage}) => {
                                     {showThreeOptions ? (
                                         <>
                                             <div className="three-options">
-                                                <h5>Edit</h5>
+                                                <h5 onClick={() => editMessage(message.msg)}>Edit</h5>
                                                 <h5 onClick={() => deleteMessage(message.msg)}>Delete</h5>
                                                 <h5>Copy</h5>
                                             
