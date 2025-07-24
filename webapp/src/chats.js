@@ -1,7 +1,7 @@
-import { chats } from "./data";
+import { allChats } from "./data";
 import './css/chatprev.css'
 import './css/chat.css'
-import Chat from "./chat";
+import ChatParent from "./chat";
 import { useEffect, useState } from "react";
 
 import { people } from "./people";
@@ -51,7 +51,7 @@ const ChatPreview = () => {
 
             <div className="chatPreviews">
 
-            {chats.map((chat) => {
+            {allChats.map((chat) => {
 
                 var lastMessage
                 var previewLastMessage
@@ -108,7 +108,7 @@ const ChatPreview = () => {
             )}
 
                 
-                {showChat && <Chat chatID={chatId}/>}
+                {showChat && <ChatParent chatID={chatId}/>}
 
 
 

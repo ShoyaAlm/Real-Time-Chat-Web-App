@@ -1,4 +1,4 @@
-export const chats = [
+export const allChats = [
     {id: 1, name: "Peter", 
         messages:[
             {from:"Peter", 

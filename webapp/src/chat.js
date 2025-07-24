@@ -1,21 +1,40 @@
 
-import { chats } from "./data"
+import { allChats } from "./data"
 import './css/chat.css'
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
-const Chat = (id) => {
+const ChatParent = ({ chatID }) => {
+    
+    const [chats, setChats] = useState(allChats)
+
+    return (
+        <Chat
+         chatID={chatID}
+         chats={chats}
+         setChats={setChats}   
+        />
+    )
+}
+
+const Chat = ({chatID, chats, setChats}) => {
     
     const [inputValue, setInputValue] = useState('')
 
-    const {chatID} = id
 
-    const [user, setUser] = useState(chats.find((chat) => chat.id === chatID))
 
-    useEffect(() => {
-        const switchedChat = chats.find((chat) => chat.id === chatID)
-        setUser(switchedChat)
-    }, [chatID])
+    const user = chats.find((chat) => chat.id === chatID)
 
+    const updatedMessages = (newMessages) => {
+
+        setChats( prevChats => prevChats.map((chat) => chat.id === chatID
+         ? {...chat, messages: newMessages} : chat))
+    
+        }
+
+        console.log(chats);
+        
+
+    
     return (
 
     <div className="chat-container">
@@ -36,10 +55,8 @@ const Chat = (id) => {
 
                 
                     {<ShowMessages chat={user} onDeleteMessage={ theMessage => {
-                        setUser(prevUser => ({
-                            ...prevUser,
-                            messages: prevUser.messages.filter((message) => message.msg !== theMessage)
-                        }))
+                        const filteredMessages = user.messages.filter((message) => message.msg !== theMessage)
+                        updatedMessages(filteredMessages)
                     }
 
                     }/>}
@@ -63,8 +80,8 @@ const Chat = (id) => {
 
                         if(inputValue !== ''){
                             
-                            setUser(prevUser => ({...prevUser, 
-                            messages: [...prevUser.messages, {from: "Shoya", msg: `${inputValue}`} ]}))
+                            const newMessages = [...user.messages, {from: "Shoya", msg: `${inputValue}`}]
+                            updatedMessages(newMessages)
 
                             setInputValue('')
                         }
@@ -84,17 +101,9 @@ const Chat = (id) => {
 const ShowMessages = ({chat, onDeleteMessage}) => {
     
     const messages = chat.messages
-    
-    console.log(messages);
-    
-    
-    // const [allMessages, setAllMessages] = useState(selectedChat.messages) 
+        
     
     const [showThreeOptions, setShowThreeOptions] = useState(false)
-    
-    // useEffect(() => {
-
-    // }, [chat.messages])
         
 
     var messageExists = messages.length > 0
@@ -188,4 +197,4 @@ const ShowMessages = ({chat, onDeleteMessage}) => {
 }
 
 
-export default Chat
+export default ChatParent
