@@ -84,6 +84,15 @@
     justify-content: flex-end;
 }
 
+.dot-button{
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.message-wrapper.right:hover .dot-button{
+    opacity: 1;
+}
+
 
 .messages-received{
 

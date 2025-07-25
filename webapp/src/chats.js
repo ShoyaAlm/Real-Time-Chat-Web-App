@@ -10,7 +10,7 @@ const ChatPreview = () => {
 
 
 
-    const [chatId, setChatId] = useState(0)
+    const [user, setUser] = useState('')
     const [showChat, setShowChat] = useState(false)
 
     const [isLoadingUsers, setIsLoadingUsers] = useState(false)
@@ -71,7 +71,7 @@ const ChatPreview = () => {
                         if(!showChat){
                             setShowChat(true)
                         }
-                        setChatId(chat.id)
+                        setUser(chat.name)
                         }}>
                         <img alt="" src={chat.img} className="profile-img"/>
                         <h2 className="name">{chat.name}</h2>
@@ -95,7 +95,21 @@ const ChatPreview = () => {
                         {searchedUsers.map((user) => {
                             return (
                                 <div key={user.id}>
-                                    {user.name}
+                                    
+                                    <h3 onClick={() => {
+                                    setShowChat(true)
+                                    setUser(user.name)
+                                    setIsLoadingUsers(false)
+                                    return (
+                                        <>
+                                            {showChat && <ChatParent name={user}/>}
+                                        </>
+                                    )
+                                }}>
+                                        {user.name}
+                                    </h3>
+                                    
+
                                     <hr/>
                                 </div>
                             )
@@ -108,7 +122,7 @@ const ChatPreview = () => {
             )}
 
                 
-                {showChat && <ChatParent chatID={chatId}/>}
+                {showChat && <ChatParent name={user}/>}
 
 
 

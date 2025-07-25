@@ -1,40 +1,46 @@
 
 import { allChats } from "./data"
+import { people } from "./people"
 import './css/chat.css'
 import { useState } from "react"
 
-const ChatParent = ({ chatID }) => {
+const ChatParent = ({ name }) => {
     
     const [chats, setChats] = useState(allChats)
 
     return (
         <Chat
-         chatID={chatID}
+         name={name}
          chats={chats}
          setChats={setChats}   
         />
     )
 }
 
-const Chat = ({chatID, chats, setChats}) => {
+const Chat = ({name, chats, setChats}) => {
     
     const [inputValue, setInputValue] = useState('')
 
     const [sendStatus, setSendStatus] = useState('send')
+    
     const [messageToEdit, setMessageToEdit] = useState('')
-
-
-    const user = chats.find((chat) => chat.id === chatID)
 
     const updatedMessages = (newMessages) => {
 
-        setChats( prevChats => prevChats.map((chat) => chat.id === chatID
+        setChats( prevChats => prevChats.map((chat) => chat.name === name
          ? {...chat, messages: newMessages} : chat))
     
         }
 
-        console.log(chats);
+    var user = chats.find((chat) => chat.name === name)
+    
+    if(user === undefined){
+
+        user = people.find((person) => person.name === name)
+        console.log(user);
         
+    }
+    
 
     
     return (
@@ -59,11 +65,11 @@ const Chat = ({chatID, chats, setChats}) => {
                     {<ShowMessages chat={user} onDeleteMessage={ theMessage => {
                         const filteredMessages = user.messages.filter((message) => message.msg !== theMessage)
                         updatedMessages(filteredMessages)
-                    }
-
-                    }
+                    }}
                         setMessageToEdit={setMessageToEdit}
                         setInputValue={setInputValue} setSendStatus={setSendStatus}
+                        
+
                     />}
                 
                 
@@ -85,7 +91,9 @@ const Chat = ({chatID, chats, setChats}) => {
 
                         if(inputValue !== '' && sendStatus === 'send'){
                             
-                            const newMessages = [...user.messages, {from: "Shoya", msg: `${inputValue}`}]
+                            const newMessages = [...user.messages, 
+                            {from: "Shoya", msg: `${inputValue}`, createdAt: new Date().toISOString()}]
+                            
                             updatedMessages(newMessages)
 
                             setInputValue('')
@@ -113,14 +121,21 @@ const Chat = ({chatID, chats, setChats}) => {
 }
 
 
-const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setInputValue, setSendStatus}) => {
+const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, 
+    setInputValue, setSendStatus}) => {
     
     const messages = chat.messages
     
     const [showThreeOptions, setShowThreeOptions] = useState(false)
         
+    var messageExists
 
-    var messageExists = messages.length > 0
+    if(messages === undefined){
+        messageExists = false
+    } else {
+        messageExists = true /* messages.length > 0*/
+    }
+    
     
 
     const editMessage = (theMessage) => {
