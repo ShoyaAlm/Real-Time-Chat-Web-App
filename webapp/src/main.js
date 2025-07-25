@@ -1,5 +1,5 @@
 
-import ChatPreview from "./chats"
+import ChatPage from "./chats"
 
 import './css/main.css'
 
@@ -7,7 +7,7 @@ const Main = () => {
 
 return (<>
 
-        <ChatPreview/>
+        <ChatPage/>
 
 
 </>)

@@ -1,12 +1,10 @@
 
-import { allChats } from "./data"
 import { people } from "./people"
 import './css/chat.css'
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
-const ChatParent = ({ name }) => {
+const ChatParent = ({ name, chats, setChats }) => {
     
-    const [chats, setChats] = useState(allChats)
 
     return (
         <Chat
@@ -25,6 +23,10 @@ const Chat = ({name, chats, setChats}) => {
     
     const [messageToEdit, setMessageToEdit] = useState('')
 
+    const [chatHistory, setChatHistory] = useState(null)
+
+    console.log(chats, setChats);
+    
     const updatedMessages = (newMessages) => {
 
         setChats( prevChats => prevChats.map((chat) => chat.name === name
@@ -32,15 +34,12 @@ const Chat = ({name, chats, setChats}) => {
     
         }
 
-    var user = chats.find((chat) => chat.name === name)
+    var user = chats.find((chat) => chat.name === name) ?? people.find((person) => person.name === name)
     
-    if(user === undefined){
+    useEffect(() => {   
+        setChatHistory(chats.find((chat) => chat.name === name) ? true : false)
+    }, [user/*, chats*/])
 
-        user = people.find((person) => person.name === name)
-        console.log(user);
-        
-    }
-    
 
     
     return (
@@ -91,12 +90,29 @@ const Chat = ({name, chats, setChats}) => {
 
                         if(inputValue !== '' && sendStatus === 'send'){
                             
-                            const newMessages = [...user.messages, 
-                            {from: "Shoya", msg: `${inputValue}`, createdAt: new Date().toISOString()}]
-                            
-                            updatedMessages(newMessages)
+                            if(chatHistory){
 
-                            setInputValue('')
+                                const newMessages = [...user.messages, 
+                                {from: "Shoya", msg: inputValue, createdAt: new Date().toISOString()}]
+                                
+                                updatedMessages(newMessages)
+
+                                setInputValue('')
+                                
+                                console.log(chats)
+                            } else {
+
+                                setChats( prevChats => [...prevChats, {id: prevChats.length + 1,
+                                name: user.name, messages: [{from:"Shoya", msg: inputValue, 
+                                createdAt: new Date().toISOString()}],
+                                img: user.img
+                                }])
+
+                                console.log(chats)
+
+                                setChatHistory(true)
+
+                            }
                         
                         } else if(inputValue !== '' && sendStatus === 'edit') {
                             
@@ -124,7 +140,7 @@ const Chat = ({name, chats, setChats}) => {
 const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, 
     setInputValue, setSendStatus}) => {
     
-    const messages = chat.messages
+    const messages = chat.messages    
     
     const [showThreeOptions, setShowThreeOptions] = useState(false)
         

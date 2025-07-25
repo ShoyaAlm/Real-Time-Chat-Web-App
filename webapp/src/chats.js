@@ -6,7 +6,19 @@ import { useEffect, useState } from "react";
 
 import { people } from "./people";
 
-const ChatPreview = () => {
+const ChatPage = () => {
+    
+    const [chats, setChats] = useState(allChats)
+
+    return (
+        <>
+            <ChatPreview chats={chats} setChats={setChats} />
+        </>
+    )
+}
+
+
+const ChatPreview = ({chats, setChats}) => {
 
 
 
@@ -31,7 +43,7 @@ const ChatPreview = () => {
         setSearchedUsers(users)
         
     }, [searchInputValue])
-
+    
     return (
     
         <div className="front-end">
@@ -51,7 +63,7 @@ const ChatPreview = () => {
 
             <div className="chatPreviews">
 
-            {allChats.map((chat) => {
+            {chats.map((chat) => {
 
                 var lastMessage
                 var previewLastMessage
@@ -102,7 +114,8 @@ const ChatPreview = () => {
                                     setIsLoadingUsers(false)
                                     return (
                                         <>
-                                            {showChat && <ChatParent name={user}/>}
+                                            {showChat && <ChatParent name={user} 
+                                                chats={chats} setChats={setChats}/>}
                                         </>
                                     )
                                 }}>
@@ -122,7 +135,7 @@ const ChatPreview = () => {
             )}
 
                 
-                {showChat && <ChatParent name={user}/>}
+                {showChat && <ChatParent name={user} chats={chats} setChats={setChats}/>}
 
 
 
@@ -139,4 +152,4 @@ const ChatPreview = () => {
 
 
 
-export default ChatPreview
+export default ChatPage
