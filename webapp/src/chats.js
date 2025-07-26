@@ -63,7 +63,8 @@ const ChatPreview = ({chats, setChats}) => {
 
             <div className="chatPreviews">
 
-            {chats.map((chat) => {
+            {chats.slice().sort((a, b) => new Date(b.lastUpdatedAt) - new Date(a.lastUpdatedAt)) 
+            .map((chat) => {
 
                 var lastMessage
                 var previewLastMessage
@@ -72,7 +73,7 @@ const ChatPreview = ({chats, setChats}) => {
 
                     lastMessage = chat.messages[chat.messages.length - 1].msg
 
-                    previewLastMessage = lastMessage.length > 65 ? lastMessage.slice(0, 65) + "..." : lastMessage;
+                    previewLastMessage = lastMessage.length > 65 ? lastMessage.slice(0, 60) + "..." : lastMessage;
 
                 } else {
                     previewLastMessage = "(empty chat)"
@@ -112,6 +113,7 @@ const ChatPreview = ({chats, setChats}) => {
                                     setShowChat(true)
                                     setUser(user.name)
                                     setIsLoadingUsers(false)
+                                    setSearchInputValue('')
                                     return (
                                         <>
                                             {showChat && <ChatParent name={user} 

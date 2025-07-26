@@ -24,14 +24,13 @@ const Chat = ({name, chats, setChats}) => {
     const [messageToEdit, setMessageToEdit] = useState('')
 
     const [chatHistory, setChatHistory] = useState(null)
-
-    console.log(chats, setChats);
     
     const updatedMessages = (newMessages) => {
 
         setChats( prevChats => prevChats.map((chat) => chat.name === name
-         ? {...chat, messages: newMessages} : chat))
-    
+         ? {...chat, messages: newMessages, 
+            lastUpdatedAt: newMessages[newMessages.length - 1].createdAt} : chat))
+        
         }
 
     var user = chats.find((chat) => chat.name === name) ?? people.find((person) => person.name === name)
@@ -62,8 +61,10 @@ const Chat = ({name, chats, setChats}) => {
 
                 
                     {<ShowMessages chat={user} onDeleteMessage={ theMessage => {
+                    
                         const filteredMessages = user.messages.filter((message) => message.msg !== theMessage)
                         updatedMessages(filteredMessages)
+                    
                     }}
                         setMessageToEdit={setMessageToEdit}
                         setInputValue={setInputValue} setSendStatus={setSendStatus}
@@ -99,16 +100,15 @@ const Chat = ({name, chats, setChats}) => {
 
                                 setInputValue('')
                                 
-                                console.log(chats)
                             } else {
 
                                 setChats( prevChats => [...prevChats, {id: prevChats.length + 1,
                                 name: user.name, messages: [{from:"Shoya", msg: inputValue, 
                                 createdAt: new Date().toISOString()}],
-                                img: user.img
+                                img: user.img, lastUpdatedAt: new Date().toISOString()
                                 }])
 
-                                console.log(chats)
+                                setInputValue('')
 
                                 setChatHistory(true)
 
@@ -123,6 +123,7 @@ const Chat = ({name, chats, setChats}) => {
 
                             setInputValue('')
                             setSendStatus('send')
+
                         }
                         
                         }}
