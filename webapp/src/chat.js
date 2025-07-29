@@ -1,7 +1,7 @@
 
 import { people } from "./people"
 import './css/chat.css'
-import { useEffect, useState } from "react"
+import { useEffect, useReducer, useState } from "react"
 
 const ChatParent = ({ name, chats, setChats }) => {
     
@@ -15,8 +15,28 @@ const ChatParent = ({ name, chats, setChats }) => {
     )
 }
 
+
+
+// const reducer = (state, action) => {
+//     if(action.type === "delete-msg"){
+
+//     }
+
+//     if(action.type === "edit-msg"){
+
+//     }
+// }
+
+// const initialState = {
+
+// }
+
+
 const Chat = ({name, chats, setChats}) => {
+
+    // const [state, dipatch] = useReducer(reducer, initialState)
     
+
     const [inputValue, setInputValue] = useState('')
 
     const [sendStatus, setSendStatus] = useState('send')
@@ -121,6 +141,9 @@ const Chat = ({name, chats, setChats}) => {
                             
                             selectedMessage.msg = inputValue
 
+                            setChats( prevChats => prevChats.map((chat) => chat.name === name 
+                            ? {...chat, messages: [...chat.messages, selectedMessage]} : chat))
+
                             setInputValue('')
                             setSendStatus('send')
 
@@ -213,9 +236,14 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit,
                                     {showThreeOptions && optionsIndex === index ? (
                                         <>
                                             <div className="three-options">
+                                                <h5 onClick={() => 
+                                                {navigator.clipboard.writeText(message.msg)
+                                                .then(() => console.log("copied"))
+                                                .catch(() => console.log("failed to copy"))
+                                                setShowThreeOptions(false)
+                                                }}>Copy</h5>
                                                 <h5 onClick={() => editMessage(message.msg)}>Edit</h5>
                                                 <h5 onClick={() => deleteMessage(message.msg)}>Delete</h5>
-                                                <h5>Copy</h5>
                                             
                                             </div>
                                         </>
