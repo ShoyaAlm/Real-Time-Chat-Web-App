@@ -1,16 +1,15 @@
 
 import { people } from "./people"
 import './css/chat.css'
-import { useEffect, useReducer, useState } from "react"
+import { useEffect, useState, useContext } from "react"
 
-const ChatParent = ({ name, chats, setChats }) => {
-    
+import { chatsContext } from "./chats"
+
+const ChatParent = ({ name }) => {
 
     return (
         <Chat
          name={name}
-         chats={chats}
-         setChats={setChats}   
         />
     )
 }
@@ -32,10 +31,11 @@ const ChatParent = ({ name, chats, setChats }) => {
 // }
 
 
-const Chat = ({name, chats, setChats}) => {
+const Chat = ({name}) => {
 
     // const [state, dipatch] = useReducer(reducer, initialState)
     
+    const {chats, setChats} = useContext(chatsContext)
 
     const [inputValue, setInputValue] = useState('')
 
@@ -140,9 +140,10 @@ const Chat = ({name, chats, setChats}) => {
                                 (message) => message.msg === messageToEdit)
                             
                             selectedMessage.msg = inputValue
-
+                            
+                            
                             setChats( prevChats => prevChats.map((chat) => chat.name === name 
-                            ? {...chat, messages: [...chat.messages, selectedMessage]} : chat))
+                            ? {...chat, messages: chat.messages} : chat))
 
                             setInputValue('')
                             setSendStatus('send')

@@ -2,9 +2,11 @@ import { allChats } from "./data";
 import './css/chatprev.css'
 import './css/chat.css'
 import ChatParent from "./chat";
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 
 import { people } from "./people";
+
+export const chatsContext = createContext(null)
 
 const ChatPage = () => {
     
@@ -12,13 +14,15 @@ const ChatPage = () => {
 
     return (
         <>
-            <ChatPreview chats={chats} setChats={setChats} />
+            <chatsContext.Provider value={{chats, setChats}}>
+                <ChatPreview />
+            </chatsContext.Provider>
         </>
     )
 }
 
 
-const ChatPreview = ({chats, setChats}) => {
+const ChatPreview = () => {
 
 
 
@@ -44,6 +48,8 @@ const ChatPreview = ({chats, setChats}) => {
         
     }, [searchInputValue])
     
+    const {chats} = useContext(chatsContext)
+
     return (
     
         <div className="front-end">
@@ -116,8 +122,7 @@ const ChatPreview = ({chats, setChats}) => {
                                     setSearchInputValue('')
                                     return (
                                         <>
-                                            {showChat && <ChatParent name={user} 
-                                                chats={chats} setChats={setChats}/>}
+                                            {showChat && <ChatParent name={user} />}
                                         </>
                                     )
                                 }}>
@@ -137,7 +142,7 @@ const ChatPreview = ({chats, setChats}) => {
             )}
 
                 
-                {showChat && <ChatParent name={user} chats={chats} setChats={setChats}/>}
+                {showChat && <ChatParent name={user} />}
 
 
 
