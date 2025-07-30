@@ -80,9 +80,13 @@
     justify-content: flex-start;
 }
 
-.message-wrapper.right{
-    justify-content: flex-end;
+.message-wrapper.right {
+  display: flex;
+  justify-content: flex-end;
+  margin: 8px 0;
 }
+
+
 
 .dot-button{
     opacity: 0;
@@ -96,51 +100,64 @@
 
 .messages-received{
 
-    text-align: left;
+  background-color: #e1ffc7;
+  border-radius: 12px;
+  max-width: 60%;
+  min-width: 100px;
+  padding: 10px 12px;
+  position: relative;
+  word-wrap: break-word;
+  display: flex;
+  flex-direction: column;
+  font-family: "ui-monospace", monospace;
 
-    background-color: #e1ffc7;
-    border-radius: 12px;
-    max-width: 60%;
-    min-width: 5%;
-    
-    min-height: 5px;
-    word-wrap: break-word;
-    display:inline-block;
 
 }
 
 .messages-received h4 {
-    font-family: "ui-monospace";
-    position: relative;
-    left: 10px;
-    top: -5px;
-    max-width: 95%;
-    min-height: 10px;
-}
-
-.messages-sent{
-    
-    background-color: #c7d8ff;
-    border-radius: 12px;
-    max-width: 60%;
-    min-width: 100px;
-    min-height: 50px;
-    word-wrap: break-word;
-    display: block;
-    
-}
-
-.messages-sent h4{
-    position: absolute;
-    font-family: "ui-monospace";
-    position: relative;
-    left: 20px;
-    min-height: 15px;
-    top: -6px;
-    max-width: 95%;
-
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
 
 }
+
+.messages-received h5{
+  margin: 0;
+  font-size: 12px;
+  text-align: right;
+  color: #555;
+
+}
+
+
+ .messages-sent {
+  background-color: #c7d8ff;
+  border-radius: 12px;
+  max-width: 60%;
+  min-width: 100px;
+  padding: 10px 12px;
+  position: relative;
+  word-wrap: break-word;
+  display: flex;
+  flex-direction: column;
+  font-family: "ui-monospace", monospace;
+}
+
+.messages-sent h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.messages-sent h5 {
+  margin: 0;
+  font-size: 12px;
+  text-align: right;
+  color: #555;
+}
+
 
 
 

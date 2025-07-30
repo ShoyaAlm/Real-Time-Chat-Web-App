@@ -34,7 +34,8 @@ const ChatPreview = () => {
     const [searchInputValue, setSearchInputValue] = useState('')
 
     const [searchedUsers, setSearchedUsers] = useState([])
-    
+
+    var lastMessageOrigin = ''
 
     useEffect(() => {
 
@@ -60,11 +61,21 @@ const ChatPreview = () => {
                         setSearchInputValue(e.target.value)
                         setIsLoadingUsers(true)
                     
-                }}/>
+                }} placeholder="search..."/>
+            
+            {searchInputValue && (
+                <button onClick={() => {
+                    setSearchInputValue('')
+                    setIsLoadingUsers(false)
+                }} className="clear-btn" aria-label="Clear search">
+                    X
+                </button>
+            )}
+            
             </div>
 
 
-            {!isLoadingUsers ? (
+            {!isLoadingUsers || !searchInputValue ? (
                 <>
 
             <div className="chatPreviews">
@@ -74,10 +85,16 @@ const ChatPreview = () => {
 
                 var lastMessage
                 var previewLastMessage
-
+                
                 if(chat.messages.length !== 0){
 
                     lastMessage = chat.messages[chat.messages.length - 1].msg
+
+                    if(chat.messages[chat.messages.length - 1].from === 'Shoya'){
+                        lastMessageOrigin = 'Shoya'
+                    } else {
+                       lastMessageOrigin = chat.messages[chat.messages.length - 1].from 
+                    }
 
                     previewLastMessage = lastMessage.length > 65 ? lastMessage.slice(0, 60) + "..." : lastMessage;
 
@@ -94,7 +111,7 @@ const ChatPreview = () => {
                         }}>
                         <img alt="" src={chat.img} className="profile-img"/>
                         <h2 className="name">{chat.name}</h2>
-                        <h4 className="chat-msg">{previewLastMessage}</h4>
+                        <h4 className="chat-msg">{lastMessageOrigin}: {previewLastMessage}</h4>
                         <hr/>
 
                     </div>
@@ -109,12 +126,20 @@ const ChatPreview = () => {
             ) : (
                 <>
 
-                    <div className="searched-users">
+                    <div className="searched-users-container">
 
+                    {searchedUsers.length !== 0 ? 
+                    (
+                        <>
+                        
                         {searchedUsers.map((user) => {
+
+                        
                             return (
-                                <div key={user.id}>
+                                <div key={user.id} className="searched-user">
                                     
+                                    <img src={user.img} className="searched-user-profile"/>
+
                                     <h3 onClick={() => {
                                     setShowChat(true)
                                     setUser(user.name)
@@ -125,15 +150,26 @@ const ChatPreview = () => {
                                             {showChat && <ChatParent name={user} />}
                                         </>
                                     )
-                                }}>
+                                }} className="searched-user-name">
                                         {user.name}
                                     </h3>
+
+                                    <h5 style={{position:'relative', left:'33px', top:'0px'}}>
+                                    Last seen recently</h5>
                                     
 
-                                    <hr/>
+                                    <hr style={{position:"relative"}}/>
                                 </div>
                             )
+
                         })}
+                        </>
+                    ) : (
+                        <>
+                            <h2 style={{textAlign:'center'}}>No users were found...</h2>
+                        </>
+                    )}
+                        
 
 
                     </div>

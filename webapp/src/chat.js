@@ -214,6 +214,10 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit,
                                 <h4>
                                     {message.msg}
                                 </h4>
+                                <h5>
+                                    {new Date(message.createdAt)
+                                    .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </h5>
                             </div>
                         </div>
                     )
@@ -260,6 +264,10 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit,
                                     <h4>
                                         {message.msg}
                                     </h4>
+                                <h5>
+                                    {new Date(message.createdAt)
+                                    .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </h5>
                                 </div>
                                 
 
