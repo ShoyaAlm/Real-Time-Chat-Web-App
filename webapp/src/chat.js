@@ -16,24 +16,7 @@ const ChatParent = ({ name }) => {
 
 
 
-// const reducer = (state, action) => {
-//     if(action.type === "delete-msg"){
-
-//     }
-
-//     if(action.type === "edit-msg"){
-
-//     }
-// }
-
-// const initialState = {
-
-// }
-
-
 const Chat = ({name}) => {
-
-    // const [state, dipatch] = useReducer(reducer, initialState)
     
     const {chats, setChats} = useContext(chatsContext)
 
@@ -42,9 +25,12 @@ const Chat = ({name}) => {
     const [sendStatus, setSendStatus] = useState('send')
     
     const [messageToEdit, setMessageToEdit] = useState('')
+    const [messageToReply, setMessageToReply] = useState('')
+
 
     const [chatHistory, setChatHistory] = useState(null)
     
+
     const updatedMessages = (newMessages) => {
 
         setChats( prevChats => prevChats.map((chat) => chat.name === name
@@ -52,6 +38,8 @@ const Chat = ({name}) => {
             lastUpdatedAt: newMessages[newMessages.length - 1].createdAt} : chat))
         
         }
+
+    
 
     var user = chats.find((chat) => chat.name === name) ?? people.find((person) => person.name === name)
     
@@ -86,7 +74,7 @@ const Chat = ({name}) => {
                         updatedMessages(filteredMessages)
                     
                     }}
-                        setMessageToEdit={setMessageToEdit}
+                        setMessageToEdit={setMessageToEdit} setMessageToReply={setMessageToReply}
                         setInputValue={setInputValue} setSendStatus={setSendStatus}
                         
 
@@ -100,7 +88,28 @@ const Chat = ({name}) => {
 
 
 
+                    {sendStatus === 'reply' || sendStatus === 'edit' ? (
+                        <>
+                            <div className="typeof-message">
+                                {sendStatus == 'reply' ? (
+                                    <div className="reply">
+                                       <h5>Reply: {messageToReply.slice(0, 50)}
+                                       {messageToReply.length > 50 ? '...' : ''}</h5>  
+                                    </div>
+                                ) : (
+                                    <div className="edit">
+                                        <h5>Edit</h5>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <></>
+                    )}
                 <div className="write-text">
+
+                    
+
                     <input className="user-input" value={inputValue} style={{width:'90%'}}
                         onChange={(e) => {
                             setInputValue(e.target.value)
@@ -124,7 +133,7 @@ const Chat = ({name}) => {
 
                                 setChats( prevChats => [...prevChats, {id: prevChats.length + 1,
                                 name: user.name, messages: [{from:"Shoya", msg: inputValue, 
-                                createdAt: new Date().toISOString()}],
+                                createdAt: new Date().toISOString(), type:"normal"}],
                                 img: user.img, lastUpdatedAt: new Date().toISOString()
                                 }])
 
@@ -140,7 +149,7 @@ const Chat = ({name}) => {
                                 (message) => message.msg === messageToEdit)
                             
                             selectedMessage.msg = inputValue
-                            
+                            selectedMessage.type = 'edited'
                             
                             setChats( prevChats => prevChats.map((chat) => chat.name === name 
                             ? {...chat, messages: chat.messages} : chat))
@@ -148,6 +157,20 @@ const Chat = ({name}) => {
                             setInputValue('')
                             setSendStatus('send')
 
+                        }
+                        else if(inputValue !== '' && sendStatus === 'reply'){
+
+                            const selectedMessage = user.messages.find(
+                                (message) => message.msg === messageToReply)
+
+                            const newMessages = [...user.messages,
+                            {from:"Shoya", msg: inputValue, createdAt: new Date().toISOString(),
+                             type:"reply", ref:selectedMessage}]
+                            
+                            setInputValue('')
+                            setSendStatus('send')
+                            updatedMessages(newMessages)
+                            
                         }
                         
                         }}
@@ -162,22 +185,26 @@ const Chat = ({name}) => {
 }
 
 
-const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, 
+const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToReply,
     setInputValue, setSendStatus}) => {
     
     const messages = chat.messages    
     
+    console.log(messages);
+    
     const [showThreeOptions, setShowThreeOptions] = useState(false)
         
-    var messageExists
+    var messagesExist = messages === undefined ? false : true
+        
+    const replyMessage = (theMessage) => {
+    
+        setMessageToReply(theMessage)
+              
+        setInputValue('')
+        setShowThreeOptions(false)
+        setSendStatus('reply')
 
-    if(messages === undefined){
-        messageExists = false
-    } else {
-        messageExists = true /* messages.length > 0*/
     }
-    
-    
 
     const editMessage = (theMessage) => {
 
@@ -202,7 +229,7 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit,
 
     return (
     <>
-        {messageExists ?
+        {messagesExist ?
         
         (
             messages.map((message, index) => {
@@ -210,15 +237,41 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit,
                     
                     return (
                         <div className="message-wrapper left" key={index}>
+
                             <div className="messages-received">
                                 <h4>
                                     {message.msg}
                                 </h4>
-                                <h5>
+                                <h5 >
                                     {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>
                             </div>
+
+                            <div className="dot-container">
+                                    <button onClick={() => {
+                                        if(!showThreeOptions){
+                                            setOptionsIndex(index)
+                                            setShowThreeOptions(true)
+                                        } else {
+                                            setOptionsIndex(null)
+                                            setShowThreeOptions(false)
+                                        }
+                                    }} className="dot-button">...</button>
+                                    
+                                    <div className={`three-options ${showThreeOptions && optionsIndex === index 
+                                    ? "show" : ""}`}>
+                                    
+                                    
+                                    <h5 onClick={() => replyMessage(message.msg)}>Reply</h5>
+                                    <h5 onClick={() => {navigator.clipboard.writeText(message.msg);
+                                        setShowThreeOptions(false);
+                                    }}
+                                    >Copy</h5>
+                                </div>
+
+                                </div>
+
                         </div>
                     )
 
@@ -238,33 +291,45 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit,
                                         }
                                     }} className="dot-button">...</button>
                                     
-                                    {showThreeOptions && optionsIndex === index ? (
-                                        <>
-                                            <div className="three-options">
-                                                <h5 onClick={() => 
-                                                {navigator.clipboard.writeText(message.msg)
-                                                .then(() => console.log("copied"))
-                                                .catch(() => console.log("failed to copy"))
-                                                setShowThreeOptions(false)
-                                                }}>Copy</h5>
-                                                <h5 onClick={() => editMessage(message.msg)}>Edit</h5>
-                                                <h5 onClick={() => deleteMessage(message.msg)}>Delete</h5>
-                                            
-                                            </div>
-                                        </>
-                                    )
-                                    : (
-                                        <></>
-                                    )}
+                                    <div className={`three-options ${showThreeOptions && optionsIndex === index 
+                                    ? "show" : ""}`}>
+                                    
+                                    
+                                    <h5 onClick={() => replyMessage(message.msg)}>Reply</h5>
+                                    <h5 onClick={() => {
+                                        navigator.clipboard.writeText(message.msg);
+                                        setShowThreeOptions(false);
+                                    }}
+                                    >
+                                    Copy
+                                    </h5>
+                                    <h5 onClick={() => editMessage(message.msg)}>Edit</h5>
+                                    <h5 onClick={() => deleteMessage(message.msg)}>Delete</h5>
+                                
+                                
+                                </div>
                                     
 
                                 </div>
                                 
                                 <div className="messages-sent">
+                                    {message.ref ? (
+                                        <>
+                                        <h5>Rep: {message.ref.msg.slice(0, 15)}
+                                        {message.ref.msg.length > 15 ? '...' : ''}</h5>
+                                        <h4>
+                                            {message.msg}
+                                        </h4>
+                                        </>
+                                    ) : (
+                                    
                                     <h4>
                                         {message.msg}
                                     </h4>
+                                        
+                                    )}
                                 <h5>
+                                {message.type == "edited" ? "Edited, " : ""}
                                     {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>

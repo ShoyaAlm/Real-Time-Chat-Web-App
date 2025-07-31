@@ -6,7 +6,7 @@ export const allChats = [
             createdAt: new Date().toISOString(),
                 type: 'normal'},
             {from:"Peter",
-                msg:"To be honest, I think this works! I have my proof of work on me, so hit me when you have time",
+                msg:"To be honest, I think this works! I have my proof of work on me, so hit me when you have time. To be honest, I think this works! I have my proof of work on me, so hit me when you have timeTo be honest, I think this works! I have my proof of work on me, so hit me when you have timeTo be honest, I think this works! I have my proof of work on me, so hit me when you have timeTo be honest, I think this works! I have my proof of work on me, so hit me when you have timeTo be honest, I think this works! I have my proof of work on me, so hit me when you have timeTo be honest, I think this works! I have my proof of work on me, so hit me when you have time",
                 createdAt: new Date().toISOString(),
                 type: 'normal'},
             
