@@ -1,5 +1,5 @@
 export const allChats = [
-    {id: 1, name: "Peter", 
+    {id: 1, name: "Peter", type:'chat',
         messages:[
             {from:"Peter", 
             msg:"This was the most helpful thing i have ever read to help me finish my thesis",
@@ -24,7 +24,7 @@ export const allChats = [
         lastUpdatedAt: new Date().toISOString()
     },
 
-    {id: 2, name: "Josh",
+    {id: 2, name: "Josh", type:'chat',
          messages:[
                 {from:"Josh" ,
                     msg:"I think we should take the alternative way to infiltrate the detection system?",
@@ -42,7 +42,7 @@ export const allChats = [
         lastUpdatedAt: new Date().toISOString()
     },
     
-    {id: 3, name: "Maxim", 
+    {id: 3, name: "Maxim", type:'chat',
         messages:[
             {from:"Maxim", 
                 msg:"Not to be redundant or anything, but do any of you suggest we regroup at a certain cafe?",
@@ -59,6 +59,38 @@ export const allChats = [
         img: 'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg',
         lastUpdatedAt: new Date().toISOString()
     },
+
+    {id: 4, name: "Group 1", type:'group',
+        messages:[
+            {from:"Maxim",
+                msg:"Hi everyone to this wonderful GroupChat!", createdAt: new Date().toISOString(),
+                type:'normal'
+            },
+            
+            {from:"Maxim",
+                msg:"Who's in it for a treat?", createdAt: new Date().toISOString(),
+                type:'normal'
+            },
+
+            {from:"Peter",
+                msg:"I'm game.", createdAt: new Date().toISOString(),
+                type:'normal'
+            },
+            
+        ],
+        users:[{name:"Maxim", 
+            img:'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg'},
+        {name:"Peter", 
+            img:'https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg'},
+        {name:"Shoya", 
+            img:'https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg'},],
+        
+            
+            img: 'https://wallpaper.dog/large/20675505.jpg',
+        lastUpdatedAt: new Date().toISOString()
+
+
+    }
 
 
 ]

@@ -59,7 +59,8 @@ const Chat = ({name}) => {
                 <img alt="" src={user.img}/>
                 <div className="user">
                     <h2>{user.name}</h2>
-                    <h5>Last seen recently</h5>
+                    {user.type === 'group' ? (<></>) : (<><h5>Last seen recently</h5></>
+                    )}
                 </div>
             </div>
 
@@ -240,8 +241,28 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                     return (
                         <div className="message-wrapper left" key={index}>
 
+                            {chat.type === 'group' ? (<>
+
+                                {chat.users.map((user) => {
+                                    if(user.name == message.from){
+                                        return (<>
+                                        
+                                    <img src={user.img} 
+                                    style={{width:'36px', height:'36px', borderRadius:'50%', marginRight:'5px',
+                                        position:'relative', left:'0', objectFit: 'cover',flexShrink: '0'}}/>
+                                        
+                                        </>)
+                                    }
+                                })} </>) : (<></>)}
+                            
                             <div className="messages-received">
-                                <h4>
+
+                                
+
+                                <h5 style={{position:'relative', textAlign:'left'}}>
+                                {message.from}</h5>
+
+                                <h4 style={{marginTop:'4px'}}>
                                     {message.msg}
                                 </h4>
                                 <h5 >
@@ -332,10 +353,20 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                                 <h4>{message.msg}</h4>
                                         </>
                                     ) : (
-                                    
+                                    <>
+                                        {message.type === 'forwarded' ? (
+                                            <>
+                                            <div className="forward-preview">
+                                            <h5>forward: {message.from}</h5>
+                                            </div>
+                                            </>
+                                        ) : (
+                                            <></>
+                                        )}
                                     <h4>
                                         {message.msg}
                                     </h4>
+                                    </>
                                         
                                     )}
                                 <h5>

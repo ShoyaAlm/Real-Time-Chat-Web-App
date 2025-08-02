@@ -162,7 +162,7 @@
   border-radius: 12px;
   max-width: 60%;
   min-width: 100px;
-  padding: 10px 12px;
+  padding: 5px 12px;
   position: relative;
   word-wrap: break-word;
   display: flex;
@@ -193,7 +193,7 @@
   background-color: #c7d8ff;
   border-radius: 12px;
   max-width: 60%;
-  min-width: 100px;
+  min-width: 52px;
   padding: 10px 12px;
   position: relative;
   word-wrap: break-word;
@@ -218,18 +218,35 @@
 
 .reply-preview {
   position: relative;
-  background-color: #e3ebff; /* lighter than #c7d8ff */
+  background-color: #e3ebff;
   padding: 4px 10px 5px 4px;
   border-radius: 8px;
   margin-bottom: 6px;
   font-size: 0.9rem;
-  color: #e1ffc7; /* darker text for contrast */
-  word-break: break-word; /* to avoid overflow */
+  color: #e1ffc7;
+  word-break: break-word;
 }
 
 .reply-preview h5{
   text-align: left;
 }
+
+.forward-preview {
+  position: relative;
+  background-color: #e3ebff;
+  top: 50%;
+  /* padding: 4px 10px 5px 4px; */
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: #e1ffc7;
+  word-break: break-word;
+}
+
+.forward-preview h5{
+  text-align: left;
+}
+
 
 
 
@@ -243,7 +260,6 @@
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    /* padding: 0 20px; */
     background-color: #f0f0f0;
 
 }
