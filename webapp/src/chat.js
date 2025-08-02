@@ -2,8 +2,8 @@
 import { people } from "./people"
 import './css/chat.css'
 import { useEffect, useState, useContext } from "react"
-
 import { chatsContext } from "./chats"
+import OptionsModal from "./modal"
 
 const ChatParent = ({ name }) => {
 
@@ -98,7 +98,8 @@ const Chat = ({name}) => {
                                     </div>
                                 ) : (
                                     <div className="edit">
-                                        <h5>Edit</h5>
+                                       <h5>Edit: {messageToEdit.slice(0, 50)}
+                                       {messageToEdit.length > 50 ? '...' : ''}</h5>  
                                     </div>
                                 )}
                             </div>
@@ -189,9 +190,7 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
     setInputValue, setSendStatus}) => {
     
     const messages = chat.messages    
-    
-    console.log(messages);
-    
+        
     const [showThreeOptions, setShowThreeOptions] = useState(false)
         
     var messagesExist = messages === undefined ? false : true
@@ -224,8 +223,11 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
         onDeleteMessage(theMessage)
     
     }
-    
+
+
     const [optionsIndex, setOptionsIndex] = useState(null)
+
+    const [showModal, setShowModal] = useState(false)
 
     return (
     <>
@@ -303,6 +305,13 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                     >
                                     Copy
                                     </h5>
+                                    
+                                    <h5 onClick={() => {setShowThreeOptions(false)
+                                        setShowModal(true)}}>Forward</h5>
+                                    
+                                        {showModal && <OptionsModal message={message}
+                                        modalType={'forward'} setShowModal={setShowModal}/>}
+                                    
                                     <h5 onClick={() => editMessage(message.msg)}>Edit</h5>
                                     <h5 onClick={() => deleteMessage(message.msg)}>Delete</h5>
                                 
@@ -315,11 +324,12 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                 <div className="messages-sent">
                                     {message.ref ? (
                                         <>
-                                        <h5>Rep: {message.ref.msg.slice(0, 15)}
-                                        {message.ref.msg.length > 15 ? '...' : ''}</h5>
-                                        <h4>
-                                            {message.msg}
-                                        </h4>
+                                            <div className="reply-preview">
+                                            <h5 style={{fontSize:"13px"}}>{message.ref.from}</h5>
+                                                <h5>{message.ref.msg.slice(0, 30)}
+                                                {message.ref.msg.length > 30 ? '...' : ''}</h5>
+                                            </div>
+                                                <h4>{message.msg}</h4>
                                         </>
                                     ) : (
                                     
@@ -358,6 +368,8 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
 
     )
 }
+
+
 
 
 export default ChatParent
