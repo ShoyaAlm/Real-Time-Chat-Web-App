@@ -3,7 +3,7 @@ import { people } from "./people"
 import './css/chat.css'
 import { useEffect, useState, useContext } from "react"
 import { chatsContext } from "./chats"
-import OptionsModal from "./modal"
+import {OptionsModal, AttachedFileModal} from './modal'
 
 const ChatParent = ({ name }) => {
 
@@ -30,6 +30,7 @@ const Chat = ({name}) => {
 
     const [chatHistory, setChatHistory] = useState(null)
     
+    const [attachedFiles, setAttachedFiles] = useState(null)
 
     const updatedMessages = (newMessages) => {
 
@@ -49,6 +50,27 @@ const Chat = ({name}) => {
 
 
     
+    const handleAttachFiles = (event) => {
+        
+        const attachedFile = event.target.files[0]
+        
+        if(attachedFiles === null && attachedFile !== undefined){
+            setAttachedFiles([attachedFile])
+        } else if (attachedFile !== undefined){
+
+            const fileAlreadyAdded = attachedFiles.some(file => file.name === attachedFile.name)
+
+            if(fileAlreadyAdded){
+                console.log("file already added");
+            } else {
+                setAttachedFiles([...attachedFiles, attachedFile])
+            }
+        }
+
+        
+    }
+
+
     return (
 
     <div className="chat-container">
@@ -118,6 +140,12 @@ const Chat = ({name}) => {
                         }}
                     />
                     
+                    <button className="attach-file">Attach</button>
+                    <input type="file" onChange={handleAttachFiles}/>
+                    
+                    {attachedFiles && <AttachedFileModal attachedFiles={attachedFiles}
+                     setAttachedFiles={setAttachedFiles} handleAttachFiles={handleAttachFiles}/>}
+
                     <button className="send" onClick={() => {
 
                         if(inputValue !== '' && sendStatus === 'send'){
@@ -250,17 +278,16 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                     <img src={user.img} 
                                     style={{width:'36px', height:'36px', borderRadius:'50%', marginRight:'5px',
                                         position:'relative', left:'0', objectFit: 'cover',flexShrink: '0'}}/>
-                                        
                                         </>)
                                     }
                                 })} </>) : (<></>)}
                             
                             <div className="messages-received">
 
-                                
-
-                                <h5 style={{position:'relative', textAlign:'left'}}>
-                                {message.from}</h5>
+                                {chat.type === 'group' ? (
+                                    <><h5 style={{position:'relative', textAlign:'left'}}>{message.from}</h5></>
+                                ) : (<></>)}
+                                        
 
                                 <h4 style={{marginTop:'4px'}}>
                                     {message.msg}
