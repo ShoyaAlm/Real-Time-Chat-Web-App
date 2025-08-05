@@ -9,12 +9,12 @@ const OptionsModal = ({message, modalType, setShowModal}) => {
     const [chosenChats, setChosenChats] = useState([])
     
 
-    const forwardMessages = (chosedChats) => {
+    const forwardMessages = (selectedChats) => {
         
         setChats((prevChats) => {
             
             return prevChats.map((chat) => {
-                if(chosedChats.includes(chat.id)){
+                if(selectedChats.includes(chat.id)){
                 
                 return {...chat, messages:[...chat.messages, {from:message.from, msg: message.msg,
                  createdAt: new Date().toISOString(), type:'forwarded'}],lastUpdatedAt: new Date().toISOString()}
@@ -115,8 +115,9 @@ const OptionsModal = ({message, modalType, setShowModal}) => {
     // }
 }
 
-const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles}) => {
+const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, chatID, fileInputRef}) => {
 
+    const {chats, setChats} = useContext(chatsContext)
 
     const [avgSize, setAvgSize] = useState({width:'16%', height:'16%'})
     const [imgDimensions, setImgDimensions] = useState({})
@@ -178,17 +179,43 @@ const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles})
         return `${size.toFixed(1)} ${sizes[i]}`
     }
 
+    const sendAttachedFiles = (attachedFiles) => {
+        setChats((prevChats) => {
+            fileInputRef.current = attachedFiles
+            
+            return (prevChats.map((chat) => {
+                
+                if(chat.id === chatID){
+                    return {...chat, messages:[...chat.messages, 
+                        {from:"Shoya", msg: attachedFiles, 
+                            createdAt: new Date().toISOString(), type:'files'}],
+                        
+                            lastUpdatedAt: new Date().toISOString()}
+
+                } else {
+                    return chat
+                }
+
+
+            }))
+        })
+        setTimeout(() => {
+            setAttachedFiles(null)
+            fileInputRef.current = ''
+            }, 200)
+    }
+
     return (
-        <Modal isOpen={true} onRequestClose={() => setAttachedFiles(null)}
-        ariaHideApp={false} overlayClassName="attached-files-overlay" className="attached-files-content"
-        >
+        <Modal isOpen={true} onRequestClose={() => {
+            fileInputRef.current.value = ''
+            setAttachedFiles(null)}} ariaHideApp={false} overlayClassName="attached-files-overlay"
+            className="attached-files-content">
 
         <h2 style={{position:'relative', left:'10px'}}>Attached Files</h2>
         <hr/>
 
         <div className="selected-files" style={{position:'relative'}}>
         {attachedFiles.map((file, index) => {
-                console.log(file)
             if(file.type.startsWith('image/')){
                 return (
                     <div key={index} style={{ display:'flex', alignItems:'center', marginBottom:'10px'}}>
@@ -223,11 +250,20 @@ const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles})
             }
         })}
 
-        <button onClick={() => console.log('sending')} style={{position:'absolute', right:'0'}}>Send</button>
-        {/* <button onClick={() => handleAttachFiles()} >Add</button> */}
-        <input style={{position:'relative', left:'140px'}} onChange={handleAttachFiles} type="file"/>
-        <button onClick={() => setAttachedFiles(null)} 
-            style={{position:'absolute', left:'0'}}>Close</button>
+        <button onClick={() => {
+            fileInputRef.current.value = ''
+            setAttachedFiles(null)}} style={{position:'absolute', left:'0'}}>Close</button>
+        
+        {attachedFiles.length <= 9 ? (
+            <>
+                {/* <button onClick={() => handleAttachFiles()} >Add</button> */}
+                <input style={{position:'relative', left:'140px'}} onChange={handleAttachFiles} type="file"/>
+            </>
+        ) : (
+            <></>
+        )}
+                <button onClick={() => sendAttachedFiles(attachedFiles)} 
+                style={{position:'absolute', right:'0'}}>Send</button>
         
         </div>
         

@@ -87,16 +87,21 @@ const ChatPreview = () => {
                 var previewLastMessage
                 
                 if(chat.messages.length !== 0){
+                    
+                    lastMessageOrigin = chat.messages[chat.messages.length - 1].from 
 
                     lastMessage = chat.messages[chat.messages.length - 1].msg
 
-                    if(chat.messages[chat.messages.length - 1].from === 'Shoya'){
-                        lastMessageOrigin = 'Shoya'
-                    } else {
-                       lastMessageOrigin = chat.messages[chat.messages.length - 1].from 
-                    }
+                        if(chat.messages[chat.messages.length - 1].type !== "files"){
 
-                    previewLastMessage = lastMessage.length > 65 ? lastMessage.slice(0, 60) + "..." : lastMessage;
+
+                        previewLastMessage = lastMessage.length > 65 ? 
+                            lastMessage.slice(0, 60) + "..." : lastMessage;
+                    
+                    } else {
+                        previewLastMessage = lastMessage.length == 1 ? lastMessage.length + " file"
+                            : lastMessage.length + " files"
+                    }
 
                 } else {
                     previewLastMessage = "(empty chat)"
