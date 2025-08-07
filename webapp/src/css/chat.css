@@ -234,7 +234,10 @@
 .forward-preview {
   position: relative;
   background-color: #e3ebff;
+  min-width: 100px;
+  /* text-align: left; */
   top: 50%;
+  height: 30px;
   /* padding: 4px 10px 5px 4px; */
   border-radius: 8px;
   margin-bottom: 6px;
@@ -245,6 +248,9 @@
 
 .forward-preview h5{
   text-align: left;
+  left: 10px;
+  top: 6px;
+  position: relative;
 }
 
 

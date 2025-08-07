@@ -4,6 +4,7 @@ import './css/chat.css'
 import { useEffect, useState, useContext, useRef } from "react"
 import { chatsContext } from "./chats"
 import {OptionsModal, AttachedFileModal} from './modal'
+import ShowcaseFiles from "./files"
 
 const ChatParent = ({ name }) => {
 
@@ -83,8 +84,7 @@ const Chat = ({name}) => {
                 <img alt="" src={user.img}/>
                 <div className="user">
                     <h2>{user.name}</h2>
-                    {user.type === 'group' ? (<></>) : (<><h5>Last seen recently</h5></>
-                    )}
+                    {user.type === 'group' ? (<></>) : (<><h5>Last seen recently</h5></>)}
                 </div>
             </div>
 
@@ -119,14 +119,14 @@ const Chat = ({name}) => {
                             <div className="typeof-message">
                                 {sendStatus == 'reply' ? (
                                     <div className="reply">
-                                    {messageToReply.type !== "files" ? (
+                                    {messageToReply.type === "files" ? (
                                         <>
                                     <h5>Reply: files from {messageToReply.from}</h5>  
                                         </>
                                     ) : (
                                         <>
-                                        <h5>Reply: {messageToReply.slice(0, 50)}
-                                        {messageToReply.length > 50 ? '...' : ''}</h5>  
+                                        <h5>Reply: {messageToReply.msg.slice(0, 50)}
+                                        {messageToReply.msg.length > 50 ? '...' : ''}</h5>  
                                         </>
                                     )}
                                     </div>
@@ -146,9 +146,7 @@ const Chat = ({name}) => {
                     
 
                     <input className="user-input" value={inputValue} style={{width:'90%'}}
-                        onChange={(e) => {
-                            setInputValue(e.target.value)
-                        }}
+                        onChange={(e) => setInputValue(e.target.value)}
                     />
                     
                     <button className="attach-file">Attach</button>
@@ -204,7 +202,7 @@ const Chat = ({name}) => {
                         else if(inputValue !== '' && sendStatus === 'reply'){
 
                             const selectedMessage = user.messages.find(
-                                (message) => message.msg === messageToReply)
+                                (message) => message.msg === messageToReply.msg)
                             
                             console.log(selectedMessage)
                             const newMessages = [...user.messages,
@@ -236,10 +234,11 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
         
     const [showThreeOptions, setShowThreeOptions] = useState(false)
         
-    var messagesExist = messages === undefined ? false : true
+    // var messagesExist = messages === undefined ? false : true
         
     const replyMessage = (theMessage) => {
-    
+        
+        
         setMessageToReply(theMessage)
               
         setInputValue('')
@@ -260,32 +259,6 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
         onDeleteMessage(theMessage)
     }
 
-    const filenameTruncate = (filename) => {
-        if(filename.length <= 20) return filename
-
-        const extIndex = filename.lastIndexOf('.')
-        if(!extIndex) return filename.slice(0, 18) + '...'
-
-        const name = filename.slice(0, extIndex);
-        const ext = filename.slice(extIndex);
-
-        const charsToShow = 20 - ext.length - 3;
-        const frontChars = Math.ceil(charsToShow / 2);
-        const backChars = Math.floor(charsToShow / 2);
-
-        return (
-            name.slice(0, frontChars) + '...' + name.slice(name.length - backChars) + ext
-        )
-    }
-
-    const fileSize = (bytes) => {
-        if(bytes === 0) return '0 Bytes'
-        const k = 1024
-        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-        const i = Math.floor(Math.log(bytes) / Math.log(k))
-        const size = bytes / Math.pow(k, i)
-        return `${size.toFixed(1)} ${sizes[i]}`
-    }
 
     const [optionsIndex, setOptionsIndex] = useState(null)
 
@@ -293,7 +266,7 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
 
     return (
     <>
-        {messagesExist ?
+        {messages ?
         
         (
             messages.map((message, index) => {
@@ -304,14 +277,14 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
 
                             {chat.type === 'group' ? (<>
 
-                                {chat.users.map((user) => {
+                                {chat.users.map((user, index) => {
                                     if(user.name == message.from){
-                                        return (<>
+                                        return (<div key={index}>
                                         
                                     <img src={user.img} 
                                     style={{width:'36px', height:'36px', borderRadius:'50%', marginRight:'5px',
                                         position:'relative', left:'0', objectFit: 'cover',flexShrink: '0'}}/>
-                                        </>)
+                                        </div>)
                                     }
                                 })} </>) : (<></>)}
                             
@@ -346,7 +319,7 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                     ? "show" : ""}`}>
                                     
                                     
-                                    <h5 onClick={() => replyMessage(message.msg)}>Reply</h5>
+                                    <h5 onClick={() => replyMessage(message)}>Reply</h5>
                                     <h5 onClick={() => {navigator.clipboard.writeText(message.msg);
                                         setShowThreeOptions(false);
                                     }}
@@ -377,12 +350,10 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                             <div className={`three-options ${showThreeOptions && optionsIndex === index 
                             ? "show" : ""}`}>
 
-                            <h5 onClick={() => replyMessage(message.msg)}>Reply</h5>
+                            <h5 onClick={() => replyMessage(message)}>Reply</h5>
                             <h5 onClick={() => {
                                 navigator.clipboard.writeText(message.msg);
-                                setShowThreeOptions(false);
-                            }}
-                            >Copy</h5>
+                                setShowThreeOptions(false)}}>Copy</h5>
                             
                             <h5 onClick={() => {setShowThreeOptions(false)
                                 setShowModal(true)}}>Forward</h5>
@@ -408,7 +379,6 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                             <>
                                             <h5>{message.ref.msg.slice(0, 30)}
                                             {message.ref.msg.length > 30 ? '...' : ''}</h5>
-                                            {/* <h4>{message.msg}</h4> */}
                                             </>
                                         ) : (
                                             <>
@@ -420,46 +390,33 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                         )}
                                     </div>
                                 </>
-                            ) : (
+                            ) : (<></>)}
+
+                            {message.type === 'forwarded' ? (
                                 <>
-                                        {message.type === 'forwarded' ? (
-                                            <>
-                                            <div className="forward-preview">
-                                            <h5>forward: {message.from}</h5>
-                                            </div>
-                                            <h4>{message.msg}</h4>
-                                            </>
-                                        ) : (
-                                            <></>
-                                        )}
-                                    </>
-                                        
-                                    )}
+                                <div className="forward-preview">
+                                    <h5>from: {message.from}</h5>
+                                </div>
+                                </>
+                            ) : (<></>)}
                                 
 
                                 {message.type === "files" ? (
-        <>
-        {message.msg.map((file, index) => {
-            console.log(message.msg)
-            if(file.type.startsWith('image/')){
-                return (
-                    <div key={index} style={{ display:'flex',textAlign:'left',marginBottom:'8px',
-                    width:'250px'}}>
-                        <img src={URL.createObjectURL(file)} 
-                        style={{position:'relative', width: "25%", height: "25%", borderRadius:'8%',
-                            left:'10px', display:'block'}} />
-                        <div style={{display:'flex', flexDirection:'column', position:'relative', left:'20px'}}>
-                            <h4 style={{position:'relative'}}>{filenameTruncate(file.name)}</h4>
-                            <h5 style={{position:'relative', textAlign:'left'}}>{fileSize(file.size)}</h5>
-                        </div>
-                    </div>
-                )
-            } return null
-        })}
-        </>
+                                <>
+                                <ShowcaseFiles files={message.msg} />
+                                </>
                                 ) : (
-                                    <><h4>{message.msg}</h4></>
+                                    <>
+                                    {typeof message.msg === "object" ? (
+                                        <><ShowcaseFiles files={message.msg} /></>
+                                    ) : (
+                                        <><h4>{message.msg}</h4></>
+                                    )}
+                                    
+                                    </>
                                 )}
+
+
 
                                 <h5>
                                 {message.type == "edited" ? "Edited, " : ""}

@@ -1,6 +1,7 @@
 import {useState, useContext, useEffect} from 'react'
 import Modal from 'react-modal'
 import { chatsContext } from './chats'
+import ShowcaseFiles from './files'
 
 const OptionsModal = ({message, modalType, setShowModal}) => {
 
@@ -12,10 +13,10 @@ const OptionsModal = ({message, modalType, setShowModal}) => {
     const forwardMessages = (selectedChats) => {
         
         setChats((prevChats) => {
+            console.log(typeof message.msg);
             
             return prevChats.map((chat) => {
                 if(selectedChats.includes(chat.id)){
-                
                 return {...chat, messages:[...chat.messages, {from:message.from, msg: message.msg,
                  createdAt: new Date().toISOString(), type:'forwarded'}],lastUpdatedAt: new Date().toISOString()}
 
@@ -30,17 +31,27 @@ const OptionsModal = ({message, modalType, setShowModal}) => {
     }
 
 
-
-    if(modalType == 'forward'){
-        return (
+    switch (modalType) {
+        case 'forward':
+            return (
         
          <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
         
         contentLabel="Forward Modal"
         ariaHideApp={false} overlayClassName="forward-modal-overlay" className="forward-modal-content"
       >
-        <p style={{position:'relative', left:'0', color:'#99c2fb', margin:'0'}}>{message.msg}</p>
-        <h2 style={{fontSize:'20px'}}>Forward Message To...</h2>
+        {message.type !== "files" ? (
+            <>
+            <p style={{position:'relative', left:'0', color:'#99c2fb', margin:'0'}}>{message.msg}</p>
+            <h2 style={{fontSize:'20px'}}>Forward Message To...</h2>
+            </>
+        ) : (
+            <>
+            <p style={{position:'relative', left:'0', color:'#99c2fb', 
+                margin:'0'}}>{message.msg.length} files</p>
+            <h2 style={{fontSize:'20px'}}>Forward Files To...</h2>
+            </>
+        )}
 
         <hr/>
                 <div className="user-chats-modal"
@@ -56,7 +67,7 @@ const OptionsModal = ({message, modalType, setShowModal}) => {
                         <div className="chat-modal" style={{width: "calc(33.33% - 13.33px)",
                         textAlign: "center"}} key={chat.id} 
                         onClick={() => {
-                            if(chosenChats.includes(chat.id)){
+                            if(isChosen){
 
                                 setChosenChats(() => {
                                     const filterChosenChats = chosenChats.filter(
@@ -104,84 +115,34 @@ const OptionsModal = ({message, modalType, setShowModal}) => {
             </div>
       </Modal>       
         )
+            // break;
+        
+        // case 'delete':
+
+        //     break;
+
+        // case 'pin':
+            
+        //     break;
+        
+        default:
+            break;
     }
 
-    // if(modalType === 'delete'){
-
-    // }
-
-    // if(modalType === 'forward'){
-
-    // }
 }
 
 const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, chatID, fileInputRef}) => {
 
     const {chats, setChats} = useContext(chatsContext)
 
-    const [avgSize, setAvgSize] = useState({width:'16%', height:'16%'})
-    const [imgDimensions, setImgDimensions] = useState({})
-
-    useEffect(() => {
-        let loaded = 0;
-        const newDims = {}
-
-        attachedFiles.forEach((file, index) => {
-            if(file.type.startsWith('image/')){
-                const img = new Image();
-                img.src = URL.createObjectURL(file)
-                img.onload = () => {
-                    newDims[index] = {
-                        width: img.width * 0.1,
-                        height: img.height * 0.1
-                    }
-                    loaded ++;
 
 
-                    if(loaded === attachedFiles.filter(f => f.type.startsWith('image/').length)){
-                        setImgDimensions(newDims);
-
-                        const allDims = Object.values(newDims)
-                        const avgW = allDims.reduce((sum, d) => sum + d.width, 0) / allDims.length;
-                        const avgH = allDims.reduce((sum, d) => sum + d.height, 0) / allDims.length;
-
-                        setAvgSize({ width: avgW, height: avgH });
-                    }
-                }
-            }
-        })
-    }, [attachedFiles])
-
-    const filenameTruncate = (filename) => {
-        if(filename.length <= 20) return filename
-
-        const extIndex = filename.lastIndexOf('.')
-        if(!extIndex) return filename.slice(0, 18) + '...'
-
-        const name = filename.slice(0, extIndex);
-        const ext = filename.slice(extIndex);
-
-        const charsToShow = 20 - ext.length - 3;
-        const frontChars = Math.ceil(charsToShow / 2);
-        const backChars = Math.floor(charsToShow / 2);
-
-        return (
-            name.slice(0, frontChars) + '...' + name.slice(name.length - backChars) + ext
-        )
-    }
-
-    const fileSize = (bytes) => {
-        if(bytes === 0) return '0 Bytes'
-        const k = 1024
-        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-        const i = Math.floor(Math.log(bytes) / Math.log(k))
-        const size = bytes / Math.pow(k, i)
-        return `${size.toFixed(1)} ${sizes[i]}`
-    }
 
     const sendAttachedFiles = (attachedFiles) => {
         setChats((prevChats) => {
-            fileInputRef.current = attachedFiles
+            if(fileInputRef.current) {
+                fileInputRef.current.value = ''
+            }
             
             return (prevChats.map((chat) => {
                 
@@ -201,7 +162,9 @@ const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, 
         })
         setTimeout(() => {
             setAttachedFiles(null)
-            fileInputRef.current = ''
+            if(fileInputRef.current) {
+                fileInputRef.current.value = ''
+            }
             }, 200)
     }
 
@@ -215,40 +178,8 @@ const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, 
         <hr/>
 
         <div className="selected-files" style={{position:'relative'}}>
-        {attachedFiles.map((file, index) => {
-            if(file.type.startsWith('image/')){
-                return (
-                    <div key={index} style={{ display:'flex', alignItems:'center', marginBottom:'10px'}}>
-                        <img src={URL.createObjectURL(file)} alt={file.name}
-                        style={{position:'relative', width: avgSize.width, height: avgSize.height, 
-                        borderRadius:'4%', left:'10px'}} />
-                        <div style={{display:'flex', flexDirection:'column', marginLeft:'20px'}}>
-                            <h4 style={{position:'relative'}}>{filenameTruncate(file.name)}</h4>
-                            <h3 style={{position:'relative'}}>{fileSize(file.size)}</h3>
-                        </div>
-                    </div>
-                )
-            } else if(file.type.startsWith('video/')){
-                return (
-                <div key={index}>
-                    <video src={URL.createObjectURL(file)} width="180" height="160" controls
-                    style={{borderRadius: '0', position:'relative', left:'10px'}}/>
-                    <h5>{file.name}</h5>
-                </div>
-                )
-            } else if(file.type.startsWith('application/pdf')){
-                return (
-                    <div key={index}>
-                        <img
-                        src="webapp/src/img/pdf-icon.png"
-                        alt="PDF"
-                        style={{ width: '80px', height: '70px' }}
-                        />
-                        <h5>{file.name}</h5>
-                    </div>
-                    );
-            }
-        })}
+        
+        <ShowcaseFiles files={attachedFiles}/>
 
         <button onClick={() => {
             fileInputRef.current.value = ''
