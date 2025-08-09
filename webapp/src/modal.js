@@ -2,7 +2,7 @@ import {useState, useContext, useEffect} from 'react'
 import Modal from 'react-modal'
 import { chatsContext } from './chats'
 
-const OptionsModal = ({message, modalType, setShowModal}) => {
+const OptionsModal = ({messageToForward, setMessageToForward, modalType, setShowModal}) => {
 
     const {chats, setChats} = useContext(chatsContext)
 
@@ -15,8 +15,8 @@ const OptionsModal = ({message, modalType, setShowModal}) => {
             
             return prevChats.map((chat) => {
                 if(selectedChats.includes(chat.id)){
-                return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,from:message.from,
-                     msg: message.msg, createdAt: new Date().toISOString(), type:'forwarded'}],
+                return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,from:messageToForward.from,
+                     msg: messageToForward.msg, createdAt: new Date().toISOString(), type:'forwarded'}],
                      lastUpdatedAt: new Date().toISOString()}
 
                 } else {
@@ -26,10 +26,9 @@ const OptionsModal = ({message, modalType, setShowModal}) => {
             }) 
         })
 
+        setMessageToForward(null)
         setShowModal(false)
     }
-
-    console.log(message);
     
 
 
@@ -42,15 +41,25 @@ const OptionsModal = ({message, modalType, setShowModal}) => {
         contentLabel="Forward Modal"
         ariaHideApp={false} overlayClassName="forward-modal-overlay" className="forward-modal-content"
       >
-        {message.type !== "files" && message.type !== "edited-files" ? (
+        {messageToForward.type !== "files" && messageToForward.type !== "edited-files" ? (
             <>
-            <p style={{position:'relative', left:'0', color:'#99c2fb', margin:'0'}}>{message.msg}</p>
+            {typeof messageToForward.msg !== "object" ? (
+                <>
+            <p style={{position:'relative', left:'0', color:'#99c2fb', margin:'0'}}>{messageToForward.msg}</p>
             <h2 style={{fontSize:'20px'}}>Forward Message To...</h2>
+                </>
+            ) : (
+                <>
+            <p style={{position:'relative', left:'0', color:'#99c2fb', 
+                margin:'0'}}>{messageToForward.msg.length > 1 ? "1 file" : `${messageToForward.msg.length}`} files</p>
+            <h2 style={{fontSize:'20px'}}>Forward Files To...</h2>
+                </>
+            )}
             </>
         ) : (
             <>
             <p style={{position:'relative', left:'0', color:'#99c2fb', 
-                margin:'0'}}>{message.msg.length} files</p>
+                margin:'0'}}>{messageToForward.msg.length > 1 ? "1 file" : `${messageToForward.msg.length}`} files</p>
             <h2 style={{fontSize:'20px'}}>Forward Files To...</h2>
             </>
         )}

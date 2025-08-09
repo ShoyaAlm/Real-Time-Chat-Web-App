@@ -146,8 +146,18 @@ const Chat = ({name}) => {
                                         </>
                                     ) : (
                                         <>
+                                        {typeof messageToReply.msg === "object" ? (
+                                            <>
+                                            <h5>Reply: {messageToReply.msg.length > 1 ? 'files ' : '1 file '} 
+                                            from {messageToReply.from}</h5>                                                
+                                            </>
+                                        ) : (
+                                            <>
                                         <h5>Reply: {messageToReply.msg.slice(0, 50)}
                                         {messageToReply.msg.length > 50 ? '...' : ''}</h5>  
+
+                                            </>
+                                        )}
                                         </>
                                     )}
                                     </div>
@@ -197,7 +207,7 @@ const Chat = ({name}) => {
 
                                 const newMessages = [...user.messages, 
                                 {id: user.messages.length + 1, from: "Shoya", msg: inputValue,
-                                 createdAt: new Date().toISOString()}]
+                                 createdAt: new Date().toISOString(), type:"normal"}]
                                 
                                 updatedMessages(newMessages)
                                                             
@@ -241,7 +251,7 @@ const Chat = ({name}) => {
                             const selectedMessage = user.messages.find(
                                 (message) => message.id === messageToReply.id)
                             
-                            console.log(selectedMessage)
+                            // console.log(selectedMessage.msg)
                             const newMessages = [...user.messages,
                             {id:user.messages.length + 1 ,from:"Shoya", msg: inputValue,
                              createdAt: new Date().toISOString(), type:"reply", ref:selectedMessage}]
@@ -272,7 +282,6 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
     const [showThreeOptions, setShowThreeOptions] = useState(false)
                 
     const replyMessage = (theMessage) => {
-        
         
         setMessageToReply(theMessage)
         
@@ -309,6 +318,8 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
     const [optionsIndex, setOptionsIndex] = useState(null)
 
     const [showModal, setShowModal] = useState(false)
+
+    const [messageToForward, setMessageToForward] = useState(null)
 
     return (
     <>
@@ -401,11 +412,14 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                 navigator.clipboard.writeText(message.msg);
                                 setShowThreeOptions(false)}}>Copy</h5>
                             
-                            <h5 onClick={() => {setShowThreeOptions(false)
-                                setShowModal(true)}}>Forward</h5>
+                            <h5 onClick={() => {
+                                setShowThreeOptions(false)
+                                setShowModal(true)
+                                setMessageToForward(message)
+                                }}>Forward</h5>
                             
-                                {showModal && <OptionsModal message={message}
-                                modalType={'forward'} setShowModal={setShowModal}/>}
+                                {showModal && <OptionsModal messageToForward={messageToForward}
+                                setMessageToForward={setMessageToForward} modalType={'forward'} setShowModal={setShowModal}/>}
                             
                             <h5 onClick={() => editMessage(message)}>Edit</h5>
                             <h5 onClick={() => deleteMessage(message.msg)}>Delete</h5>
@@ -429,7 +443,14 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                             </>
                                         ) : (
                                             <>
-                                        <h5>{message.ref.msg.slice(0, 30)}{message.ref.msg.length > 30 ? '...' : ''}</h5>
+                                            {typeof message.ref.msg !== "object" ? (
+                                                <>
+                                                <h5>{message.ref.msg.slice(0, 30)}
+                                                {message.ref.msg.length > 30 ? '...' : ''}</h5>
+                                                </>
+                                            ) : (
+                                                <></>
+                                            )}
                                             </>
                                         )}
 
