@@ -3,20 +3,6 @@
     top: 0px;
 }
 
-/* .searchbar{
-    position: relative;
-    max-width: 660px;
-    left: 10px;
-    top: 10px;
-
-}
-
-.searchbar input{
-    position: relative;
-    width: 85%;
-} */
-
-
 .searchbar {
   position: relative;
   max-width: 660px;
@@ -82,7 +68,7 @@
 .chatPreviews{
     position: relative;
     width: 40%;
-    top: 15px;
+    top: 5px;
     /* overflow-y: auto; */
 
 }
@@ -109,6 +95,7 @@
 
 .name{
     position: relative;
+    width: 80%;
     top: 0;
     left: 75px;
 }
@@ -116,7 +103,7 @@
 
 .chat-msg{
     position: relative;
-
+    width: 80%;
     left: 75px;
 }
 

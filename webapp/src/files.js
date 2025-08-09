@@ -38,7 +38,7 @@ const ShowcaseFiles = ({files}) => {
         let loaded = 0;
         const newDims = {}
 
-        files.forEach((file, index) => {
+        files.msg.forEach((file, index) => {
             if(file.type.startsWith('image/')){
                 const img = new Image();
                 img.src = URL.createObjectURL(file)
@@ -50,7 +50,7 @@ const ShowcaseFiles = ({files}) => {
                     loaded ++;
 
 
-                    if(loaded === files.filter(f => f.type.startsWith('image/').length)){
+                    if(loaded === files.msg.filter(f => f.type.startsWith('image/').length)){
                         setImgDimensions(newDims);
 
                         const allDims = Object.values(newDims)
@@ -63,14 +63,11 @@ const ShowcaseFiles = ({files}) => {
             }
         })
     }, [files])
-
-    console.log(typeof files);
     
 
     return (
         <>
-
-        {files.map((file, index) => {
+        {files.msg.map((file, index) => {
             if(file.type.startsWith('image/')){
                 return (
                     <div key={index} style={{ display:'flex', alignItems:'center', marginBottom:'10px',
@@ -105,8 +102,10 @@ const ShowcaseFiles = ({files}) => {
                     </div>
                     );
             }
-        })}
-
+        })
+        
+        }
+        <h4 style={{textAlign:'left'}}>{files.comment}</h4>
         </>
     )
 

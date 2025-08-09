@@ -51,13 +51,23 @@ const Chat = ({name}) => {
 
 
     
-    const handleAttachFiles = (event) => {
+    const handleAttachFiles = (event, replaceIndex = null) => {
         
         const attachedFile = event.target.files[0]
+
+        if(replaceIndex !== null){
         
-        if(attachedFiles === null && attachedFile !== undefined){
-            setAttachedFiles([attachedFile])
-        } else if (attachedFile !== undefined){
+            setAttachedFiles(prevFiles => {
+                const updatedFiles = [...prevFiles]
+                updatedFiles[replaceIndex] = attachedFile
+                return updatedFiles
+            })
+
+        } else {
+        
+                if(attachedFiles === null && attachedFile !== undefined){
+                    setAttachedFiles([attachedFile])
+                } else if (attachedFile !== undefined){
 
             const fileAlreadyAdded = attachedFiles.some(file => file.name === attachedFile.name)
 
@@ -71,8 +81,24 @@ const Chat = ({name}) => {
         
     }
 
+            }
+        
+        
+
 
     const fileInputRef = useRef(null)
+
+    const [fileInputKey, setFileInputKey] = useState(0)
+
+    const resetFileInputKey = () => {
+        setFileInputKey(prevKey => prevKey + 1)
+    }
+
+    const [editingAttachedFiles, setEditingAttachedFiles] = useState(false)
+
+    const [selectedFileMessageID, setSelectedFileMessageID] = useState(0)
+
+    const [attachedFilesComment, setAttachedFilesComment] = useState('')
 
     return (
 
@@ -94,34 +120,29 @@ const Chat = ({name}) => {
 
                 
                     {<ShowMessages chat={user} onDeleteMessage={ theMessage => {
-                    
                         const filteredMessages = user.messages.filter((message) => message.msg !== theMessage)
                         updatedMessages(filteredMessages)
-                    
                     }}
                         setMessageToEdit={setMessageToEdit} setMessageToReply={setMessageToReply}
-                        setInputValue={setInputValue} setSendStatus={setSendStatus} 
-                        attachedFiles={attachedFiles}
-                        
+                        inputValue={inputValue} setInputValue={setInputValue} setSendStatus={setSendStatus} 
+                        setAttachedFiles={setAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
+                        setSelectedFileMessageID={setSelectedFileMessageID}
+
 
                     />}
                 
-                
-
-
-
             </div>
-
-
 
                     {sendStatus === 'reply' || sendStatus === 'edit' ? (
                         <>
                             <div className="typeof-message">
                                 {sendStatus == 'reply' ? (
+                                    
                                     <div className="reply">
-                                    {messageToReply.type === "files" ? (
+                                    {messageToReply.type === "files" || messageToReply.type === "edited-files" ? (
                                         <>
-                                    <h5>Reply: files from {messageToReply.from}</h5>  
+                                    <h5>Reply: {messageToReply.msg.length > 1 ? 'files ' : '1 file '} 
+                                            from {messageToReply.from}</h5>  
                                         </>
                                     ) : (
                                         <>
@@ -130,11 +151,19 @@ const Chat = ({name}) => {
                                         </>
                                     )}
                                     </div>
+
                                 ) : (
-                                    <div className="edit">
-                                       <h5>Edit: {messageToEdit.slice(0, 50)}
-                                       {messageToEdit.length > 50 ? '...' : ''}</h5>  
-                                    </div>
+                                    <>
+                                        {typeof messageToEdit === "object" ? (
+                                            <></>
+                                        ) : (
+                                      
+                                        <div className="edit">
+                                            <h5>Edit: {messageToEdit.slice(0, 50)}
+                                            {messageToEdit.length > 50 ? '...' : ''}</h5>  
+                                        </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </>
@@ -149,12 +178,15 @@ const Chat = ({name}) => {
                         onChange={(e) => setInputValue(e.target.value)}
                     />
                     
-                    <button className="attach-file">Attach</button>
-                    <input type="file" onChange={handleAttachFiles} ref={fileInputRef}/>
+                    <input type="file" key={fileInputKey} onChange={handleAttachFiles} ref={fileInputRef}/>
                     
                     {attachedFiles && <AttachedFileModal attachedFiles={attachedFiles}
                      setAttachedFiles={setAttachedFiles} handleAttachFiles={handleAttachFiles}
-                        chatID={user.id} fileInputRef={fileInputRef}
+                        chatID={user.id} fileInputRef={fileInputRef} resetFileInputKey={resetFileInputKey}
+                        editingAttachedFiles={editingAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
+                        selectedFileMessageID={selectedFileMessageID} setSelectedFileMessageID={setSelectedFileMessageID}
+                        sendStatus={sendStatus} setSendStatus={setSendStatus} attachedFilesComment={attachedFilesComment}
+                        setAttachedFilesComment={setAttachedFilesComment}
                      />}
 
                     <button className="send" onClick={() => {
@@ -164,21 +196,26 @@ const Chat = ({name}) => {
                             if(chatHistory){
 
                                 const newMessages = [...user.messages, 
-                                {from: "Shoya", msg: inputValue, createdAt: new Date().toISOString()}]
+                                {id: user.messages.length + 1, from: "Shoya", msg: inputValue,
+                                 createdAt: new Date().toISOString()}]
                                 
                                 updatedMessages(newMessages)
-
+                                                            
+                            if(inputValue !== ''){
                                 setInputValue('')
+                            } else if(fileInputRef.current !== null){
+                                fileInputRef.current.value = null
+                            }
+                            
                                 
                             } else {
 
                                 setChats( prevChats => [...prevChats, {id: prevChats.length + 1,
-                                name: user.name, messages: [{from:"Shoya", msg: inputValue, 
+                                name: user.name, messages: [{id: 1 ,from:"Shoya", msg: inputValue, 
                                 createdAt: new Date().toISOString(), type:"normal"}],
                                 img: user.img, lastUpdatedAt: new Date().toISOString()
                                 }])
 
-                                setInputValue('')
 
                                 setChatHistory(true)
 
@@ -187,7 +224,7 @@ const Chat = ({name}) => {
                         } else if(inputValue !== '' && sendStatus === 'edit') {
                             
                             const selectedMessage = user.messages.find(
-                                (message) => message.msg === messageToEdit)
+                                (message) => message.id === messageToEdit.id)
                             
                             selectedMessage.msg = inputValue
                             selectedMessage.type = 'edited'
@@ -202,12 +239,12 @@ const Chat = ({name}) => {
                         else if(inputValue !== '' && sendStatus === 'reply'){
 
                             const selectedMessage = user.messages.find(
-                                (message) => message.msg === messageToReply.msg)
+                                (message) => message.id === messageToReply.id)
                             
                             console.log(selectedMessage)
                             const newMessages = [...user.messages,
-                            {from:"Shoya", msg: inputValue, createdAt: new Date().toISOString(),
-                             type:"reply", ref:selectedMessage}]
+                            {id:user.messages.length + 1 ,from:"Shoya", msg: inputValue,
+                             createdAt: new Date().toISOString(), type:"reply", ref:selectedMessage}]
                             
                             setInputValue('')
                             setSendStatus('send')
@@ -227,21 +264,21 @@ const Chat = ({name}) => {
 }
 
 
-const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToReply,
-    setInputValue, setSendStatus, attachedFiles}) => {
+const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToReply, inputValue,
+    setInputValue, setSendStatus, setAttachedFiles, setEditingAttachedFiles, setSelectedFileMessageID}) => {
     
     const messages = chat.messages    
         
     const [showThreeOptions, setShowThreeOptions] = useState(false)
-        
-    // var messagesExist = messages === undefined ? false : true
-        
+                
     const replyMessage = (theMessage) => {
         
         
         setMessageToReply(theMessage)
-              
-        setInputValue('')
+        
+        if(inputValue){
+            setInputValue('')
+        }
         setShowThreeOptions(false)
         setSendStatus('reply')
 
@@ -249,8 +286,17 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
 
     const editMessage = (theMessage) => {
         setShowThreeOptions(false)
-        setMessageToEdit(theMessage)
-        setInputValue(theMessage)
+
+        if(typeof theMessage.msg === "object"){
+            setEditingAttachedFiles(true)
+            setAttachedFiles(theMessage.msg)
+            console.log(theMessage)
+            setSelectedFileMessageID(theMessage.id)
+        } else {
+            setInputValue(theMessage.msg)
+            setMessageToEdit(theMessage.msg)
+        }
+        
         setSendStatus('edit')
     }
 
@@ -361,7 +407,7 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                 {showModal && <OptionsModal message={message}
                                 modalType={'forward'} setShowModal={setShowModal}/>}
                             
-                            <h5 onClick={() => editMessage(message.msg)}>Edit</h5>
+                            <h5 onClick={() => editMessage(message)}>Edit</h5>
                             <h5 onClick={() => deleteMessage(message.msg)}>Delete</h5>
                         
                         
@@ -375,19 +421,19 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                 <>
                                     <div className="reply-preview">
                                     <h5 style={{fontSize:"13px"}}>{message.ref.from}</h5>
-                                        {message.ref.type !== "files" ? (
+                                        {message.ref.type === "files" || message.ref.type === "edited-files" ? (
                                             <>
-                                            <h5>{message.ref.msg.slice(0, 30)}
-                                            {message.ref.msg.length > 30 ? '...' : ''}</h5>
+                                                <h5>{message.ref.msg.length > 1 ? (<>
+                                                {message.ref.msg.length} files
+                                                </>) : (<>{message.ref.msg.length} file</>)}</h5>
                                             </>
                                         ) : (
                                             <>
-                                            <h5>{message.ref.length > 1 ? (<>
-                                                {message.ref.msg.length} files
-                                            </>) : (<>{message.ref.msg.length} file</>)}</h5>
-                                            
+                                        <h5>{message.ref.msg.slice(0, 30)}{message.ref.msg.length > 30 ? '...' : ''}</h5>
                                             </>
                                         )}
+
+                                        
                                     </div>
                                 </>
                             ) : (<></>)}
@@ -401,25 +447,27 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                             ) : (<></>)}
                                 
 
-                                {message.type === "files" ? (
-                                <>
-                                <ShowcaseFiles files={message.msg} />
-                                </>
+                                {message.type === "files" || message.type === "edited-files" ? (
+                                    <>
+                                    <ShowcaseFiles files={message} />                                        
+                                    </>
                                 ) : (
                                     <>
                                     {typeof message.msg === "object" ? (
-                                        <><ShowcaseFiles files={message.msg} /></>
+                                        <>
+                                        <ShowcaseFiles files={message} />
+                                        </>
                                     ) : (
                                         <><h4>{message.msg}</h4></>
                                     )}
-                                    
                                     </>
                                 )}
 
 
 
+
                                 <h5>
-                                {message.type == "edited" ? "Edited, " : ""}
+                                {message.type == "edited" || message.type == "edited-files" ? "Edited, " : ""}
                                     {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>

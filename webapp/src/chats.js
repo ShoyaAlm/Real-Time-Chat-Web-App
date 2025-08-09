@@ -86,30 +86,36 @@ const ChatPreview = () => {
                 var lastMessage
                 var previewLastMessage
                 
-                if(chat.messages.length !== 0){
+            if(chat.messages.length !== 0){
                     
                     lastMessageOrigin = chat.messages[chat.messages.length - 1].from 
 
                     lastMessage = chat.messages[chat.messages.length - 1].msg
 
-                        if(chat.messages[chat.messages.length - 1].type === "files"){
+                {/* if(chat.messages[chat.messages.length - 1].type === "files"){
 
                         previewLastMessage = lastMessage.length == 1 ? lastMessage.length + " file"
                             : lastMessage.length + " files"
                     
 
-                    } else if (chat.messages[chat.messages.length - 1].type === "forwarded"
+                } else if (chat.messages[chat.messages.length - 1].type === "forwarded"
                                 && typeof chat.messages[chat.messages.length - 1].msg === "object") {
                         
                             previewLastMessage = lastMessage.length === 1 ? "forwarded 1 file"
                                     : "forwarded " + lastMessage.length + " files"
 
-                    } else {
+                } else if(chat.messages[chat.messages.length - 1].type === "edited"
+                        && typeof chat.messages[chat.messages.length - 1].msg === "object"){
+
+                        previewLastMessage = lastMessage.length == 1 ? "1 file"
+                            : lastMessage.length + " files"
+                
+                } else {
                         previewLastMessage = lastMessage.length > 50 ? 
                             lastMessage.slice(0, 50) + "..." : lastMessage;
-                    }
+                } */}
 
-                } else {
+            } else {
                     previewLastMessage = "(empty chat)"
                 }                
                 
