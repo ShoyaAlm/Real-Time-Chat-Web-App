@@ -105,7 +105,11 @@ const ShowcaseFiles = ({files}) => {
         })
         
         }
-        <h4 style={{textAlign:'left'}}>{files.comment}</h4>
+        {files.comment ? (
+            <><h4 style={{textAlign:'left', whiteSpace:'pre-line'}}>
+            {files.comment.match(/.{1,50}/g).join('\n')}</h4></>
+        ) : (<></>)}
+        
         </>
     )
 

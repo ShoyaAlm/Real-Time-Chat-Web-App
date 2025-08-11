@@ -3,7 +3,10 @@ import { people } from "./people"
 import './css/chat.css'
 import { useEffect, useState, useContext, useRef } from "react"
 import { chatsContext } from "./chats"
+
 import {OptionsModal, AttachedFileModal} from './modal'
+import { UserInfo, GroupInfo } from "./chat-info"
+
 import ShowcaseFiles from "./files"
 
 const ChatParent = ({ name }) => {
@@ -100,12 +103,20 @@ const Chat = ({name}) => {
 
     const [attachedFilesComment, setAttachedFilesComment] = useState('')
 
+
+    const [showUserInfo, setShowUserInfo] = useState(false)
+    const [showGroupInfo, setShowGroupInfo] = useState(false)
+
     return (
 
     <div className="chat-container">
 
+            {showUserInfo && <UserInfo chat={user} setShowUserInfo={setShowUserInfo} />}
+            {showGroupInfo && <GroupInfo chat={user} setShowGroupInfo={setShowGroupInfo} 
+                showUserInfo={showUserInfo} setShowUserInfo={setShowUserInfo}/>}
        
-            <div className="user-info">
+            <div className="user-info" onClick={() => user.type === "chat" 
+                ? setShowUserInfo(true) : setShowGroupInfo(true)}>
                 
                 <img alt="" src={user.img}/>
                 <div className="user">
@@ -113,6 +124,7 @@ const Chat = ({name}) => {
                     {user.type === 'group' ? (<></>) : (<><h5>Last seen recently</h5></>)}
                 </div>
             </div>
+
 
 
             <div className="chat-section">
@@ -418,8 +430,8 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                 setMessageToForward(message)
                                 }}>Forward</h5>
                             
-                                {showModal && <OptionsModal messageToForward={messageToForward}
-                                setMessageToForward={setMessageToForward} modalType={'forward'} setShowModal={setShowModal}/>}
+                            {showModal && <OptionsModal messageToForward={messageToForward}
+                            setMessageToForward={setMessageToForward} modalType={'forward'} setShowModal={setShowModal}/>}
                             
                             <h5 onClick={() => editMessage(message)}>Edit</h5>
                             <h5 onClick={() => deleteMessage(message.msg)}>Delete</h5>
@@ -478,6 +490,7 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                         <>
                                         <ShowcaseFiles files={message} />
                                         </>
+                                        
                                     ) : (
                                         <><h4>{message.msg}</h4></>
                                     )}

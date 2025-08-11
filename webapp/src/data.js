@@ -20,6 +20,7 @@ export const allChats = [
                 createdAt: new Date().toISOString(),
                 type: 'normal'},
         ],
+        bio:'Hey there, I am Peter, not the actual Spiderman, though, haha!',
         img:'https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg',
         lastUpdatedAt: new Date().toISOString()
     },
@@ -38,6 +39,7 @@ export const allChats = [
                     type: 'normal'
                 }
             ],
+        bio:'My specialty comes in many fields, including hacking...',
         img:'https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg',
         lastUpdatedAt: new Date().toISOString()
     },
@@ -55,7 +57,7 @@ export const allChats = [
                 createdAt: new Date().toISOString(),
                 type: 'normal'
             }],
-
+        bio:"the name's maxim, from mother Russia",
         img: 'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg',
         lastUpdatedAt: new Date().toISOString()
     },
@@ -83,8 +85,16 @@ export const allChats = [
         {id:2, name:"Peter", 
             img:'https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg'},
         {id:3, name:"Shoya", 
-            img:'https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg'},],
+            img:'https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg'},
+        {id:4, name:"Jay", 
+            img:'https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg'},
+        {id:5, name:"Lucas", 
+            img:'https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg'},
+        {id:6, name:"Aiden", 
+            img:'https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg'},
+        ],
         
+            bio:'This is just for the showcasing purposes, nothing specific.',
             
             img: 'https://wallpaper.dog/large/20675505.jpg',
         lastUpdatedAt: new Date().toISOString()

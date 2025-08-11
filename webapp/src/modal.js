@@ -14,10 +14,23 @@ const OptionsModal = ({messageToForward, setMessageToForward, modalType, setShow
         setChats((prevChats) => {
             
             return prevChats.map((chat) => {
+                console.log(typeof messageToForward.msg);
+                
                 if(selectedChats.includes(chat.id)){
-                return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,from:messageToForward.from,
-                     msg: messageToForward.msg, createdAt: new Date().toISOString(), type:'forwarded'}],
+
+                    if(typeof messageToForward.msg === "object" && messageToForward.comment !== null){
+                    
+                    return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,from:messageToForward.from,
+                     msg: messageToForward.msg, createdAt: new Date().toISOString(), type:'forwarded',
+                    comment: messageToForward.comment}],
                      lastUpdatedAt: new Date().toISOString()}
+                    } else {
+                        
+                        return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
+                                from:messageToForward.from, msg: messageToForward.msg,
+                                createdAt: new Date().toISOString(), type:'forwarded'}],
+                             lastUpdatedAt: new Date().toISOString()}
+                    }
 
                 } else {
                     return chat
