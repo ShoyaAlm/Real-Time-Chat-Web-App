@@ -263,7 +263,7 @@
     gap: 10px;
     padding: 10px 15px;
     background-color: #00175B;
-    border-top: 1px solid #ddd;
+    /* border-top: 1px solid #ddd; */
     width: 100%;
     height: auto;
     box-sizing: border-box;

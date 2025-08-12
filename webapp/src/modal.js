@@ -257,9 +257,11 @@ const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, 
                             }
                             return message
                         })
+                        setAttachedFilesComment('')
                         return {...chat, lastUpdatedAt: new Date().toISOString()}
 
                     } else {
+                        setAttachedFilesComment('')
                         return {...chat, messages:[...chat.messages, 
                             {id:chat.messages.length + 1 ,from:"Shoya", msg: attachedFiles, 
                                 createdAt: new Date().toISOString(), type: 'files',

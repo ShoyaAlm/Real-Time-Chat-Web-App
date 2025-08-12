@@ -121,7 +121,8 @@ const Chat = ({name}) => {
                 <img alt="" src={user.img}/>
                 <div className="user">
                     <h2>{user.name}</h2>
-                    {user.type === 'group' ? (<></>) : (<><h5>Last seen recently</h5></>)}
+                    {user.type === 'group' ? (<><h5>{user.users.length} members</h5></>)
+                         : (<><h5>Last seen recently</h5></>)}
                 </div>
             </div>
 
@@ -139,6 +140,7 @@ const Chat = ({name}) => {
                         inputValue={inputValue} setInputValue={setInputValue} setSendStatus={setSendStatus} 
                         setAttachedFiles={setAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
                         setSelectedFileMessageID={setSelectedFileMessageID}
+                        setAttachedFilesComment={setAttachedFilesComment}
 
 
                     />}
@@ -231,9 +233,7 @@ const Chat = ({name}) => {
                                 fileInputRef.current.value = null
                             }
                             
-                                
                             } else {
-
                                 setChats( prevChats => [...prevChats, {id: prevChats.length + 1,
                                 name: user.name, messages: [{id: 1 ,from:"Shoya", msg: inputValue, 
                                 createdAt: new Date().toISOString(), type:"normal"}],
@@ -245,9 +245,7 @@ const Chat = ({name}) => {
                             } else if(fileInputRef.current !== null){
                                 fileInputRef.current.value = null
                             }
-
                                 setChatHistory(true)
-
                             }
                         
                         } else if(inputValue !== '' && sendStatus === 'edit') {
@@ -271,7 +269,6 @@ const Chat = ({name}) => {
                             const selectedMessage = user.messages.find(
                                 (message) => message.id === messageToReply.id)
                             
-                            // console.log(selectedMessage.msg)
                             const newMessages = [...user.messages,
                             {id:user.messages.length + 1 ,from:"Shoya", msg: inputValue,
                              createdAt: new Date().toISOString(), type:"reply", ref:selectedMessage}]
@@ -295,7 +292,8 @@ const Chat = ({name}) => {
 
 
 const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToReply, inputValue,
-    setInputValue, setSendStatus, setAttachedFiles, setEditingAttachedFiles, setSelectedFileMessageID}) => {
+    setInputValue, setSendStatus, setAttachedFiles, setEditingAttachedFiles, setSelectedFileMessageID,
+    setAttachedFilesComment}) => {
     
     const messages = chat.messages    
         
@@ -317,9 +315,11 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
         setShowThreeOptions(false)
 
         if(typeof theMessage.msg === "object"){
+            if(theMessage.comment !== ''){
+                setAttachedFilesComment(theMessage.comment)
+            }
             setEditingAttachedFiles(true)
             setAttachedFiles(theMessage.msg)
-            console.log(theMessage)
             setSelectedFileMessageID(theMessage.id)
         } else {
             setInputValue(theMessage.msg)
