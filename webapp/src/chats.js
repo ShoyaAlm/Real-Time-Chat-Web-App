@@ -99,8 +99,8 @@ const ChatPreview = () => {
                     
                     if(chat.messages[chat.messages.length - 1].comment !== ''){
                         previewLastMessage = lastMessage.length == 1 ? 
-                        `1 file(${chat.messages[chat.messages.length - 1].comment})` 
-                                : `${lastMessage.length} files(${chat.messages[chat.messages.length - 1].comment})`
+                        `${chat.messages[chat.messages.length - 1].comment} (1 file)` 
+                                : `${chat.messages[chat.messages.length - 1].comment} (${lastMessage.length} files)`
                     } else {
                         previewLastMessage = lastMessage.length == 1 ? `1 file` : `${lastMessage.length} files`
                     }
@@ -112,8 +112,9 @@ const ChatPreview = () => {
                         
                     if(chat.messages[chat.messages.length - 1].comment !== ''){
                         previewLastMessage = lastMessage.length == 1 ? 
-                        `forwarded 1 file(${chat.messages[chat.messages.length - 1].comment})` 
-                        : `forwarded ${lastMessage.length} files(${chat.messages[chat.messages.length - 1].comment})`
+                        `forwarded: ${chat.messages[chat.messages.length - 1].comment} (1 file)` 
+                                : `forwarded ${chat.messages[chat.messages.length - 1].comment} 
+                                (${lastMessage.length} files)`
                     } else {
                             previewLastMessage = lastMessage.length === 1 ? `forwarded 1 file`
                             : `forwarded ${lastMessage.length} files`
@@ -125,8 +126,8 @@ const ChatPreview = () => {
                         
                         if(chat.messages[chat.messages.length - 1].comment !== ''){
                             previewLastMessage = lastMessage.length === 1 ? 
-                            `1 file(${chat.messages[chat.messages.length - 1].comment})` 
-                                    : `${lastMessage.length} files(${chat.messages[chat.messages.length - 1].comment})`
+                        `${chat.messages[chat.messages.length - 1].comment} (1 file)` 
+                                : `${chat.messages[chat.messages.length - 1].comment} (${lastMessage.length} files)`
                         } else {
                             previewLastMessage = lastMessage.length === 1 ? `1 file`
                             : `${lastMessage.length} files`

@@ -106,7 +106,7 @@ const Chat = ({name}) => {
 
     const [showUserInfo, setShowUserInfo] = useState(false)
     const [showGroupInfo, setShowGroupInfo] = useState(false)
-
+    
     return (
 
     <div className="chat-container">
@@ -126,13 +126,23 @@ const Chat = ({name}) => {
                 </div>
             </div>
 
+            <div className="pinned-messages" style={{backgroundColor:'#68b4e0a7'}}>
+                {user.pinnedMessages.length != 0 && (
+                    
+                    <div style={{position:'relative'}}>
+                    <h5 style={{position:'relative', width:'80%', left:'10px'}}>
+                        {user.pinnedMessages[user.pinnedMessages.length - 1].phrase}</h5>
+                    </div>
+
+                )}
+            </div>
 
 
             <div className="chat-section">
 
 
                 
-                    {<ShowMessages chat={user} onDeleteMessage={ theMessage => {
+                    {<ShowMessages chat={user} setChats={setChats} onDeleteMessage={ theMessage => {
                         const filteredMessages = user.messages.filter((message) => message.msg !== theMessage)
                         updatedMessages(filteredMessages)
                     }}
@@ -291,7 +301,7 @@ const Chat = ({name}) => {
 }
 
 
-const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToReply, inputValue,
+const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMessageToReply, inputValue,
     setInputValue, setSendStatus, setAttachedFiles, setEditingAttachedFiles, setSelectedFileMessageID,
     setAttachedFilesComment}) => {
     
@@ -329,17 +339,31 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
         setSendStatus('edit')
     }
 
-    const deleteMessage = (theMessage) => {
-        setShowThreeOptions(false)
-        onDeleteMessage(theMessage)
-    }
+    console.log(chat.pinnedMessages);
+    
 
+    const pinMessage = (theMessage) => {
+
+        setChats(prevChats => prevChats.map((selectedChat) => {
+            
+            if(selectedChat.id === chat.id){
+                return {...selectedChat, pinnedMessages:[...selectedChat.pinnedMessages,
+                    {id: chat.pinnedMessages.length + 1, messageID: theMessage.id, from: theMessage.from,
+                    phrase: theMessage.msg, createdAt: theMessage.createdAt, type: theMessage.type}]}
+            } else {
+                return selectedChat
+            }
+        
+        }))
+    }
 
     const [optionsIndex, setOptionsIndex] = useState(null)
 
     const [showModal, setShowModal] = useState(false)
 
     const [messageToForward, setMessageToForward] = useState(null)
+
+    const [modalType, setModalType] = useState(null)
 
     return (
     <>
@@ -433,16 +457,30 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
                                 setShowThreeOptions(false)}}>Copy</h5>
                             
                             <h5 onClick={() => {
+                                setModalType('pin')
+                                setShowModal(true)
+                                setShowThreeOptions(false)
+                            }}>Pin</h5>
+
+                            <h5 onClick={() => {
                                 setShowThreeOptions(false)
                                 setShowModal(true)
                                 setMessageToForward(message)
+                                setModalType('forward')
                                 }}>Forward</h5>
                             
-                            {showModal && <OptionsModal messageToForward={messageToForward}
-                            setMessageToForward={setMessageToForward} modalType={'forward'} setShowModal={setShowModal}/>}
+                            {showModal && <OptionsModal {...(modalType === 'forward' ? {
+                                messageToForward, setMessageToForward} : {})}
+                                {...(modalType === "delete" ? {onDeleteMessage, message} : {})}
+                                {...(modalType === "pin" ? {pinMessage, message} : {})}
+                                
+                              modalType={modalType} setShowModal={setShowModal}/>}
                             
                             <h5 onClick={() => editMessage(message)}>Edit</h5>
-                            <h5 onClick={() => deleteMessage(message.msg)}>Delete</h5>
+                            <h5 onClick={() => {
+                                setModalType('delete')
+                                setShowModal(true)
+                                setShowThreeOptions(false)}}>Delete</h5>
                         
                         
                         </div>

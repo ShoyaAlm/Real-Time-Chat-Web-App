@@ -20,6 +20,7 @@ export const allChats = [
                 createdAt: new Date().toISOString(),
                 type: 'normal'},
         ],
+        pinnedMessages:[], // have its OWN id, plus taking in the message id that we pinned
         bio:'Hey there, I am Peter, not the actual Spiderman, though, haha!',
         img:'https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg',
         lastUpdatedAt: new Date().toISOString()
@@ -39,6 +40,10 @@ export const allChats = [
                     type: 'normal'
                 }
             ],
+        pinnedMessages:[{id:1, messageID:"1", from:"Josh", 
+            phrase:"I think we should take the alternative way to infiltrate the detection system?", 
+            createdAt: new Date().toISOString(), type: 'normal',}],
+
         bio:'My specialty comes in many fields, including hacking...',
         img:'https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg',
         lastUpdatedAt: new Date().toISOString()
@@ -57,6 +62,7 @@ export const allChats = [
                 createdAt: new Date().toISOString(),
                 type: 'normal'
             }],
+        pinnedMessages:[],
         bio:"the name's maxim, from mother Russia",
         img: 'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg',
         lastUpdatedAt: new Date().toISOString()
@@ -93,7 +99,7 @@ export const allChats = [
         {id:6, name:"Aiden", 
             img:'https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg'},
         ],
-        
+        pinnedMessages:[],
             bio:'This is just for the showcasing purposes, nothing specific.',
             
             img: 'https://wallpaper.dog/large/20675505.jpg',

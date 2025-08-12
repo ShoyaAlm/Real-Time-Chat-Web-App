@@ -1,9 +1,10 @@
 import {useState, useContext, useEffect} from 'react'
 import Modal from 'react-modal'
 import { chatsContext } from './chats'
-import { people } from './people'
+import './css/modal.css'
 
-const OptionsModal = ({messageToForward, setMessageToForward, modalType, setShowModal}) => {
+const OptionsModal = ({messageToForward, setMessageToForward, onDeleteMessage, pinMessage, message, 
+                        modalType, setShowModal}) => {
 
     const {chats, setChats} = useContext(chatsContext)
 
@@ -51,9 +52,8 @@ const OptionsModal = ({messageToForward, setMessageToForward, modalType, setShow
             return (
         
          <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
-        
-        contentLabel="Forward Modal"
-        ariaHideApp={false} overlayClassName="forward-modal-overlay" className="forward-modal-content"
+        contentLabel="Forward Modal" ariaHideApp={false}
+        overlayClassName="forward-modal-overlay" className="forward-modal-content"
       >
         {messageToForward.type !== "files" && messageToForward.type !== "edited-files" ? (
             <>
@@ -140,13 +140,57 @@ const OptionsModal = ({messageToForward, setMessageToForward, modalType, setShow
         )
             // break;
         
-        // case 'delete':
+        case 'delete':
+                return (
+                    <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
+                            contentLabel="Delete Modal" ariaHideApp={false}
+                            overlayClassName="delete-modal-overlay" className="delete-modal-content"
+                        >
 
-        //     break;
+                        <h4 style={{marginTop:'0', textAlign:'center'}}>Do you want to delete this message?</h4>
+                        
+                        <div style={{position:'relative', flexDirection:'row', marginBottom:'10px'}}>
+                            
+                            <button style={{position:'absolute', left:'0px'}} 
+                                onClick={() => setShowModal(false)}>No</button>
+                            
+                            <button style={{position:'absolute', right:'0px'}}
+                                onClick={() => {
+                                    setShowModal(false)
+                                    onDeleteMessage(message.msg)
+                                    }}>Yes</button>
+                            
+                        </div>
+                        <br/>
+                            
+                    </Modal>
+                )
 
-        // case 'pin':
+        case 'pin':
+            return (
+                <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
+                            contentLabel="Pin Modal" ariaHideApp={false}
+                            overlayClassName="pin-modal-overlay" className="pin-modal-content"
+                        >
+
+                        <h4 style={{marginTop:'0', textAlign:'center'}}>Would you like to pin this message?</h4>
+                        
+                        <div style={{position:'relative', flexDirection:'row', marginBottom:'10px'}}>
+                            
+                            <button style={{position:'absolute', left:'0px'}} 
+                                onClick={() => setShowModal(false)}>No</button>
+                            
+                            <button style={{position:'absolute', right:'0px'}}
+                                onClick={() => {
+                                    pinMessage(message)
+                                    setShowModal(false)}}>Yes</button>
+                            
+                        </div>
+                        <br/>
+                            
+                    </Modal>
+            )
             
-        //     break;
         
         default:
             break;
