@@ -189,26 +189,28 @@ const Chat = ({name}) => {
                                 )}
                             </div>
                         </>
-                    ) : (
-                        <></>
-                    )}
+                    ) : (<></>)}
+
                 <div className="write-text">
 
                     
+                    
+                    <label className="file-label" htmlFor="fileUpload">📎Attach</label>
+                    <input type="file" id="fileUpload" key={fileInputKey} onChange={handleAttachFiles}
+                        ref={fileInputRef}/>
 
                     <input className="user-input" value={inputValue} style={{width:'90%'}}
                         onChange={(e) => setInputValue(e.target.value)}
                     />
                     
-                    <input type="file" key={fileInputKey} onChange={handleAttachFiles} ref={fileInputRef}/>
-                    
                     {attachedFiles && <AttachedFileModal attachedFiles={attachedFiles}
                      setAttachedFiles={setAttachedFiles} handleAttachFiles={handleAttachFiles}
-                        chatID={user.id} fileInputRef={fileInputRef} resetFileInputKey={resetFileInputKey}
+                        selectedUser={user} fileInputRef={fileInputRef} resetFileInputKey={resetFileInputKey}
                         editingAttachedFiles={editingAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
                         selectedFileMessageID={selectedFileMessageID} setSelectedFileMessageID={setSelectedFileMessageID}
                         sendStatus={sendStatus} setSendStatus={setSendStatus} attachedFilesComment={attachedFilesComment}
-                        setAttachedFilesComment={setAttachedFilesComment}
+                        setAttachedFilesComment={setAttachedFilesComment} chatHistory={chatHistory}
+                        setChatHistory={setChatHistory}
                      />}
 
                     <button className="send" onClick={() => {
@@ -238,6 +240,11 @@ const Chat = ({name}) => {
                                 img: user.img, lastUpdatedAt: new Date().toISOString()
                                 }])
 
+                            if(inputValue !== ''){
+                                setInputValue('')
+                            } else if(fileInputRef.current !== null){
+                                fileInputRef.current.value = null
+                            }
 
                                 setChatHistory(true)
 
@@ -248,6 +255,7 @@ const Chat = ({name}) => {
                             const selectedMessage = user.messages.find(
                                 (message) => message.id === messageToEdit.id)
                             
+                            console.log(selectedMessage)
                             selectedMessage.msg = inputValue
                             selectedMessage.type = 'edited'
                             
@@ -315,7 +323,7 @@ const ShowMessages = ({chat, onDeleteMessage, setMessageToEdit, setMessageToRepl
             setSelectedFileMessageID(theMessage.id)
         } else {
             setInputValue(theMessage.msg)
-            setMessageToEdit(theMessage.msg)
+            setMessageToEdit(theMessage)
         }
         
         setSendStatus('edit')

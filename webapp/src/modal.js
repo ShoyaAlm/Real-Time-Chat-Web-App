@@ -1,6 +1,7 @@
 import {useState, useContext, useEffect} from 'react'
 import Modal from 'react-modal'
 import { chatsContext } from './chats'
+import { people } from './people'
 
 const OptionsModal = ({messageToForward, setMessageToForward, modalType, setShowModal}) => {
 
@@ -58,12 +59,12 @@ const OptionsModal = ({messageToForward, setMessageToForward, modalType, setShow
             <>
             {typeof messageToForward.msg !== "object" ? (
                 <>
-            <p style={{position:'relative', left:'0', color:'#99c2fb', margin:'0'}}>{messageToForward.msg}</p>
+            <p style={{position:'relative', left:'0', color:'#9306458b', margin:'0'}}>{messageToForward.msg}</p>
             <h2 style={{fontSize:'20px'}}>Forward Message To...</h2>
                 </>
             ) : (
                 <>
-            <p style={{position:'relative', left:'0', color:'#99c2fb', 
+            <p style={{position:'relative', left:'0', color:'#9306458b', 
                 margin:'0'}}>{messageToForward.msg.length > 1 ? "1 file" : `${messageToForward.msg.length}`} files</p>
             <h2 style={{fontSize:'20px'}}>Forward Files To...</h2>
                 </>
@@ -80,7 +81,7 @@ const OptionsModal = ({messageToForward, setMessageToForward, modalType, setShow
         <hr/>
                 <div className="user-chats-modal"
                 style={{display: "flex", flexWrap: "wrap", gap: "20px",
-                justifyContent: "space-between"}}>
+                justifyContent: "flex-start", flexDirection:'row'}}>
             
             {chats.map((chat) => {
 
@@ -153,10 +154,9 @@ const OptionsModal = ({messageToForward, setMessageToForward, modalType, setShow
 
 }
 
-const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, chatID, fileInputRef, 
-        resetFileInputKey, editingAttachedFiles, setEditingAttachedFiles, 
-        selectedFileMessageID, setSelectedFileMessageID, sendStatus, setSendStatus, attachedFilesComment,
-        setAttachedFilesComment}) => {
+const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, selectedUser, fileInputRef, 
+        resetFileInputKey, editingAttachedFiles, setEditingAttachedFiles, selectedFileMessageID, setSelectedFileMessageID,
+        sendStatus, setSendStatus, attachedFilesComment, setAttachedFilesComment, chatHistory, setChatHistory}) => {
 
     const {chats, setChats} = useContext(chatsContext)
 
@@ -229,11 +229,22 @@ const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, 
     const sendAttachedFiles = (attachedFiles) => {
         
         setChats((prevChats) => {
+
+            
+            if(!chatHistory) {
+
+            setChatHistory(true) 
+            return [...prevChats, {id:prevChats.length + 1, name: selectedUser.name, type: "chat", 
+                messages:[{id:1, from:"Shoya", msg: attachedFiles, createdAt: new Date().toISOString(),
+                    type: 'files', comment: attachedFilesComment ? attachedFilesComment : ''}],
+                    img: selectedUser.img, lastUpdatedAt: new Date().toISOString()}]
+        
+            }
             
             return (prevChats.map((chat) => {
                 
-                if(chat.id === chatID){
-                    console.log(selectedFileMessageID);
+                if(chat.id === selectedUser.id){
+                    
                     
                     if(editingAttachedFiles){
 
@@ -264,6 +275,7 @@ const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, 
 
             }))
         })
+
 
         
         setTimeout(() => {

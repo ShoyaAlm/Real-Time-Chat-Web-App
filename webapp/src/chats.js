@@ -53,15 +53,18 @@ const ChatPreview = () => {
 
     return (
     
-        <div className="front-end">
+        <div className="front-end" style={{display:'flex', flexDirection:'row'}}>
             
+            <div className="left-side-container" style={{backgroundColor:'rgba(59, 110, 148, 0.89)', width:'40%',
+            maxHeight:'100vh'}}>
+
             <div className="searchbar">
                 
                 <input type="text" onChange={(e) => {
                         setSearchInputValue(e.target.value)
                         setIsLoadingUsers(true)
                     
-                }} placeholder="search..."/>
+                }} placeholder="search..." value={searchInputValue}/>
             
             {searchInputValue && (
                 <button onClick={() => {
@@ -120,19 +123,21 @@ const ChatPreview = () => {
                 }                
                 
                 return (
-                    <div key={chat.id} className="preview" onClick={() => {
+                    <div key={chat.id}>
+                    <div className="preview" onClick={() => {
                         if(!showChat){
                             setShowChat(true)
                         }
                         setUser(chat.name)
                         }}>
                         <img alt="" src={chat.img} className="profile-img"/>
-                        <h2 className="name">{chat.name}</h2>
-                        <h4 className="chat-msg">{lastMessageOrigin}: {previewLastMessage}</h4>
-                        <hr/>
-
+                        <div style={{position:'relative', display:'flex', flexDirection:'column', left:'20px'}}>
+                            <h3 className="name">{chat.name}</h3>
+                            <h4 className="chat-msg">{lastMessageOrigin}: {previewLastMessage}</h4>
+                        </div>
                     </div>
-                    
+                        <hr style={{color:'#333'}}/>
+                    </div>
                 )
             })}
 
@@ -153,11 +158,7 @@ const ChatPreview = () => {
 
                         
                             return (
-                                <div key={user.id} className="searched-user">
-                                    
-                                    <img src={user.img} className="searched-user-profile"/>
-
-                                    <h3 onClick={() => {
+                                <div key={user.id} className="searched-user" onClick={() => {
                                     setShowChat(true)
                                     setUser(user.name)
                                     setIsLoadingUsers(false)
@@ -167,15 +168,21 @@ const ChatPreview = () => {
                                             {showChat && <ChatParent name={user} />}
                                         </>
                                     )
-                                }} className="searched-user-name">
+                                }}>
+                                    
+                                    <img src={user.img} className="searched-user-profile"/>
+
+                                    <div style={{display:'flex', flexDirection:'column'}}>
+                                    <h3 className="searched-user-name">
                                         {user.name}
                                     </h3>
 
                                     <h5 style={{position:'relative', left:'33px', top:'0px'}}>
                                     Last seen recently</h5>
                                     
+                                    <hr />
+                                    </div>
 
-                                    <hr style={{position:"relative"}}/>
                                 </div>
                             )
 
@@ -194,10 +201,11 @@ const ChatPreview = () => {
                 </>
             )}
 
+            </div>
                 
+                <div>
                 {showChat && <ChatParent name={user} />}
-
-
+                </div>
 
         </div>
     )

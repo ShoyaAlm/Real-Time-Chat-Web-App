@@ -1,6 +1,6 @@
 .chat-container{
     position: absolute;
-    height: 90vh;
+    height: 100%;
     width: 60%;
     right: 0px;
     top: 0px;
@@ -14,11 +14,11 @@
   height: 80px;
   background-color: darkcyan;
   display: flex;
-  align-items: center;       /* Vertically center content */
-  padding: 0 20px;           /* Space on left and right */
+  align-items: center;
+  padding: 0 20px;
   text-align: center;
-  gap: 15px;                 /* Space between image and text */
-  box-sizing: border-box;    /* Include padding in height */
+  gap: 15px;
+  box-sizing: border-box;
 }
 
 .user-info img {
@@ -26,13 +26,13 @@
   height: 65px;
   border-radius: 50%;
   object-fit: cover;
-  flex-shrink: 0;            /* Prevent image shrinking */
+  flex-shrink: 0;
 }
 
 .user {
   position: relative;
   left: 33%;
-  color: white;              /* Text color for visibility */
+  color: white;
 }
 
 .user h2 {
@@ -57,6 +57,7 @@
     position: relative;
     flex-direction: column;
     gap: 15px;
+    background-color: #a3bfe7;
 
 }
 
@@ -115,7 +116,7 @@
 
 .three-options{
     position: absolute;
-  top: 100%; /* right below the button */
+  top: 100%;
   width: 120px;
   right: 0;
   background-color: white;
@@ -130,7 +131,7 @@
   transform: translateY(-10px);
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s ease;
-  z-index: 10; /* on top */
+  z-index: 10;
 }
 
 .three-options h5 {
@@ -235,10 +236,8 @@
   position: relative;
   background-color: #e3ebff;
   min-width: 100px;
-  /* text-align: left; */
   top: 50%;
   height: 30px;
-  /* padding: 4px 10px 5px 4px; */
   border-radius: 8px;
   margin-bottom: 6px;
   font-size: 0.9rem;
@@ -258,43 +257,87 @@
 
 
 .write-text{
-    position: relative;
-    bottom: -50px;
-    width: 100%;
-    height: 60px;
-
-    flex-shrink: 0;
+    
     display: flex;
     align-items: center;
-    background-color: #f0f0f0;
-
+    gap: 10px;
+    padding: 10px 15px;
+    background-color: #00175B;
+    border-top: 1px solid #ddd;
+    width: 100%;
+    height: auto;
+    box-sizing: border-box;
 }
 
 .typeof-message{
   background-color: #c7d8ff;
-  position: absolute;
+  position: relative;
   width: 100%;
   height: 60px;
-  bottom: 10px;
- border-radius: 12px;
+  bottom: 0px;
+ border-radius: 5px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;  
 }
 
 
+input[type="file"] {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+
 .user-input{
     flex-grow: 1;
-    height: 35px;
-    margin-right: 10px;
-    padding: 5px 10px;
+    height: 40px;
+    padding: 0 12px;
     font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.user-input:focus{
+      border-color: #999;
 }
 
 .send{
-    height: 35px;
-    padding: 0 15px;
+    height: 40px;
+    padding: 0 16px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
     cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.send:hover{
+      background-color: #45a049;
+}
+
+
+.file-label {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    background-color: #ddd;
+    color: #333;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 75px;
+    transition: background-color 0.2s;
+}
+
+.file-label:hover {
+    background-color: #ccc;
 }
 
 .forward-modal-overlay {
