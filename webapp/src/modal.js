@@ -3,7 +3,7 @@ import Modal from 'react-modal'
 import { chatsContext } from './chats'
 import './css/modal.css'
 
-const OptionsModal = ({messageToForward, setMessageToForward, onDeleteMessage, pinMessage, message, 
+const OptionsModal = ({messageToForward, setMessageToForward, onDeleteMessage, pinMessage, selectedModalMsg, 
                         modalType, setShowModal}) => {
 
     const {chats, setChats} = useContext(chatsContext)
@@ -45,8 +45,6 @@ const OptionsModal = ({messageToForward, setMessageToForward, onDeleteMessage, p
         setShowModal(false)
     }
     
-
-
     switch (modalType) {
         case 'forward':
             return (
@@ -138,7 +136,6 @@ const OptionsModal = ({messageToForward, setMessageToForward, onDeleteMessage, p
             </div>
       </Modal>       
         )
-            // break;
         
         case 'delete':
                 return (
@@ -157,7 +154,7 @@ const OptionsModal = ({messageToForward, setMessageToForward, onDeleteMessage, p
                             <button style={{position:'absolute', right:'0px'}}
                                 onClick={() => {
                                     setShowModal(false)
-                                    onDeleteMessage(message.msg)
+                                    onDeleteMessage(selectedModalMsg.msg)
                                     }}>Yes</button>
                             
                         </div>
@@ -182,7 +179,7 @@ const OptionsModal = ({messageToForward, setMessageToForward, onDeleteMessage, p
                             
                             <button style={{position:'absolute', right:'0px'}}
                                 onClick={() => {
-                                    pinMessage(message)
+                                    pinMessage(selectedModalMsg)
                                     setShowModal(false)}}>Yes</button>
                             
                         </div>

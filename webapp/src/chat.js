@@ -86,7 +86,15 @@ const Chat = ({name}) => {
 
             }
         
+    
+    const [highlightMsgId, setHighlightMsgId] = useState(null)
         
+    const highlightMessage = (msgId) => {        
+        setHighlightMsgId(msgId - 1)
+        setTimeout(() => {
+            setHighlightMsgId(null)
+        }, 3000)
+    }
 
 
     const fileInputRef = useRef(null)
@@ -98,9 +106,7 @@ const Chat = ({name}) => {
     }
 
     const [editingAttachedFiles, setEditingAttachedFiles] = useState(false)
-
     const [selectedFileMessageID, setSelectedFileMessageID] = useState(0)
-
     const [attachedFilesComment, setAttachedFilesComment] = useState('')
 
 
@@ -129,9 +135,17 @@ const Chat = ({name}) => {
             <div className="pinned-messages" style={{backgroundColor:'#68b4e0a7'}}>
                 {user.pinnedMessages.length != 0 && (
                     
-                    <div style={{position:'relative'}}>
-                    <h5 style={{position:'relative', width:'80%', left:'10px'}}>
-                        {user.pinnedMessages[user.pinnedMessages.length - 1].phrase}</h5>
+                    <div className="pinned-message-container">
+                    
+                    <div style={{position:'relative',width:'80%',left:'30px',display:'flex',flexDirection:'column'}}
+                    onClick={() => highlightMessage(user.pinnedMessages[user.pinnedMessages.length - 1].messageID)}
+                    >
+                    <h5 style={{marginBottom:'0px', marginTop:'10px'}}>Pinned Message {user.pinnedMessages.length}</h5>
+                        <h5 style={{marginTop:'10px'}}>
+                            {user.pinnedMessages[user.pinnedMessages.length - 1].phrase}</h5>
+                    </div>
+                        <button style={{position:'relative', width:'60px', height:'20px', top:'20px', left:'100px'}}
+                         onClick={() => console.log('checking')}>Pinned Messages</button>
                     </div>
 
                 )}
@@ -150,7 +164,7 @@ const Chat = ({name}) => {
                         inputValue={inputValue} setInputValue={setInputValue} setSendStatus={setSendStatus} 
                         setAttachedFiles={setAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
                         setSelectedFileMessageID={setSelectedFileMessageID}
-                        setAttachedFilesComment={setAttachedFilesComment}
+                        setAttachedFilesComment={setAttachedFilesComment} highlightMsgId={highlightMsgId}
 
 
                     />}
@@ -303,7 +317,7 @@ const Chat = ({name}) => {
 
 const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMessageToReply, inputValue,
     setInputValue, setSendStatus, setAttachedFiles, setEditingAttachedFiles, setSelectedFileMessageID,
-    setAttachedFilesComment}) => {
+    setAttachedFilesComment, highlightMsgId}) => {
     
     const messages = chat.messages    
         
@@ -338,8 +352,6 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
         
         setSendStatus('edit')
     }
-
-    console.log(chat.pinnedMessages);
     
 
     const pinMessage = (theMessage) => {
@@ -364,6 +376,13 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     const [messageToForward, setMessageToForward] = useState(null)
 
     const [modalType, setModalType] = useState(null)
+    const [selectedModalMsg, setSelectedModalMsg] = useState(null)
+
+    const openModal = (type, message) => {
+        setModalType(type)
+        setSelectedModalMsg(message)
+        setShowModal(true)
+    }
 
     return (
     <>
@@ -374,12 +393,15 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                 if(message.from !== "Shoya"){
                     
                     return (
-                        <div className="message-wrapper left" key={index}>
+                        <div className={`message-wrapper left ${highlightMsgId == `${index}` ? 'highlight' : ''} `} 
+                        key={index} id={`msg-${index}`}>
 
+                        
                             {chat.type === 'group' ? (<>
 
                                 {chat.users.map((user, index) => {
                                     if(user.name == message.from){
+                                        console.log(typeof index, index)
                                         return (<div key={index}>
                                         
                                     <img src={user.img} 
@@ -405,7 +427,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                 </h5>
                             </div>
 
-                            <div className="dot-container">
+                            {/* <div className="dot-container">
                                     <button onClick={() => {
                                         if(!showThreeOptions){
                                             setOptionsIndex(index)
@@ -427,18 +449,10 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                     >Copy</h5>
                                 </div>
 
-                                </div>
-
-                        </div>
-                    )
-
-                } else {
-
-                        return (
-                    <div className="message-wrapper right" key={index}>
-                        
+                                </div> */}
                         <div className="dot-container">
                             <button onClick={() => {
+                                console.log(typeof index, index)
                                 if(!showThreeOptions){
                                     setOptionsIndex(index)
                                     setShowThreeOptions(true)
@@ -457,8 +471,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                 setShowThreeOptions(false)}}>Copy</h5>
                             
                             <h5 onClick={() => {
-                                setModalType('pin')
-                                setShowModal(true)
+                                openModal('pin', message)
                                 setShowThreeOptions(false)
                             }}>Pin</h5>
 
@@ -471,15 +484,73 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                             
                             {showModal && <OptionsModal {...(modalType === 'forward' ? {
                                 messageToForward, setMessageToForward} : {})}
-                                {...(modalType === "delete" ? {onDeleteMessage, message} : {})}
-                                {...(modalType === "pin" ? {pinMessage, message} : {})}
+                                {...(modalType === "delete" ? {onDeleteMessage, selectedModalMsg} : {})}
+                                {...(modalType === "pin" ? {pinMessage, selectedModalMsg} : {})}
                                 
                               modalType={modalType} setShowModal={setShowModal}/>}
                             
                             <h5 onClick={() => editMessage(message)}>Edit</h5>
                             <h5 onClick={() => {
-                                setModalType('delete')
+                                openModal('delete', message)
+                                setShowThreeOptions(false)}}>Delete</h5>
+                        
+                        
+                        </div>
+                            
+
+                        </div>
+
+                        </div>
+                    )
+
+                } else {
+
+                        return (
+                    <div className={`message-wrapper right ${highlightMsgId == `${index}` ? 'highlight' : ''} `} 
+                        key={index} id={`msg-${index}`}>
+                        
+                        <div className="dot-container">
+                            <button onClick={() => {
+                                console.log(typeof index, index)
+                                if(!showThreeOptions){
+                                    setOptionsIndex(index)
+                                    setShowThreeOptions(true)
+                                } else {
+                                    setOptionsIndex(null)
+                                    setShowThreeOptions(false)
+                                }
+                            }} className="dot-button">...</button>
+                            
+                            <div className={`three-options ${showThreeOptions && optionsIndex === index 
+                            ? "show" : ""}`}>
+
+                            <h5 onClick={() => replyMessage(message)}>Reply</h5>
+                            <h5 onClick={() => {
+                                navigator.clipboard.writeText(message.msg);
+                                setShowThreeOptions(false)}}>Copy</h5>
+                            
+                            <h5 onClick={() => {
+                                openModal('pin', message)
+                                setShowThreeOptions(false)
+                            }}>Pin</h5>
+
+                            <h5 onClick={() => {
+                                setShowThreeOptions(false)
                                 setShowModal(true)
+                                setMessageToForward(message)
+                                setModalType('forward')
+                                }}>Forward</h5>
+                            
+                            {showModal && <OptionsModal {...(modalType === 'forward' ? {
+                                messageToForward, setMessageToForward} : {})}
+                                {...(modalType === "delete" ? {onDeleteMessage, selectedModalMsg} : {})}
+                                {...(modalType === "pin" ? {pinMessage, selectedModalMsg} : {})}
+                                
+                              modalType={modalType} setShowModal={setShowModal}/>}
+                            
+                            <h5 onClick={() => editMessage(message)}>Edit</h5>
+                            <h5 onClick={() => {
+                                openModal('delete', message)                                
                                 setShowThreeOptions(false)}}>Delete</h5>
                         
                         

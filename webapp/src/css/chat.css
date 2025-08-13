@@ -29,6 +29,38 @@
   flex-shrink: 0;
 }
 
+.pinned-message-container{
+  height: 60px;
+  position: relative;
+  display: flex;
+  flex-direction: row;
+
+}
+
+
+
+.highlight {
+  animation: highlightAnimation 3s ease forwards;
+  /* border: 2px solid yellow; */
+  background-color: #f0ecc8;
+}
+
+@keyframes highlightAnimation {
+  0% {
+    background-color: #fff8c4;
+  }
+  100% {
+    background-color: transparent;
+  }
+  
+}
+
+
+
+
+
+
+
 .user {
   position: relative;
   left: 33%;

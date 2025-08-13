@@ -38,9 +38,21 @@ export const allChats = [
                     msg:"That's the way I think, at least I thought it would be initally! So don't blame me!",
                     createdAt: new Date().toISOString(),
                     type: 'normal'
+                },
+                
+                {id:3, from:"Josh",
+                    msg:"Anyway, how was your day?",
+                    createdAt: new Date().toISOString(),
+                    type: 'normal'
+                },
+                
+                {id:4, from:"Josh",
+                    msg:"I hear it was fullfilling, you were fulfilled! Haha.",
+                    createdAt: new Date().toISOString(),
+                    type: 'normal'
                 }
             ],
-        pinnedMessages:[{id:1, messageID:"1", from:"Josh", 
+        pinnedMessages:[{id:1, messageID:1, from:"Josh", 
             phrase:"I think we should take the alternative way to infiltrate the detection system?", 
             createdAt: new Date().toISOString(), type: 'normal',}],
 
