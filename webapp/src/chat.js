@@ -2,10 +2,11 @@
 import { people } from "./people"
 import './css/chat.css'
 import { useEffect, useState, useContext, useRef } from "react"
-import { chatsContext } from "./chats"
+import { chatsContext, showChatContext, pinnedMessagesContext } from "./chats"
 
 import {OptionsModal, AttachedFileModal} from './modal'
 import { UserInfo, GroupInfo } from "./chat-info"
+
 
 import ShowcaseFiles from "./files"
 
@@ -88,7 +89,9 @@ const Chat = ({name}) => {
         
     
     const [highlightMsgId, setHighlightMsgId] = useState(null)
-        
+    
+    const [currentLine, setCurrentLine] = useState(0)
+
     const highlightMessage = (msgId) => {        
         setHighlightMsgId(msgId - 1)
         setTimeout(() => {
@@ -96,9 +99,10 @@ const Chat = ({name}) => {
         }, 3000)
     }
 
+    const {showPinnedMessages, setShowPinnedMessages} = useContext(pinnedMessagesContext)
+    const {showChat, setShowChat} = useContext(showChatContext)
 
     const fileInputRef = useRef(null)
-
     const [fileInputKey, setFileInputKey] = useState(0)
 
     const resetFileInputKey = () => {
@@ -114,201 +118,240 @@ const Chat = ({name}) => {
     const [showGroupInfo, setShowGroupInfo] = useState(false)
     
     return (
+    <>
+            <div className="chat-container">
 
-    <div className="chat-container">
+                    {showUserInfo && <UserInfo chat={user} setShowUserInfo={setShowUserInfo} />}
+                    {showGroupInfo && <GroupInfo chat={user} setShowGroupInfo={setShowGroupInfo} 
+                        showUserInfo={showUserInfo} setShowUserInfo={setShowUserInfo}/>}
 
-            {showUserInfo && <UserInfo chat={user} setShowUserInfo={setShowUserInfo} />}
-            {showGroupInfo && <GroupInfo chat={user} setShowGroupInfo={setShowGroupInfo} 
-                showUserInfo={showUserInfo} setShowUserInfo={setShowUserInfo}/>}
-       
-            <div className="user-info" onClick={() => user.type === "chat" 
-                ? setShowUserInfo(true) : setShowGroupInfo(true)}>
-                
-                <img alt="" src={user.img}/>
-                <div className="user">
-                    <h2>{user.name}</h2>
-                    {user.type === 'group' ? (<><h5>{user.users.length} members</h5></>)
-                         : (<><h5>Last seen recently</h5></>)}
-                </div>
-            </div>
-
-            <div className="pinned-messages" style={{backgroundColor:'#68b4e0a7'}}>
-                {user.pinnedMessages.length != 0 && (
-                    
-                    <div className="pinned-message-container">
-                    
-                    <div style={{position:'relative',width:'80%',left:'30px',display:'flex',flexDirection:'column'}}
-                    onClick={() => highlightMessage(user.pinnedMessages[user.pinnedMessages.length - 1].messageID)}
-                    >
-                    <h5 style={{marginBottom:'0px', marginTop:'10px'}}>Pinned Message {user.pinnedMessages.length}</h5>
-                        <h5 style={{marginTop:'10px'}}>
-                            {user.pinnedMessages[user.pinnedMessages.length - 1].phrase}</h5>
-                    </div>
-                        <button style={{position:'relative', width:'60px', height:'20px', top:'20px', left:'100px'}}
-                         onClick={() => console.log('checking')}>Pinned Messages</button>
-                    </div>
-
-                )}
-            </div>
-
-
-            <div className="chat-section">
-
-
-                
-                    {<ShowMessages chat={user} setChats={setChats} onDeleteMessage={ theMessage => {
-                        const filteredMessages = user.messages.filter((message) => message.msg !== theMessage)
-                        updatedMessages(filteredMessages)
-                    }}
-                        setMessageToEdit={setMessageToEdit} setMessageToReply={setMessageToReply}
-                        inputValue={inputValue} setInputValue={setInputValue} setSendStatus={setSendStatus} 
-                        setAttachedFiles={setAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
-                        setSelectedFileMessageID={setSelectedFileMessageID}
-                        setAttachedFilesComment={setAttachedFilesComment} highlightMsgId={highlightMsgId}
-
-
-                    />}
-                
-            </div>
-
-                    {sendStatus === 'reply' || sendStatus === 'edit' ? (
+                    {!showPinnedMessages && (
                         <>
-                            <div className="typeof-message">
-                                {sendStatus == 'reply' ? (
-                                    
-                                    <div className="reply">
-                                    {messageToReply.type === "files" || messageToReply.type === "edited-files" ? (
-                                        <>
-                                    <h5>Reply: {messageToReply.msg.length > 1 ? 'files ' : '1 file '} 
-                                            from {messageToReply.from}</h5>  
-                                        </>
-                                    ) : (
-                                        <>
-                                        {typeof messageToReply.msg === "object" ? (
-                                            <>
-                                            <h5>Reply: {messageToReply.msg.length > 1 ? 'files ' : '1 file '} 
-                                            from {messageToReply.from}</h5>                                                
-                                            </>
-                                        ) : (
-                                            <>
-                                        <h5>Reply: {messageToReply.msg.slice(0, 50)}
-                                        {messageToReply.msg.length > 50 ? '...' : ''}</h5>  
 
-                                            </>
-                                        )}
-                                        </>
-                                    )}
-                                    </div>
-
-                                ) : (
-                                    <>
-                                        {typeof messageToEdit === "object" ? (
-                                            <></>
-                                        ) : (
-                                      
-                                        <div className="edit">
-                                            <h5>Edit: {messageToEdit.slice(0, 50)}
-                                            {messageToEdit.length > 50 ? '...' : ''}</h5>  
-                                        </div>
-                                        )}
-                                    </>
-                                )}
-                            </div>
+                    <div className="user-info" onClick={() => user.type === "chat" 
+                        ? setShowUserInfo(true) : setShowGroupInfo(true)}>
+                        
+                        <img alt="" src={user.img}/>
+                        <div className="user">
+                            <h2>{user.name}</h2>
+                            {user.type === 'group' ? (<><h5>{user.users.length} members</h5></>)
+                                : (<><h5>Last seen recently</h5></>)}
+                        </div>
+                    </div>
                         </>
-                    ) : (<></>)}
+                    )}
 
-                <div className="write-text">
-
-                    
-                    
-                    <label className="file-label" htmlFor="fileUpload">📎Attach</label>
-                    <input type="file" id="fileUpload" key={fileInputKey} onChange={handleAttachFiles}
-                        ref={fileInputRef}/>
-
-                    <input className="user-input" value={inputValue} style={{width:'90%'}}
-                        onChange={(e) => setInputValue(e.target.value)}
-                    />
-                    
-                    {attachedFiles && <AttachedFileModal attachedFiles={attachedFiles}
-                     setAttachedFiles={setAttachedFiles} handleAttachFiles={handleAttachFiles}
-                        selectedUser={user} fileInputRef={fileInputRef} resetFileInputKey={resetFileInputKey}
-                        editingAttachedFiles={editingAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
-                        selectedFileMessageID={selectedFileMessageID} setSelectedFileMessageID={setSelectedFileMessageID}
-                        sendStatus={sendStatus} setSendStatus={setSendStatus} attachedFilesComment={attachedFilesComment}
-                        setAttachedFilesComment={setAttachedFilesComment} chatHistory={chatHistory}
-                        setChatHistory={setChatHistory}
-                     />}
-
-                    <button className="send" onClick={() => {
-
-                        if(inputValue !== '' && sendStatus === 'send'){
+                    {!showPinnedMessages && (<>
+                    <div className="pinned-messages" style={{backgroundColor:'#19138ad8'}}>
+                        {user.pinnedMessages.length != 0 && (
                             
-                            if(chatHistory){
+                            <div className="pinned-message-container">
+                            
+                            
+                            <div className="pinned-messages-lines">
+                                {user.pinnedMessages.slice(0, 3).map((msg, index, arr) => (
+                                    <div key={index} className={`line-segment ${index === arr.length - 
+                                        `${currentLine === 0 ? 1 : currentLine}` ? 'current-pin' : ''}`}>
+                                    </div>
+                                ))}
+                            
+                            </div>
 
-                                const newMessages = [...user.messages, 
-                                {id: user.messages.length + 1, from: "Shoya", msg: inputValue,
-                                 createdAt: new Date().toISOString(), type:"normal"}]
+                            <div style={{position:'relative',width:'80%',left:'30px',display:'flex',flexDirection:'column'}}
+                            onClick={() => {
+                                const pinnedMessagesLength = user.pinnedMessages.length
+                                if(currentLine < pinnedMessagesLength){
+                                    if(currentLine === 0){
+                                        setCurrentLine(1)                                
+                                        highlightMessage(user.pinnedMessages[user.pinnedMessages.length - 1].messageID)
+                                    } else {
+                                        setCurrentLine(currentLine + 1)
+                                        highlightMessage(user.pinnedMessages[user.pinnedMessages.length - currentLine].messageID)
+                                    }
+                                } else {
+                                    setCurrentLine(1)
+                                    highlightMessage(user.pinnedMessages[user.pinnedMessages.length - currentLine].messageID)
+                                }
+                                }}
+                            >
+                            <h5 style={{marginBottom:'0px', marginTop:'10px'}}>Pinned Message {currentLine === 0 
+                            ? `${user.pinnedMessages.length}` 
+                            : `${user.pinnedMessages.length - currentLine + 1}`}</h5>
                                 
-                                updatedMessages(newMessages)
-                                                            
-                            if(inputValue !== ''){
-                                setInputValue('')
-                            } else if(fileInputRef.current !== null){
-                                fileInputRef.current.value = null
-                            }
-                            
-                            } else {
-                                setChats( prevChats => [...prevChats, {id: prevChats.length + 1,
-                                name: user.name, messages: [{id: 1 ,from:"Shoya", msg: inputValue, 
-                                createdAt: new Date().toISOString(), type:"normal"}],
-                                img: user.img, lastUpdatedAt: new Date().toISOString()
-                                }])
+                                <h5 style={{marginTop:'10px'}}>
+                                    {currentLine === 0 ? `${user.pinnedMessages[user.pinnedMessages.length - 1].phrase}`
+                                    : `${user.pinnedMessages[user.pinnedMessages.length - currentLine].phrase}`}
+                                    </h5>
+                            </div>
+                                <button style={{position:'relative', width:'60px', height:'20px', top:'20px', left:'100px'}}
+                                onClick={() => setShowPinnedMessages(true)}>Pinned Messages</button>
+                            </div>
 
-                            if(inputValue !== ''){
-                                setInputValue('')
-                            } else if(fileInputRef.current !== null){
-                                fileInputRef.current.value = null
-                            }
-                                setChatHistory(true)
-                            }
+                        )}
+                    </div>
+                    </>)}
+
+
+                    <div className="chat-section">
+
+
                         
-                        } else if(inputValue !== '' && sendStatus === 'edit') {
-                            
-                            const selectedMessage = user.messages.find(
-                                (message) => message.id === messageToEdit.id)
-                            
-                            console.log(selectedMessage)
-                            selectedMessage.msg = inputValue
-                            selectedMessage.type = 'edited'
-                            
-                            setChats( prevChats => prevChats.map((chat) => chat.name === name 
-                            ? {...chat, messages: chat.messages} : chat))
+                            {<ShowMessages chat={user} setChats={setChats} onDeleteMessage={ theMessage => {
+                                const filteredMessages = user.messages.filter((message) => message.msg !== theMessage)
+                                updatedMessages(filteredMessages)
+                            }}
+                                setMessageToEdit={setMessageToEdit} setMessageToReply={setMessageToReply}
+                                inputValue={inputValue} setInputValue={setInputValue} setSendStatus={setSendStatus} 
+                                setAttachedFiles={setAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
+                                setSelectedFileMessageID={setSelectedFileMessageID}
+                                setAttachedFilesComment={setAttachedFilesComment} highlightMsgId={highlightMsgId}
 
-                            setInputValue('')
-                            setSendStatus('send')
-
-                        }
-                        else if(inputValue !== '' && sendStatus === 'reply'){
-
-                            const selectedMessage = user.messages.find(
-                                (message) => message.id === messageToReply.id)
-                            
-                            const newMessages = [...user.messages,
-                            {id:user.messages.length + 1 ,from:"Shoya", msg: inputValue,
-                             createdAt: new Date().toISOString(), type:"reply", ref:selectedMessage}]
-                            
-                            setInputValue('')
-                            setSendStatus('send')
-                            updatedMessages(newMessages)
-                            
-                        }
+                            />}
                         
-                        }}
-                    >Send</button>
-                </div>
+                    </div>
+
+                            {sendStatus === 'reply' || sendStatus === 'edit' ? (
+                                <>
+                                    <div className="typeof-message">
+                                        {sendStatus == 'reply' ? (
+                                            
+                                            <div className="reply">
+                                            {messageToReply.type === "files" || messageToReply.type === "edited-files" ? (
+                                                <>
+                                            <h5>Reply: {messageToReply.msg.length > 1 ? 'files ' : '1 file '} 
+                                                    from {messageToReply.from}</h5>  
+                                                </>
+                                            ) : (
+                                                <>
+                                                {typeof messageToReply.msg === "object" ? (
+                                                    <>
+                                                    <h5>Reply: {messageToReply.msg.length > 1 ? 'files ' : '1 file '} 
+                                                    from {messageToReply.from}</h5>                                                
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                <h5>Reply: {messageToReply.msg.slice(0, 50)}
+                                                {messageToReply.msg.length > 50 ? '...' : ''}</h5>  
+
+                                                    </>
+                                                )}
+                                                </>
+                                            )}
+                                            </div>
+
+                                        ) : (
+                                            <>
+                                                {typeof messageToEdit === "object" ? (
+                                                    <></>
+                                                ) : (
+                                            
+                                                <div className="edit">
+                                                    <h5>Edit: {messageToEdit.slice(0, 50)}
+                                                    {messageToEdit.length > 50 ? '...' : ''}</h5>  
+                                                </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (<></>)}
+
+                        {!showPinnedMessages && (<>
+                        <div className="write-text">
+
+                            
+                            
+                            <label className="file-label" htmlFor="fileUpload">📎Attach</label>
+                            <input type="file" id="fileUpload" key={fileInputKey} onChange={handleAttachFiles}
+                                ref={fileInputRef}/>
+
+                            <input className="user-input" value={inputValue} style={{width:'90%'}}
+                                onChange={(e) => setInputValue(e.target.value)}
+                            />
+                            
+                            {attachedFiles && <AttachedFileModal attachedFiles={attachedFiles}
+                            setAttachedFiles={setAttachedFiles} handleAttachFiles={handleAttachFiles}
+                                selectedUser={user} fileInputRef={fileInputRef} resetFileInputKey={resetFileInputKey}
+                                editingAttachedFiles={editingAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
+                                selectedFileMessageID={selectedFileMessageID} setSelectedFileMessageID={setSelectedFileMessageID}
+                                sendStatus={sendStatus} setSendStatus={setSendStatus} attachedFilesComment={attachedFilesComment}
+                                setAttachedFilesComment={setAttachedFilesComment} chatHistory={chatHistory}
+                                setChatHistory={setChatHistory}
+                            />}
+
+                            <button className="send" onClick={() => {
+
+                                if(inputValue !== '' && sendStatus === 'send'){
+                                    
+                                    if(chatHistory){
+
+                                        const newMessages = [...user.messages, 
+                                        {id: user.messages.length + 1, from: "Shoya", msg: inputValue,
+                                        createdAt: new Date().toISOString(), type:"normal"}]
+                                        
+                                        updatedMessages(newMessages)
+                                                                    
+                                    if(inputValue !== ''){
+                                        setInputValue('')
+                                    } else if(fileInputRef.current !== null){
+                                        fileInputRef.current.value = null
+                                    }
+                                    
+                                    } else {
+                                        setChats( prevChats => [...prevChats, {id: prevChats.length + 1,
+                                        name: user.name, messages: [{id: 1 ,from:"Shoya", msg: inputValue, 
+                                        createdAt: new Date().toISOString(), type:"normal"}],
+                                        img: user.img, lastUpdatedAt: new Date().toISOString()
+                                        }])
+
+                                    if(inputValue !== ''){
+                                        setInputValue('')
+                                    } else if(fileInputRef.current !== null){
+                                        fileInputRef.current.value = null
+                                    }
+                                        setChatHistory(true)
+                                    }
+                                
+                                } else if(inputValue !== '' && sendStatus === 'edit') {
+                                    
+                                    const selectedMessage = user.messages.find(
+                                        (message) => message.id === messageToEdit.id)
+                                    
+                                    console.log(selectedMessage)
+                                    selectedMessage.msg = inputValue
+                                    selectedMessage.type = 'edited'
+                                    
+                                    setChats( prevChats => prevChats.map((chat) => chat.name === name 
+                                    ? {...chat, messages: chat.messages} : chat))
+
+                                    setInputValue('')
+                                    setSendStatus('send')
+
+                                }
+                                else if(inputValue !== '' && sendStatus === 'reply'){
+
+                                    const selectedMessage = user.messages.find(
+                                        (message) => message.id === messageToReply.id)
+                                    
+                                    const newMessages = [...user.messages,
+                                    {id:user.messages.length + 1 ,from:"Shoya", msg: inputValue,
+                                    createdAt: new Date().toISOString(), type:"reply", ref:selectedMessage}]
+                                    
+                                    setInputValue('')
+                                    setSendStatus('send')
+                                    updatedMessages(newMessages)
+                                    
+                                }
+                                
+                                }}
+                            >Send</button>
+                        </div>
+                        </>)}
 
 
-    </div>
+            </div>
+
+    </>
     )
 
 
@@ -384,9 +427,24 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
         setShowModal(true)
     }
 
+    const {showPinnedMessages} = useContext(pinnedMessagesContext)
+
     return (
     <>
-        {messages ?
+            {showPinnedMessages && <ShowPinnedMessages pinnedMessages={chat.pinnedMessages}
+                
+                showThreeOptions={showThreeOptions} setShowThreeOptions={setShowThreeOptions}
+                
+                optionsIndex={optionsIndex} setOptionsIndex={setOptionsIndex} showModal={showModal}
+                
+                setShowModal={setShowModal} messageToForward={messageToForward} setMessageToForward={setMessageToForward}
+                
+                openModal={openModal} modalType={modalType} setModalType={setModalType} onDeleteMessage={onDeleteMessage}
+                
+                selectedModalMsg={selectedModalMsg}
+                />}
+
+        {messages && !showPinnedMessages ?
         
         (
             messages.map((message, index) => {
@@ -427,29 +485,6 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                 </h5>
                             </div>
 
-                            {/* <div className="dot-container">
-                                    <button onClick={() => {
-                                        if(!showThreeOptions){
-                                            setOptionsIndex(index)
-                                            setShowThreeOptions(true)
-                                        } else {
-                                            setOptionsIndex(null)
-                                            setShowThreeOptions(false)
-                                        }
-                                    }} className="dot-button">...</button>
-                                    
-                                    <div className={`three-options ${showThreeOptions && optionsIndex === index 
-                                    ? "show" : ""}`}>
-                                    
-                                    
-                                    <h5 onClick={() => replyMessage(message)}>Reply</h5>
-                                    <h5 onClick={() => {navigator.clipboard.writeText(message.msg);
-                                        setShowThreeOptions(false);
-                                    }}
-                                    >Copy</h5>
-                                </div>
-
-                                </div> */}
                         <div className="dot-container">
                             <button onClick={() => {
                                 console.log(typeof index, index)
@@ -636,9 +671,13 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
             })
 
         ) : (
-            <div >
-                <p style={{left:"45%", top:"40%"}}>No messages...</p>
-            </div>
+            <>
+            {!showPinnedMessages ? (<>
+                <div >
+                    <p style={{left:"45%", top:"40%"}}>No messages...</p>
+                </div>
+            </>) : (<></>)}
+            </>
         )
         
         }
@@ -649,6 +688,190 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     )
 }
 
+
+const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, 
+    setShowThreeOptions, optionsIndex, setOptionsIndex, showModal, setShowModal, messageToForward, setMessageToForward,
+    openModal, modalType, setModalType, onDeleteMessage, selectedModalMsg}) => {
+
+    const {setShowPinnedMessages} = useContext(pinnedMessagesContext)
+
+    return (
+
+        <>
+        <div style={{position:'relative', display:'flex', flexDirection:'row', height:'80px', width:'100%',
+        backgroundColor:'#712727ff'}}>
+        <button onClick={() => setShowPinnedMessages(false)}>Back</button>
+        <h4>{pinnedMessages.length} Pinned Messages</h4>
+        </div>
+        
+        {pinnedMessages.map((message, index) => {
+            return (
+                <div className="show-pinned-messages" key={index}>
+
+
+                {message.from !== "Shoya" ? (
+                    <>
+                        <div className="message-wrapper left" key={index}>
+
+                        
+                            <div className="messages-received">
+
+                                        
+
+                                <h4 style={{marginTop:'4px'}}>
+                                    {message.phrase}
+                                </h4>
+                                <h5 >
+                                    {new Date(message.createdAt)
+                                    .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </h5>
+                            </div>
+
+                        <div className="dot-container">
+                            <button onClick={() => {
+                                if(!showThreeOptions){
+                                    setOptionsIndex(index)
+                                    setShowThreeOptions(true)
+                                } else {
+                                    setOptionsIndex(null)
+                                    setShowThreeOptions(false)
+                                }
+                            }} className="dot-button">...</button>
+                            
+                            <div className={`three-options ${showThreeOptions && optionsIndex === index 
+                            ? "show" : ""}`}>
+
+                            <h5 onClick={() => {
+                                navigator.clipboard.writeText(message.phrase);
+                                setShowThreeOptions(false)}}>Copy</h5>
+                            
+
+                            <h5 onClick={() => {
+                                setShowThreeOptions(false)
+                                setShowModal(true)
+                                setMessageToForward(message)
+                                setModalType('forward')
+                                }}>Forward</h5>
+                            
+                            {showModal && <OptionsModal {...(modalType === 'forward' ? {
+                                messageToForward, setMessageToForward} : {})}
+                                {...(modalType === "delete" ? {onDeleteMessage, selectedModalMsg} : {})}
+                                
+                              modalType={modalType} setShowModal={setShowModal}/>}
+                            
+                            <h5 onClick={() => {
+                                openModal('delete', message)
+                                setShowThreeOptions(false)}}>Delete</h5>
+                        
+                        
+                        </div>
+                            
+
+                        </div>
+
+                        </div>
+                    
+                    </>
+                ) : (
+                    <>
+                    <div className="message-wrapper right" key={index}>
+                        
+                        <div className="dot-container">
+                            <button onClick={() => {
+                                if(!showThreeOptions){
+                                    setOptionsIndex(index)
+                                    setShowThreeOptions(true)
+                                } else {
+                                    setOptionsIndex(null)
+                                    setShowThreeOptions(false)
+                                }
+                            }} className="dot-button">...</button>
+                            
+                            <div className={`three-options ${showThreeOptions && optionsIndex === index 
+                            ? "show" : ""}`}>
+
+                            <h5 onClick={() => {
+                                navigator.clipboard.writeText(message.msg);
+                                setShowThreeOptions(false)}}>Copy</h5>
+                            
+
+                            <h5 onClick={() => {
+                                setShowThreeOptions(false)
+                                setShowModal(true)
+                                setMessageToForward(message)
+                                setModalType('forward')
+                                }}>Forward</h5>
+                            
+                            {showModal && <OptionsModal {...(modalType === 'forward' ? {
+                                messageToForward, setMessageToForward} : {})}
+                                {...(modalType === "delete" ? {onDeleteMessage, selectedModalMsg} : {})}
+                              modalType={modalType} setShowModal={setShowModal}/>}
+                            
+                            <h5 onClick={() => {
+                                openModal('delete', message)                                
+                                setShowThreeOptions(false)}}>Delete</h5>
+                        
+                        
+                        </div>
+                            
+
+                        </div>
+                        
+                        <div className="messages-sent">
+                            
+
+                            {message.type === 'forwarded' ? (
+                                <>
+                                <div className="forward-preview">
+                                    <h5>from: {message.from}</h5>
+                                </div>
+                                </>) : (<></>)}
+
+                                {message.type === "files" || message.type === "edited-files" ? (
+                                    <>
+                                    <ShowcaseFiles files={message} />                                        
+                                    </>
+                                ) : (
+                                    <>
+                                    {typeof message.msg === "object" ? (
+                                        <>
+                                        <ShowcaseFiles files={message} />
+                                        </>
+                                        
+                                    ) : (
+                                        <><h4>{message.msg}</h4></>
+                                    )}
+                                    </>
+                                )}
+
+
+
+
+                                <h5>
+                                {message.type == "edited" || message.type == "edited-files" ? "Edited, " : ""}
+                                    {new Date(message.createdAt)
+                                    .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </h5>
+
+                                </div>
+                                
+
+
+                            </div>
+
+                    </>
+                )}
+                    
+                    
+
+                </div>
+            )
+        })}
+
+        </>
+    )
+
+}
 
 
 

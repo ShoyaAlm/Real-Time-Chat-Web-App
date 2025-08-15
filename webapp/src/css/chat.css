@@ -34,8 +34,35 @@
   position: relative;
   display: flex;
   flex-direction: row;
-
 }
+
+.pinned-messages-lines {
+  position: relative;
+  left: 5px;
+  margin-right: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  width: 6px;
+  left: 14px;
+}
+
+
+.line-segment {
+  background-color: rgb(44, 108, 168);
+  flex: 1;
+  margin: 2.4px 0;
+  transition: background-color 0.3s, width 0.3s;
+  border-radius: 2px;
+}
+
+.line-segment.current-pin {
+  background-color: rgb(150, 210, 255);
+  width: 6px;
+}
+
+
 
 
 
@@ -46,11 +73,11 @@
 }
 
 @keyframes highlightAnimation {
-  0% {
-    background-color: #fff8c4;
-  }
   100% {
     background-color: transparent;
+  }
+  0% {
+    background-color: #fff8c4;
   }
   
 }

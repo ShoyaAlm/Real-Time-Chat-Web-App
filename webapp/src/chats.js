@@ -7,6 +7,8 @@ import { useEffect, useState, createContext, useContext } from "react";
 import { people } from "./people";
 
 export const chatsContext = createContext(null)
+export const showChatContext = createContext(null)
+export const pinnedMessagesContext = createContext(null)
 
 const ChatPage = () => {
     
@@ -27,7 +29,11 @@ const ChatPreview = () => {
 
 
     const [user, setUser] = useState('')
+
     const [showChat, setShowChat] = useState(false)
+    const [showPinnedMessages, setShowPinnedMessages] = useState(false)
+    
+
 
     const [isLoadingUsers, setIsLoadingUsers] = useState(false)
 
@@ -52,6 +58,10 @@ const ChatPreview = () => {
     const {chats} = useContext(chatsContext)
 
     return (
+
+
+        <showChatContext.Provider value={{showChat, setShowChat}}>
+        <pinnedMessagesContext.Provider value={{showPinnedMessages, setShowPinnedMessages}}>
     
         <div className="front-end" style={{display:'flex', flexDirection:'row'}}>
             
@@ -184,11 +194,6 @@ const ChatPreview = () => {
                                     setUser(user.name)
                                     setIsLoadingUsers(false)
                                     setSearchInputValue('')
-                                    return (
-                                        <>
-                                            {showChat && <ChatParent name={user} />}
-                                        </>
-                                    )
                                 }}>
                                     
                                     <img src={user.img} className="searched-user-profile"/>
@@ -236,6 +241,9 @@ const ChatPreview = () => {
                 )}
 
         </div>
+
+                </pinnedMessagesContext.Provider>
+            </showChatContext.Provider>
     )
 
 

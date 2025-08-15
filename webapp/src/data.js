@@ -52,9 +52,18 @@ export const allChats = [
                     type: 'normal'
                 }
             ],
-        pinnedMessages:[{id:1, messageID:1, from:"Josh", 
+        pinnedMessages:[
+            {id:1, messageID:1, from:"Josh", 
             phrase:"I think we should take the alternative way to infiltrate the detection system?", 
-            createdAt: new Date().toISOString(), type: 'normal',}],
+            createdAt: new Date().toISOString(), type: 'normal'},
+            {id:2, messageID:2, from:"Josh", 
+            phrase:"That's the way I think, at least I thought it would be initally! So don't blame me!", 
+            createdAt: new Date().toISOString(), type: 'normal'},
+            // {id:3, messageID:4, from:"Josh", 
+            // phrase:"I hear it was fullfilling, you were fulfilled! Haha.", 
+            // createdAt: new Date().toISOString(), type: 'normal'},
+        
+        ],
 
         bio:'My specialty comes in many fields, including hacking...',
         img:'https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg',
