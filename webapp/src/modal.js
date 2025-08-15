@@ -3,12 +3,14 @@ import Modal from 'react-modal'
 import { chatsContext } from './chats'
 import './css/modal.css'
 
-const OptionsModal = ({messageToForward, setMessageToForward, onDeleteMessage, pinMessage, selectedModalMsg, 
+const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, pinMessage,
                         modalType, setShowModal}) => {
 
     const {chats, setChats} = useContext(chatsContext)
 
     const [chosenChats, setChosenChats] = useState([])
+    
+    console.log(modalType, selectedModalMsg);
     
 
     const forwardMessages = (selectedChats) => {
@@ -16,20 +18,19 @@ const OptionsModal = ({messageToForward, setMessageToForward, onDeleteMessage, p
         setChats((prevChats) => {
             
             return prevChats.map((chat) => {
-                console.log(typeof messageToForward.msg);
                 
                 if(selectedChats.includes(chat.id)){
 
-                    if(typeof messageToForward.msg === "object" && messageToForward.comment !== null){
+                    if(typeof selectedModalMsg.msg === "object" && selectedModalMsg.comment !== null){
                     
-                    return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,from:messageToForward.from,
-                     msg: messageToForward.msg, createdAt: new Date().toISOString(), type:'forwarded',
-                    comment: messageToForward.comment}],
+                    return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
+                     sentFrom:selectedModalMsg.from, from:"Shoya", msg: selectedModalMsg.msg, 
+                     createdAt: new Date().toISOString(), type:'forwarded', comment: selectedModalMsg.comment}],
                      lastUpdatedAt: new Date().toISOString()}
                     } else {
                         
                         return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
-                                from:messageToForward.from, msg: messageToForward.msg,
+                                from:selectedModalMsg.from, msg: selectedModalMsg.msg,
                                 createdAt: new Date().toISOString(), type:'forwarded'}],
                              lastUpdatedAt: new Date().toISOString()}
                     }
@@ -41,7 +42,7 @@ const OptionsModal = ({messageToForward, setMessageToForward, onDeleteMessage, p
             }) 
         })
 
-        setMessageToForward(null)
+        setSelectedModalMsg(null)
         setShowModal(false)
     }
     
@@ -53,17 +54,17 @@ const OptionsModal = ({messageToForward, setMessageToForward, onDeleteMessage, p
         contentLabel="Forward Modal" ariaHideApp={false}
         overlayClassName="forward-modal-overlay" className="forward-modal-content"
       >
-        {messageToForward.type !== "files" && messageToForward.type !== "edited-files" ? (
+        {selectedModalMsg.type !== "files" && selectedModalMsg.type !== "edited-files" ? (
             <>
-            {typeof messageToForward.msg !== "object" ? (
+            {typeof selectedModalMsg.msg !== "object" ? (
                 <>
-            <p style={{position:'relative', left:'0', color:'#9306458b', margin:'0'}}>{messageToForward.msg}</p>
+            <p style={{position:'relative', left:'0', color:'#9306458b', margin:'0'}}>{selectedModalMsg.msg}</p>
             <h2 style={{fontSize:'20px'}}>Forward Message To...</h2>
                 </>
             ) : (
                 <>
             <p style={{position:'relative', left:'0', color:'#9306458b', 
-                margin:'0'}}>{messageToForward.msg.length > 1 ? "1 file" : `${messageToForward.msg.length}`} files</p>
+                margin:'0'}}>{selectedModalMsg.msg.length > 1 ? "1 file" : `${selectedModalMsg.msg.length}`} files</p>
             <h2 style={{fontSize:'20px'}}>Forward Files To...</h2>
                 </>
             )}
@@ -71,7 +72,7 @@ const OptionsModal = ({messageToForward, setMessageToForward, onDeleteMessage, p
         ) : (
             <>
             <p style={{position:'relative', left:'0', color:'#99c2fb', 
-                margin:'0'}}>{messageToForward.msg.length > 1 ? "1 file" : `${messageToForward.msg.length}`} files</p>
+                margin:'0'}}>{selectedModalMsg.msg.length > 1 ? "1 file" : `${selectedModalMsg.msg.length}`} files</p>
             <h2 style={{fontSize:'20px'}}>Forward Files To...</h2>
             </>
         )}

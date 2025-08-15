@@ -59,9 +59,6 @@ export const allChats = [
             {id:2, messageID:2, from:"Josh", 
             phrase:"That's the way I think, at least I thought it would be initally! So don't blame me!", 
             createdAt: new Date().toISOString(), type: 'normal'},
-            // {id:3, messageID:4, from:"Josh", 
-            // phrase:"I hear it was fullfilling, you were fulfilled! Haha.", 
-            // createdAt: new Date().toISOString(), type: 'normal'},
         
         ],
 
@@ -127,6 +124,26 @@ export const allChats = [
         lastUpdatedAt: new Date().toISOString()
 
 
+    },
+
+    {id: 5, name: "Hacker News", type: 'channel', 
+        messages:[{id:1, msg:"Hi everyone to this wonderful Channel! This channel is called",
+                createdAt: new Date().toISOString(), type:'normal', author: "Shoya"
+            },
+            {id:2, msg:"This is the second message in this channel",
+                createdAt: new Date().toISOString(), type:'normal', author: "Shoya"
+            },
+            {id:3, msg:"And this will be the third & final message in here",
+                createdAt: new Date().toISOString(), type:'normal', author: "Shoya"
+            },
+            
+        ], 
+        users:[{id: 1, name:"Shoya"}],
+        pinnedMessages:[],
+        link:'hacker_news',
+        bio:'This is my one and only bio channel',
+        img:'https://wallpapers.com/images/hd/aesthetic-computer-4k-c9qdhe02pr84wh3a.jpg',
+        lastUpdatedAt: new Date().toISOString()
     }
 
 

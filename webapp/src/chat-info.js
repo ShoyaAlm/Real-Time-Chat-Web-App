@@ -103,4 +103,37 @@ const GroupInfo = ({chat, setShowGroupInfo, showUserInfo, setShowUserInfo}) => {
     )
 }
 
-export {UserInfo, GroupInfo}
+const ChannelInfo = ({chat, setShowChannelInfo}) => {
+
+    console.log(chat.users);
+    
+    return (
+        <Modal isOpen={true} onRequestClose={() => setShowChannelInfo(false)}
+        
+        contentLabel="Channel Info" ariaHideApp={false} overlayClassName="channel-info-overlay"
+        className="channel-info-content">
+
+        <img src={chat.img} style={{width:'75px', height:'75px', borderRadius:'50%', objectFit: 'cover',
+            position:'absolute', left:'10px', top:'10px'}}/>
+        <div className="channel-detail" style={{position:'relative', left:'120px'}}>
+        
+        <h3 style={{}}>{chat.name}</h3>
+        <h5 style={{}}>{chat.users.length} members</h5>
+        <hr/>
+        
+        <h5>bio</h5>
+        <h5>{chat.bio}</h5>
+        <hr/>
+        
+        <h4>{chat.link}</h4>
+        <h5 style={{}}>Link</h5>
+        <hr />
+        </div>
+        
+
+        </Modal>
+    )
+
+}
+
+export {UserInfo, GroupInfo, ChannelInfo}
