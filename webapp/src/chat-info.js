@@ -13,7 +13,7 @@ const UserInfo = ({chat, setShowUserInfo}) => {
         >
 
         <img src={chat.img} style={{width:'75px', height:'75px', borderRadius:'50%', objectFit: 'cover',
-            position:'absolute', left:'10px', top:'10px'}}/>
+            position:'absolute', left:'10px', top:'10px'}} alt=""/>
         <div className="user-detail" style={{position:'relative', left:'120px'}}>
         
         <h3 style={{}}>{chat.name}</h3>
@@ -49,10 +49,10 @@ const GroupInfo = ({chat, setShowGroupInfo, showUserInfo, setShowUserInfo}) => {
         <div>
         
 
-        <div className="group-detail" style={{position:'relative', left:'10px'}}>
+        <div className="group-detail" style={{position:'relative', left:'10px'}} alt="">
         
         <img src={chat.img} style={{width:'75px', height:'75px', borderRadius:'50%', objectFit: 'cover',
-            position:'absolute', left:'6px', top:'-5px'}}/>
+            position:'absolute', left:'6px', top:'-5px'}} alt=""/>
         
         <button onClick={() => setShowGroupInfo(false)} style={{position:'absolute', right:'30px'}}>X</button>
         <div style={{position:'relative', left:'100px', marginBottom:'25px', width:'65%'}}>
@@ -82,7 +82,7 @@ const GroupInfo = ({chat, setShowGroupInfo, showUserInfo, setShowUserInfo}) => {
                     setShowUserInfo(true) }} >
 
                 <img src={user.img} style={{position:'absolute', left:'10px', width:'54px', height:'54px', top:'8px',
-                    borderRadius:'50%', objectFit: 'cover'}}/>
+                    borderRadius:'50%', objectFit: 'cover'}} alt=""/>
                 <div style={{position:'relative' ,display:'flex', flexDirection:'column', left:'80px', height:'80px'}}>
                 <h4 style={{position:'absolute', top:'-10px'}}>{user.name}</h4>
                 <h5 style={{position:'relative', top:'20px', marginBottom:'0'}}>Last seen recently</h5>
@@ -114,7 +114,7 @@ const ChannelInfo = ({chat, setShowChannelInfo}) => {
         className="channel-info-content">
 
         <img src={chat.img} style={{width:'75px', height:'75px', borderRadius:'50%', objectFit: 'cover',
-            position:'absolute', left:'10px', top:'10px'}}/>
+            position:'absolute', left:'10px', top:'10px'}} alt=""/>
         <div className="channel-detail" style={{position:'relative', left:'120px'}}>
         
         <h3 style={{}}>{chat.name}</h3>
@@ -135,5 +135,9 @@ const ChannelInfo = ({chat, setShowChannelInfo}) => {
     )
 
 }
+
+
+// const ShowMedia = ({chat}) => {   
+// }
 
 export {UserInfo, GroupInfo, ChannelInfo}

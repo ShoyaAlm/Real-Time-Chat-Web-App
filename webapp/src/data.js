@@ -126,7 +126,7 @@ export const allChats = [
 
     },
 
-    {id: 5, name: "Hacker News", type: 'channel', 
+    {id: 5, name: "Hacker News", type: 'channel', admin:"Josh",
         messages:[{id:1, msg:"Hi everyone to this wonderful Channel! This channel is called",
                 createdAt: new Date().toISOString(), type:'normal', author: "Shoya"
             },

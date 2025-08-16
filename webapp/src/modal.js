@@ -30,7 +30,7 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, p
                     } else {
                         
                         return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
-                                from:selectedModalMsg.from, msg: selectedModalMsg.msg,
+                                sentFrom:selectedModalMsg.from, from:"Shoya", msg: selectedModalMsg.msg,
                                 createdAt: new Date().toISOString(), type:'forwarded'}],
                              lastUpdatedAt: new Date().toISOString()}
                     }
@@ -87,7 +87,8 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, p
                 const isChosen = chosenChats.includes(chat.id)
 
                 return (
-
+                    <>
+                    {chat.type !== 'channel' || chat.admin === "Shoya" ? (<>
                         <div className="chat-modal" style={{width: "calc(33.33% - 13.33px)",
                         textAlign: "center"}} key={chat.id} 
                         onClick={() => {
@@ -120,6 +121,12 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, p
                                 </div>
                             )}
                         </div>
+
+                    </>) : (<>
+
+                    </>)}
+
+                        </>
                 )
             })}
             

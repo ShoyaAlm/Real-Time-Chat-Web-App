@@ -100,7 +100,7 @@ const Chat = ({name}) => {
     }
 
     const {showPinnedMessages, setShowPinnedMessages} = useContext(pinnedMessagesContext)
-    const {showChat, setShowChat} = useContext(showChatContext)
+    // const {showChat, setShowChat} = useContext(showChatContext)
 
     const fileInputRef = useRef(null)
     const [fileInputKey, setFileInputKey] = useState(0)
@@ -182,11 +182,11 @@ const Chat = ({name}) => {
                                 }
                                 }}
                             >
-                            <h5 style={{marginBottom:'0px', marginTop:'10px'}}>Pinned Message {currentLine === 0 
-                            ? `${user.pinnedMessages.length}` 
+                            <h5 style={{marginBottom:'0px', marginTop:'10px', color:'#ffffffff'}}>
+                            Pinned Message {currentLine === 0 ? `${user.pinnedMessages.length}` 
                             : `${user.pinnedMessages.length - currentLine + 1}`}</h5>
                                 
-                                <h5 style={{marginTop:'10px'}}>
+                                <h5 style={{marginTop:'10px', color:'#ffffffff'}}>
                                     {currentLine === 0 ? `${user.pinnedMessages[user.pinnedMessages.length - 1].phrase}`
                                     : `${user.pinnedMessages[user.pinnedMessages.length - currentLine].phrase}`}
                                     </h5>
@@ -213,7 +213,7 @@ const Chat = ({name}) => {
                                 setAttachedFiles={setAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
                                 setSelectedFileMessageID={setSelectedFileMessageID}
                                 setAttachedFilesComment={setAttachedFilesComment} highlightMsgId={highlightMsgId}
-
+                                highlightMessage={highlightMessage}
                             />}
                         
                     </div>
@@ -368,7 +368,7 @@ const Chat = ({name}) => {
 
 const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMessageToReply, inputValue,
     setInputValue, setSendStatus, setAttachedFiles, setEditingAttachedFiles, setSelectedFileMessageID,
-    setAttachedFilesComment, highlightMsgId}) => {
+    setAttachedFilesComment, highlightMsgId, highlightMessage}) => {
     
     const messages = chat.messages    
         
@@ -492,7 +492,6 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
                         <div className="dot-container">
                             <button onClick={() => {
-                                console.log(typeof index, index)
                                 if(!showThreeOptions){
                                     setOptionsIndex(index)
                                     setShowThreeOptions(true)
@@ -592,7 +591,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                         <div className="messages-sent">
                             {message.ref ? (
                                 <>
-                                    <div className="reply-preview">
+                                    <div className="reply-preview" onClick={() => highlightMessage(message.ref.id)}>
                                     <h5 style={{fontSize:"13px"}}>{message.ref.from}</h5>
                                         {message.ref.type === "files" || message.ref.type === "edited-files" ? (
                                             <>
