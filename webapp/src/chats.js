@@ -9,6 +9,7 @@ import { people } from "./people";
 export const chatsContext = createContext(null)
 export const showChatContext = createContext(null)
 export const pinnedMessagesContext = createContext(null)
+export const postCommentsContext = createContext(null)
 
 const ChatPage = () => {
     
@@ -32,7 +33,8 @@ const ChatPreview = () => {
 
     const [showChat, setShowChat] = useState(false)
     const [showPinnedMessages, setShowPinnedMessages] = useState(false)
-    
+    const [showPostComments, setShowPostComments] = useState(false)
+
 
 
     const [isLoadingUsers, setIsLoadingUsers] = useState(false)
@@ -61,8 +63,9 @@ const ChatPreview = () => {
 
 
         <showChatContext.Provider value={{showChat, setShowChat}}>
-        <pinnedMessagesContext.Provider value={{showPinnedMessages, setShowPinnedMessages}}>
-    
+            <pinnedMessagesContext.Provider value={{showPinnedMessages, setShowPinnedMessages}}>
+                <postCommentsContext.Provider value={{showPostComments, setShowPostComments}}>
+            
         <div className="front-end" style={{display:'flex', flexDirection:'row'}}>
             
             <div className="left-side-container" style={{backgroundColor:'rgba(59, 110, 148, 0.89)', width:'40%',
@@ -144,8 +147,8 @@ const ChatPreview = () => {
                         }
                 
                 } else {
-                        previewLastMessage = lastMessage.length > 50 ? 
-                            lastMessage.slice(0, 50) + "..." : lastMessage;
+                        previewLastMessage = lastMessage.length > 60 ? 
+                            lastMessage.slice(0, 60) + "..." : lastMessage;
                 }
 
 
@@ -164,10 +167,12 @@ const ChatPreview = () => {
                         <img alt="" src={chat.img} className="profile-img"/>
                         <div style={{position:'relative', display:'flex', flexDirection:'column', left:'20px'}}>
                             <h3 className="name">{chat.name}</h3>
-                            <h4 className="chat-msg">{lastMessageOrigin}: {previewLastMessage}</h4>
+                            
+                            <h5 className="chat-msg">
+                            {chat.type === 'channel' ? (<></>) : (<>{lastMessageOrigin}: </>)}
+                            {previewLastMessage}</h5>
                         </div>
                     </div>
-                        <hr style={{color:'#333'}}/>
                     </div>
                 )
             })}
@@ -195,20 +200,25 @@ const ChatPreview = () => {
                                     setIsLoadingUsers(false)
                                     setSearchInputValue('')
                                 }}>
-                                    
+                                <div style={{position:'relative', display:'flex', flexDirection:'row'}}>
+
                                     <img src={user.img} className="searched-user-profile"/>
 
-                                    <div style={{display:'flex', flexDirection:'column'}}>
-                                    <h3 className="searched-user-name">
-                                        {user.name}
-                                    </h3>
-
-                                    <h5 style={{position:'relative', left:'33px', top:'0px'}}>
-                                    Last seen recently</h5>
+                                    <div style={{position:'relative', display:'flex', flexDirection:'column', 
+                                    textAlign:'center', left:'90%'}}>
                                     
-                                    <hr />
+                                    <h3 className="searched-user-name">{user.name}</h3>
+                                    
+                                    {user.type === 'chat' && (<><h5>Last seen recently</h5></>)} 
+                                    {user.type === 'group' && (<><h5>Group</h5></>)} 
+                                    {user.type === 'channel' && (<><h5>Channel</h5></>)} 
+                                                                                                            
+                                    
+                                    
                                     </div>
-
+                                    
+                                </div>
+                                
                                 </div>
                             )
 
@@ -242,6 +252,7 @@ const ChatPreview = () => {
 
         </div>
 
+                    </postCommentsContext.Provider>
                 </pinnedMessagesContext.Provider>
             </showChatContext.Provider>
     )

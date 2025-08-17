@@ -5,7 +5,7 @@
   left: 10px;
   top: 10px;
   box-sizing: border-box;
-  margin-bottom: 10px;
+  margin-bottom: 0px;
 }
 
 .searchbar input {
@@ -63,7 +63,7 @@
 
 .chatPreviews{
     position: relative;
-    direction: rtl;
+    direction: ltr;
     max-height: 92.5%;
     overflow-y: auto;
     top: 10px;
@@ -117,36 +117,55 @@
 } 
 
 
-.searched-users-container{
+.searched-users-container {
     width: 100%;
-    
     position: relative;
     top: 20px;
-    
+    height: 90vh;
+    overflow-y: auto;
 }
+
+
+.searched-users-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #4a6fd1, #2c4fb2);
+    box-shadow: 0 4px 12px rgba(44, 79, 178, 0.8);
+}
+
+
+.searched-users-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.searched-users-container::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.searched-users-container::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.6);
+}
+
+
 
 .searched-user{
     position: relative;
     top: 0px;
     text-align: center;
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 10px;
 
 }
 
 .searched-user-profile{
     position: relative;
-    width: 100px;
-    height: 100px;
+    width: 75px;
+    height: 75px;
     border-radius: 60%;
     object-fit: cover;
     display: block;
     top: 10px;
     left: 30px;
-}
-
-.searched-user-name{
-    position: absolute;
-    left: 50%;
-    top: 0px;
 }
 
 

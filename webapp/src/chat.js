@@ -2,7 +2,7 @@
 import { people } from "./people"
 import './css/chat.css'
 import { useEffect, useState, useContext, useRef } from "react"
-import { chatsContext, showChatContext, pinnedMessagesContext } from "./chats"
+import { chatsContext, showChatContext, pinnedMessagesContext, postCommentsContext } from "./chats"
 
 import {OptionsModal, AttachedFileModal} from './modal'
 import { UserInfo, GroupInfo, ChannelInfo } from "./chat-info"
@@ -51,7 +51,11 @@ const Chat = ({name}) => {
     
     useEffect(() => {   
         setChatHistory(chats.find((chat) => chat.name === name) ? true : false)
-    }, [user/*, chats*/])
+
+        if(showPinnedMessages) setShowPinnedMessages(false)
+        if(showPostComments) setShowPostComments(false)
+
+        }, [user/*, chats*/])
 
 
     
@@ -100,7 +104,8 @@ const Chat = ({name}) => {
     }
 
     const {showPinnedMessages, setShowPinnedMessages} = useContext(pinnedMessagesContext)
-    // const {showChat, setShowChat} = useContext(showChatContext)
+
+    const {showPostComments, setShowPostComments} = useContext(postCommentsContext)
 
     const fileInputRef = useRef(null)
     const [fileInputKey, setFileInputKey] = useState(0)
@@ -117,7 +122,6 @@ const Chat = ({name}) => {
     const [showUserInfo, setShowUserInfo] = useState(false)
     const [showGroupInfo, setShowGroupInfo] = useState(false)
     const [showChannelInfo, setShowChannelInfo] = useState(false)
-    
 
     return (
     <>
@@ -129,7 +133,7 @@ const Chat = ({name}) => {
                     
                     {showChannelInfo && <ChannelInfo chat={user} setShowChannelInfo={setShowChannelInfo} />}
 
-                    {!showPinnedMessages && (
+                    {!showPinnedMessages && !showPostComments && (
                         <>
 
                     <div className="user-info" onClick={() => user.type === "chat" 
@@ -141,18 +145,20 @@ const Chat = ({name}) => {
                             <h2>{user.name}</h2>
                             {user.type === 'group' ? (<><h5>{user.users.length} members</h5></>)
                                 : (<>
-                                {user.type === 'channel' ? (<></>) : (<><h5>Last seen recently</h5></>)} </>)}
+                                {user.type === 'channel' ? (<>{user.users.length} subscribers</>)
+                                : (<><h5>Last seen recently</h5></>)} </>)}
 
-                            {user.type === 'channel' && (<><h5>{user.users.length} members</h5></>)}
-                        </div>
+                            </div>
                     </div>
                         </>
                     )}
 
-                    {!showPinnedMessages && (<>
+                    {!showPinnedMessages && !showPostComments && (<>
                     <div className="pinned-messages" style={{backgroundColor:'#19138ad8'}}>
-                        {user.pinnedMessages.length != 0 && (
-                            
+                        {user.pinnedMessages !== undefined && (
+                            <>
+
+                            {user.pinnedMessages.length != 0 && (<>
                             <div className="pinned-message-container">
                             
                             
@@ -194,6 +200,9 @@ const Chat = ({name}) => {
                                 <button style={{position:'relative', width:'60px', height:'20px', top:'20px', left:'100px'}}
                                 onClick={() => setShowPinnedMessages(true)}>Pinned Messages</button>
                             </div>
+                            </>)}
+                            
+                            </>
 
                         )}
                     </div>
@@ -264,7 +273,7 @@ const Chat = ({name}) => {
                                 </>
                             ) : (<></>)}
 
-                        {!showPinnedMessages && (<>
+                        {!showPinnedMessages && user.type !== 'channel' && (<>
                         <div className="write-text">
 
                             
@@ -356,6 +365,12 @@ const Chat = ({name}) => {
                         </div>
                         </>)}
 
+                        {user.type === 'channel' && !showPostComments && (<>
+                            <div style={{textAlign:'center'}}>
+                                <h3>JOIN</h3>
+                            </div>
+                        </>)}
+
 
             </div>
 
@@ -373,7 +388,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     const messages = chat.messages    
         
     const [showThreeOptions, setShowThreeOptions] = useState(false)
-                
+
     const replyMessage = (theMessage) => {
         
         setMessageToReply(theMessage)
@@ -435,26 +450,21 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     }
 
     const {showPinnedMessages} = useContext(pinnedMessagesContext)
+    const {showPostComments, setShowPostComments} = useContext(postCommentsContext)
+
+
+    const [selectedPost, setSelectedPost] = useState(null)
 
     return (
     <>
-            {showPinnedMessages && <ShowPinnedMessages pinnedMessages={chat.pinnedMessages}
-                
-                showThreeOptions={showThreeOptions} setShowThreeOptions={setShowThreeOptions}
-                
-                optionsIndex={optionsIndex} setOptionsIndex={setOptionsIndex} showModal={showModal}
-                
-                setShowModal={setShowModal} messageToForward={messageToForward} setMessageToForward={setMessageToForward}
-                
-                openModal={openModal} modalType={modalType} setModalType={setModalType} onDeleteMessage={onDeleteMessage}
-                
-                selectedModalMsg={selectedModalMsg}
-                />}
 
-        {messages && !showPinnedMessages ?
+
+
+        {messages && !showPinnedMessages && !showPostComments ?
         
         (
             messages.map((message, index) => {
+
                 if(message.from !== "Shoya"){
                     
                     return (
@@ -480,14 +490,35 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                     <><h5 style={{position:'relative', textAlign:'left'}}>{message.from}</h5></>
                                 ) : (<></>)}
                                         
-
+                                
                                 <h4 style={{marginTop:'4px'}}>
                                     {message.msg}
                                 </h4>
-                                <h5 >
-                                    {new Date(message.createdAt)
+
+                                <div style={{display:'flex', justifyContent:'flex-end' ,textAlign:'right'}}>
+
+                                {chat.type === 'channel' && (<><h5 style={{bottom:'6px', right:'68px'}}>
+                                {message.author}, </h5></>)}
+                                <h5> {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>
+                                </div>
+
+                                    {chat.type === 'channel' && (
+                                    <div style={{position:'relative', textAlign:'left', top:'-3px'}} 
+                                    onClick={() => { setSelectedPost(message)
+                                        setShowPostComments(true)}}>    
+                                    <hr />
+                                    
+                                        {message.msgComments.length === 0 ? (<><h5>No comment...</h5></>)
+                                        : (<>{message.msgComments.length === 1 ? (<><h5>1 Comment</h5></>)
+                                        : (<> <h5>{message.msgComments.length} Comments</h5></>)}
+                                        </>)}
+                                        
+                                    </div>
+                                    )}
+
+
                             </div>
 
                         <div className="dot-container">
@@ -536,8 +567,8 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                     )
 
                 } else {
-
-                        return (
+                    
+                    return (
                     <div className={`message-wrapper right ${highlightMsgId == `${index}` ? 'highlight' : ''} `} 
                         key={index} id={`msg-${index}`}>
                         
@@ -648,9 +679,26 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
                                 <h5>
                                 {message.type == "edited" || message.type == "edited-files" ? "Edited, " : ""}
+                                    {chat.type === 'channel' && (<><h5>{message.author}</h5></>)}
                                     {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>
+                                    {chat.type === 'channel' && (
+                                    <>    
+                                    <hr />
+                                    <div style={{textAlign:'left'}}
+                                    onClick={() => {
+                                        setSelectedPost(message)
+                                        setShowPostComments(true)}}>
+
+                                        {message.msgComments.length === 0 ? (<><h5>No comment...</h5></>)
+                                        : (<>{message.msgComments.length === 1 ? (<><h5>1 Comment</h5></>)
+                                        : (<> <h5>{message.msgComments.length} Comments</h5></>)}
+                                        </>)}
+                                        
+                                    </div>
+                                    </>
+                                    )}
 
                                 </div>
                                 
@@ -666,11 +714,33 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
         ) : (
             <>
-            {!showPinnedMessages ? (<>
+            {!showPinnedMessages && !showPostComments ? (<>
                 <div >
                     <p style={{left:"45%", top:"40%"}}>No messages...</p>
                 </div>
-            </>) : (<></>)}
+            </>) : (<>
+                {/* if we had selected to showcase the pinned messages */}
+                {showPinnedMessages ? (<>
+                <ShowPinnedMessages pinnedMessages={chat.pinnedMessages}
+                showThreeOptions={showThreeOptions} setShowThreeOptions={setShowThreeOptions}
+                optionsIndex={optionsIndex} setOptionsIndex={setOptionsIndex} showModal={showModal}
+                setShowModal={setShowModal} messageToForward={messageToForward} setMessageToForward={setMessageToForward}
+                openModal={openModal} modalType={modalType} setModalType={setModalType} onDeleteMessage={onDeleteMessage}
+                selectedModalMsg={selectedModalMsg}
+                />
+
+                </>) : (<>
+                {/* alternatively, for the comments below a channel post */}
+                {showPostComments && <ShowPostComments post={selectedPost} highlightMessage={highlightMessage}
+                optionsIndex={optionsIndex} setOptionsIndex={setOptionsIndex} showThreeOptions={showThreeOptions} 
+                setShowThreeOptions={setShowThreeOptions} openModal={openModal}
+                replyMessage={replyMessage} showModal={showModal} setShowModal={setShowModal} editMessage={editMessage}
+                highlightMsgId={highlightMsgId} modalType={modalType} onDeleteMessage={onDeleteMessage}
+                selectedModalMsg={selectedModalMsg} setSelectedModalMsg={setSelectedModalMsg}
+            />}
+
+                </>)}
+            </>)}
             </>
         )
         
@@ -713,6 +783,7 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions,
                                     {message.phrase}
                                 </h4>
                                 <h5 >
+                                
                                     {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>
@@ -863,6 +934,223 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions,
 
 }
 
+const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex, showThreeOptions, setShowThreeOptions,
+        openModal, replyMessage, showModal, setShowModal, editMessage, highlightMsgId, modalType,onDeleteMessage, 
+        selectedModalMsg, setSelectedModalMsg}) => {
+
+    const {setShowPostComments} = useContext(postCommentsContext)
+
+    return (
+        <>
+
+        <div style={{backgroundColor:'#93a5ffff', display:'flex', flexDirection:'row'}}>
+        <button onClick={() => setShowPostComments(false)}>Back</button>
+
+            <div style={{display:'flex', flexDirection:'column'}}>
+                <h4>Discussion</h4>
+                {post.msgComments.length === 1 ? (<>
+                    <h5>1 comment</h5>
+                </>) : (<> {post.msgComments.length === 0 ? (<><h5>0 comments</h5></>) 
+                    : (<><h5>{post.msgComments.length} comments</h5></>)}
+                </>)}
+            </div>
+
+        </div>
+
+                        <div className="channel-post-wrapper">
+                            <div className="channel-post">
+
+                                <h4 style={{marginTop:'4px', marginBottom:'2px'}}>
+                                    {post.msg}
+                                </h4>
+
+                                <div style={{display:'flex', justifyContent:'flex-end'}}>
+
+                                <h5 style={{bottom:'6px', right:'68px'}}>{post.author}, </h5>
+
+                                <h5> {new Date(post.createdAt)
+                                    .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </h5>
+                                </div>
+                            </div>
+
+                            </div>
+
+
+        {post.msgComments.length !== 0 ? (<>
+            <h5 style={{position:'relative', left:'45%', width:'120px'}}>Discussion started</h5>
+            <br />
+            {post.msgComments.map((comment, index) => {
+
+                    if(comment.from !== "Shoya"){
+                        
+                        return (
+                            <div className={`message-wrapper left ${highlightMsgId == `${index}` ? 'highlight' : ''} `} 
+                            key={index} id={`msg-${index}`}>
+
+                                
+                                <div className="messages-received">                                        
+                                    
+                                    <h4 style={{marginTop:'4px'}}>
+                                        {comment.msg}
+                                    </h4>
+
+                                    <div style={{display:'flex', justifyContent:'flex-end' ,textAlign:'right'}}>
+
+                                    <h5> {new Date(comment.createdAt)
+                                        .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </h5>
+                                    </div>
+
+                                </div>
+
+                            <div className="dot-container">
+                                <button onClick={() => {
+                                    if(!showThreeOptions){
+                                        setOptionsIndex(index)
+                                        setShowThreeOptions(true)
+                                    } else {
+                                        setOptionsIndex(null)
+                                        setShowThreeOptions(false)
+                                    }
+                                }} className="dot-button">...</button>
+                                
+                                <div className={`three-options ${showThreeOptions && optionsIndex === index 
+                                ? "show" : ""}`}>
+
+                                <h5 onClick={() => replyMessage(comment)}>Reply</h5>
+                                
+                                <h5 onClick={() => {
+                                    openModal('forward', comment)
+                                    setShowThreeOptions(false)
+                                    }}>Forward</h5>
+                                
+                                <h5 onClick={() => {
+                                    navigator.clipboard.writeText(comment.msg);
+                                    setShowThreeOptions(false)}}>Copy</h5>
+
+                                {showModal && <OptionsModal {...(modalType === 'forward' ? {
+                                    selectedModalMsg, setSelectedModalMsg} : {})}
+                                modalType={modalType} setShowModal={setShowModal}/>}                        
+                            </div>
+
+                            </div>
+
+                            </div>
+                        )
+
+                    } else {
+                        
+                        return (
+                        <div className={`message-wrapper right ${highlightMsgId == `${index}` ? 'highlight' : ''} `} 
+                            key={index} id={`msg-${index}`}>
+                            
+                            <div className="dot-container">
+                                <button onClick={() => {
+                                    if(!showThreeOptions){
+                                        setOptionsIndex(index)
+                                        setShowThreeOptions(true)
+                                    } else {
+                                        setOptionsIndex(null)
+                                        setShowThreeOptions(false)
+                                    }
+                                }} className="dot-button">...</button>
+                                
+                                <div className={`three-options ${showThreeOptions && optionsIndex === index 
+                                ? "show" : ""}`}>
+
+                                <h5 onClick={() => replyMessage(comment)}>Reply</h5>
+                                <h5 onClick={() => {
+                                    navigator.clipboard.writeText(comment.msg);
+                                    setShowThreeOptions(false)}}>Copy</h5>
+                                
+
+                                <h5 onClick={() => {
+                                    setShowThreeOptions(false)
+                                    openModal('forward', comment)
+                                    }}>Forward</h5>
+                                
+                                {showModal && <OptionsModal {...(modalType === 'forward' ? { 
+                                    selectedModalMsg, setSelectedModalMsg } : {})}
+                                    {...(modalType === "delete" ? {onDeleteMessage, selectedModalMsg} : {})}                             
+                                modalType={modalType} setShowModal={setShowModal}/>}
+
+                                <h5 onClick={() => editMessage(comment)}>Edit</h5>
+                                <h5 onClick={() => {
+                                    openModal('delete', comment)                                
+                                    setShowThreeOptions(false)}}>Delete</h5>
+                            
+                            
+                            </div>
+                                
+
+                            </div>
+                            
+                            <div className="messages-sent">
+                                {comment.ref ? (
+                                    <>
+                                        <div className="reply-preview" onClick={() => highlightMessage(comment.ref.id)}>
+                                        <h5 style={{fontSize:"13px"}}>{comment.ref.from}</h5>
+                                            {comment.ref.type === "files" || comment.ref.type === "edited-files" ? (
+                                                <>
+                                                    <h5>{comment.ref.msg.length > 1 ? (<>
+                                                    {comment.ref.msg.length} files
+                                                    </>) : (<>{comment.ref.msg.length} file</>)}</h5>
+                                                </>
+                                            ) : (
+                                                <>
+                                                {typeof comment.ref.msg !== "object" ? (
+                                                    <>
+                                                    <h5>{comment.ref.msg.slice(0, 30)}
+                                                    {comment.ref.msg.length > 30 ? '...' : ''}</h5>
+                                                    </>
+                                                ) : (
+                                                    <></>
+                                                )}
+                                                </>
+                                            )}
+
+                                            
+                                        </div>
+                                    </>
+                                ) : (<></>)}
+                                    
+
+                                    {comment.type === "files" || comment.type === "edited-files" ? (
+                                        <>
+                                        <ShowcaseFiles files={comment} />                                        
+                                        </>
+                                    ) : (
+                                        <>
+                                        {typeof comment.msg === "object" ? (
+                                            <>
+                                            <ShowcaseFiles files={comment} />
+                                            </>
+                                            
+                                        ) : (
+                                            <><h4>{comment.msg}</h4></>
+                                        )}
+                                        </>
+                                    )}
+
+                                    <h5>
+                                    {comment.type == "edited" || comment.type == "edited-files" ? "Edited, " : ""}
+                                        {new Date(comment.createdAt)
+                                        .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </h5>
+
+                                    </div>
+                                </div>
+                            )
+                        
+                        
+                    }
+
+            })}
+        </>) : (<><h5>No comments here...</h5></>)}
+        </>
+    )
+}
 
 
 export default ChatParent

@@ -127,14 +127,16 @@ export const allChats = [
     },
 
     {id: 5, name: "Hacker News", type: 'channel', admin:"Josh",
-        messages:[{id:1, msg:"Hi everyone to this wonderful Channel! This channel is called",
-                createdAt: new Date().toISOString(), type:'normal', author: "Shoya"
+        messages:[{id:1, msg:"Hi everyone",
+                createdAt: new Date().toISOString(), type:'normal', author: "Alex",
+                msgComments:[{id:1, from:"Shoya", msg:"It begins...", createdAt: new Date().toISOString(),type:'normal'}, 
+                    {id:2, from:"Josh", msg:"Here we go", createdAt: new Date().toISOString(), type:'normal'}]
             },
             {id:2, msg:"This is the second message in this channel",
-                createdAt: new Date().toISOString(), type:'normal', author: "Shoya"
+                createdAt: new Date().toISOString(), type:'normal', author: "Alex", msgComments:[]
             },
             {id:3, msg:"And this will be the third & final message in here",
-                createdAt: new Date().toISOString(), type:'normal', author: "Shoya"
+                createdAt: new Date().toISOString(), type:'normal', author: "Alex", msgComments:[]
             },
             
         ], 
@@ -144,7 +146,8 @@ export const allChats = [
         bio:'This is my one and only bio channel',
         img:'https://wallpapers.com/images/hd/aesthetic-computer-4k-c9qdhe02pr84wh3a.jpg',
         lastUpdatedAt: new Date().toISOString()
-    }
+    },
+
 
 
 ]
