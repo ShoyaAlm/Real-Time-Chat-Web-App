@@ -43,8 +43,10 @@ const Chat = ({name}) => {
          ? {...chat, messages: newMessages, 
             lastUpdatedAt: newMessages[newMessages.length - 1].createdAt} : chat))
         
+            if(inputValue && showPostComments){
+                setInputValue('')
+            }
         }
-
     
 
     var user = chats.find((chat) => chat.name === name) ?? people.find((person) => person.name === name)
@@ -53,7 +55,11 @@ const Chat = ({name}) => {
         setChatHistory(chats.find((chat) => chat.name === name) ? true : false)
 
         if(showPinnedMessages) setShowPinnedMessages(false)
-        if(showPostComments) setShowPostComments(false)
+        if(!canShowOtherChat) {
+            setCanShowOtherChat(true)
+        } else {
+            setShowPostComments(false)
+        }
 
         }, [user/*, chats*/])
 
@@ -122,6 +128,9 @@ const Chat = ({name}) => {
     const [showUserInfo, setShowUserInfo] = useState(false)
     const [showGroupInfo, setShowGroupInfo] = useState(false)
     const [showChannelInfo, setShowChannelInfo] = useState(false)
+
+    const [selectedPost, setSelectedPost] = useState(null) // for when we click on comments of the post
+    const [canShowOtherChat, setCanShowOtherChat] = useState(true)
 
     return (
     <>
@@ -222,7 +231,8 @@ const Chat = ({name}) => {
                                 setAttachedFiles={setAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
                                 setSelectedFileMessageID={setSelectedFileMessageID}
                                 setAttachedFilesComment={setAttachedFilesComment} highlightMsgId={highlightMsgId}
-                                highlightMessage={highlightMessage}
+                                highlightMessage={highlightMessage} selectedPost={selectedPost} 
+                                setSelectedPost={setSelectedPost}
                             />}
                         
                     </div>
@@ -273,7 +283,7 @@ const Chat = ({name}) => {
                                 </>
                             ) : (<></>)}
 
-                        {!showPinnedMessages && user.type !== 'channel' && (<>
+                        {!showPinnedMessages && (user.type !== 'channel' || showPostComments === true) && (<>
                         <div className="write-text">
 
                             
@@ -300,33 +310,53 @@ const Chat = ({name}) => {
 
                                 if(inputValue !== '' && sendStatus === 'send'){
                                     
-                                    if(chatHistory){
-
-                                        const newMessages = [...user.messages, 
-                                        {id: user.messages.length + 1, from: "Shoya", msg: inputValue,
-                                        createdAt: new Date().toISOString(), type:"normal"}]
+                                    if(user.type !== 'channel'){
                                         
-                                        updatedMessages(newMessages)
-                                                                    
-                                    if(inputValue !== ''){
-                                        setInputValue('')
-                                    } else if(fileInputRef.current !== null){
-                                        fileInputRef.current.value = null
-                                    }
-                                    
-                                    } else {
-                                        setChats( prevChats => [...prevChats, {id: prevChats.length + 1,
-                                        name: user.name, messages: [{id: 1 ,from:"Shoya", msg: inputValue, 
-                                        createdAt: new Date().toISOString(), type:"normal"}],
-                                        img: user.img, lastUpdatedAt: new Date().toISOString()
-                                        }])
+                                        if(chatHistory){
 
-                                    if(inputValue !== ''){
-                                        setInputValue('')
-                                    } else if(fileInputRef.current !== null){
-                                        fileInputRef.current.value = null
-                                    }
-                                        setChatHistory(true)
+                                            const newMessages = [...user.messages, 
+                                            {id: user.messages.length + 1, from: "Shoya", msg: inputValue,
+                                            createdAt: new Date().toISOString(), type:"normal"}]
+                                            
+                                            updatedMessages(newMessages)
+                                                                        
+                                        if(inputValue !== ''){
+                                            setInputValue('')
+                                        } else if(fileInputRef.current !== null){
+                                            fileInputRef.current.value = null
+                                        }
+                                        
+                                        } else {
+                                            setChats( prevChats => [...prevChats, {id: prevChats.length + 1,
+                                            name: user.name, messages: [{id: 1 ,from:"Shoya", msg: inputValue, 
+                                            createdAt: new Date().toISOString(), type:"normal"}],
+                                            img: user.img, lastUpdatedAt: new Date().toISOString()
+                                            }])
+
+                                        if(inputValue !== ''){
+                                            setInputValue('')
+                                        } else if(fileInputRef.current !== null){
+                                            fileInputRef.current.value = null
+                                        }
+                                            setChatHistory(true)
+                                        }
+                                    } else if(user.type === 'channel'){
+                                        
+                                        if(showPostComments){
+
+                                            // then we add a comment to the selected post
+                                            selectedPost.msgComments = [...selectedPost.msgComments, 
+                                            { id: selectedPost.msgComments.length + 1, from: "Shoya", msg:inputValue,
+                                                createdAt: new Date().toISOString(), type:"normal"
+                                            }]
+
+                                            const newMessages = [...user.messages]
+                                            setCanShowOtherChat(false)
+                                            updatedMessages(newMessages)
+
+                                        } else {
+                                            // else, we are the admin of channel and sharing a post
+                                        }
                                     }
                                 
                                 } else if(inputValue !== '' && sendStatus === 'edit') {
@@ -383,7 +413,7 @@ const Chat = ({name}) => {
 
 const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMessageToReply, inputValue,
     setInputValue, setSendStatus, setAttachedFiles, setEditingAttachedFiles, setSelectedFileMessageID,
-    setAttachedFilesComment, highlightMsgId, highlightMessage}) => {
+    setAttachedFilesComment, highlightMsgId, highlightMessage, selectedPost, setSelectedPost}) => {
     
     const messages = chat.messages    
         
@@ -452,8 +482,6 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     const {showPinnedMessages} = useContext(pinnedMessagesContext)
     const {showPostComments, setShowPostComments} = useContext(postCommentsContext)
 
-
-    const [selectedPost, setSelectedPost] = useState(null)
 
     return (
     <>
@@ -1147,7 +1175,7 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
                     }
 
             })}
-        </>) : (<><h5>No comments here...</h5></>)}
+        </>) : (<><h5 style={{position:'relative', left:'45%', width:'135px'}}>No comments here...</h5></>)}
         </>
     )
 }
