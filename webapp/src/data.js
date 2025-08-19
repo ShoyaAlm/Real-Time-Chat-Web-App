@@ -126,17 +126,17 @@ export const allChats = [
 
     },
 
-    {id: 5, name: "Hacker News", type: 'channel', admin:"Josh",
+    {id: 5, name: "Hacker News", type: 'channel', admins:["Josh", "Shoya"],
         messages:[{id:1, msg:"Hi everyone",
-                createdAt: new Date().toISOString(), type:'normal', author: "Alex",
+                createdAt: new Date().toISOString(), type:'normal', from: "Alex",
                 msgComments:[{id:1, from:"Shoya", msg:"It begins...", createdAt: new Date().toISOString(),type:'normal'}, 
                     {id:2, from:"Josh", msg:"Here we go", createdAt: new Date().toISOString(), type:'normal'}]
             },
             {id:2, msg:"This is the second message in this channel",
-                createdAt: new Date().toISOString(), type:'normal', author: "Alex", msgComments:[]
+                createdAt: new Date().toISOString(), type:'normal', from: "Alex", msgComments:[]
             },
             {id:3, msg:"And this will be the third & final message in here",
-                createdAt: new Date().toISOString(), type:'normal', author: "Alex", msgComments:[]
+                createdAt: new Date().toISOString(), type:'normal', from: "Shoya", msgComments:[]
             },
             
         ], 

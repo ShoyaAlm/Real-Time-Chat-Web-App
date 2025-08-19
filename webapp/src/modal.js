@@ -3,7 +3,7 @@ import Modal from 'react-modal'
 import { chatsContext } from './chats'
 import './css/modal.css'
 
-const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, pinMessage,
+const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, onDeleteComment, pinMessage,
                         modalType, setShowModal}) => {
 
     const {chats, setChats} = useContext(chatsContext)
@@ -195,6 +195,33 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, p
                             
                     </Modal>
             )
+
+
+        case 'delete-comment':
+                return (
+                    <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
+                            contentLabel="Delete Modal" ariaHideApp={false}
+                            overlayClassName="delete-modal-overlay" className="delete-modal-content"
+                        >
+
+                        <h4 style={{marginTop:'0', textAlign:'center'}}>Do you want to delete this comment?</h4>
+                        
+                        <div style={{position:'relative', flexDirection:'row', marginBottom:'10px'}}>
+                            
+                            <button style={{position:'absolute', left:'0px'}} 
+                                onClick={() => setShowModal(false)}>No</button>
+                            
+                            <button style={{position:'absolute', right:'0px'}}
+                                onClick={() => {
+                                    setShowModal(false)
+                                    onDeleteComment(selectedModalMsg)
+                                    }}>Yes</button>
+                            
+                        </div>
+                        <br/>
+                            
+                    </Modal>
+                )
             
         
         default:

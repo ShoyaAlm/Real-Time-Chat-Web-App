@@ -57,9 +57,9 @@ const Chat = ({name}) => {
         if(showPinnedMessages) setShowPinnedMessages(false)
         if(!canShowOtherChat) {
             setCanShowOtherChat(true)
-        } else {
-            setShowPostComments(false)
-        }
+        } else setShowPostComments(false)
+
+        if(inputValue) setInputValue('')
 
         }, [user/*, chats*/])
 
@@ -129,7 +129,7 @@ const Chat = ({name}) => {
     const [showGroupInfo, setShowGroupInfo] = useState(false)
     const [showChannelInfo, setShowChannelInfo] = useState(false)
 
-    const [selectedPost, setSelectedPost] = useState(null) // for when we click on comments of the post
+    const [selectedPost, setSelectedPost] = useState(null) // for when we click on comment-section of a post
     const [canShowOtherChat, setCanShowOtherChat] = useState(true)
 
     return (
@@ -232,7 +232,7 @@ const Chat = ({name}) => {
                                 setSelectedFileMessageID={setSelectedFileMessageID}
                                 setAttachedFilesComment={setAttachedFilesComment} highlightMsgId={highlightMsgId}
                                 highlightMessage={highlightMessage} selectedPost={selectedPost} 
-                                setSelectedPost={setSelectedPost}
+                                setSelectedPost={setSelectedPost} updatedMessages={updatedMessages}
                             />}
                         
                     </div>
@@ -283,7 +283,8 @@ const Chat = ({name}) => {
                                 </>
                             ) : (<></>)}
 
-                        {!showPinnedMessages && (user.type !== 'channel' || showPostComments === true) && (<>
+                        {!showPinnedMessages && ((user.type !== 'channel' || showPostComments === true) ||
+                        (user.type === 'channel' && user.admins.includes("Shoya"))) && (<>
                         <div className="write-text">
 
                             
@@ -342,6 +343,7 @@ const Chat = ({name}) => {
                                         }
                                     } else if(user.type === 'channel'){
                                         
+                                        // posting a comment within a channel
                                         if(showPostComments){
 
                                             // then we add a comment to the selected post
@@ -355,16 +357,23 @@ const Chat = ({name}) => {
                                             updatedMessages(newMessages)
 
                                         } else {
-                                            // else, we are the admin of channel and sharing a post
+                                            // We are an admin of the channel and sharing a post
+                                            const newMessages = [...user.messages, 
+                                            {id: user.messages.length + 1, msg: inputValue, 
+                                            createdAt: new Date().toISOString(), type:"normal", from:"Shoya", 
+                                            msgComments:[]}]
+
+                                            updatedMessages(newMessages)
                                         }
                                     }
                                 
                                 } else if(inputValue !== '' && sendStatus === 'edit') {
                                     
+                                    if(user.type !== 'channel'){
+                                        
                                     const selectedMessage = user.messages.find(
-                                        (message) => message.id === messageToEdit.id)
+                                    (message) => message.id === messageToEdit.id)
                                     
-                                    console.log(selectedMessage)
                                     selectedMessage.msg = inputValue
                                     selectedMessage.type = 'edited'
                                     
@@ -374,19 +383,83 @@ const Chat = ({name}) => {
                                     setInputValue('')
                                     setSendStatus('send')
 
-                                }
+                                    }
+                                    else if (user.type === 'channel'){ // while editing a post in a channel
+                                        
+                                        if(!showPostComments){
+                                        const selectedMessage = user.messages.find(
+                                        (message) => message.id === messageToEdit.id)
+                                        
+                                        selectedMessage.msg = inputValue
+                                        selectedMessage.type = 'edited'
+                                        
+                                        setChats( prevChats => prevChats.map((chat) => chat.name === name 
+                                        ? {...chat, messages: chat.messages} : chat))
+
+                                        setInputValue('')
+                                        setSendStatus('send')
+
+                                        } else { // while editing a comment on a post 
+                                            const selectedComment = selectedPost.msgComments.find(
+                                                (comment) =>  comment.id === messageToEdit.id )
+                                            
+                                            selectedComment.msg = inputValue
+                                            selectedComment.type = 'edited'
+
+                                            setInputValue('')
+                                            setSendStatus('send')
+                                        
+                                        }
+
+                                    }
+
+                                    }
+                                    
                                 else if(inputValue !== '' && sendStatus === 'reply'){
 
-                                    const selectedMessage = user.messages.find(
-                                        (message) => message.id === messageToReply.id)
-                                    
-                                    const newMessages = [...user.messages,
-                                    {id:user.messages.length + 1 ,from:"Shoya", msg: inputValue,
-                                    createdAt: new Date().toISOString(), type:"reply", ref:selectedMessage}]
-                                    
-                                    setInputValue('')
-                                    setSendStatus('send')
-                                    updatedMessages(newMessages)
+                                    if(user.type !== 'channel'){
+                                        const selectedMessage = user.messages.find(
+                                            (message) => message.id === messageToReply.id)
+                                        
+                                        const newMessages = [...user.messages,
+                                        {id:user.messages.length + 1 ,from:"Shoya", msg: inputValue,
+                                        createdAt: new Date().toISOString(), type:"reply", ref:selectedMessage}]
+                                        
+                                        setInputValue('')
+                                        setSendStatus('send')
+                                        updatedMessages(newMessages)
+                                    } else {
+
+                                        if(!showPostComments){ // replying on channel posts
+                                            const selectedMessage = user.messages.find(
+                                            (message) => message.id === messageToReply.id)
+                                        
+                                            const newMessages = [...user.messages,
+                                            {id:user.messages.length + 1 , msg: inputValue,
+                                            createdAt: new Date().toISOString(), type:"reply", from:"Shoya", 
+                                            msgComments:[], ref:selectedMessage
+                                            }]
+                                            
+                                            setInputValue('')
+                                            setSendStatus('send')
+                                            updatedMessages(newMessages)
+
+                                        } else { // replying on a post's comment
+                                            const selectedComment = selectedPost.msgComments.find(
+                                                (comment) => comment.id === messageToReply.id
+                                            )
+                                            selectedPost.msgComments = [...selectedPost.msgComments, {
+                                                id:selectedPost.msgComments.length + 1, from:"Shoya", msg:inputValue,
+                                                createdAt: new Date().toISOString(), type:'reply', ref:selectedComment
+                                            }]
+
+                                            setInputValue('')
+                                            setSendStatus('send')
+
+                                        }
+
+
+                                    }
                                     
                                 }
                                 
@@ -395,7 +468,7 @@ const Chat = ({name}) => {
                         </div>
                         </>)}
 
-                        {user.type === 'channel' && !showPostComments && (<>
+                        {user.type === 'channel' && !showPostComments && !user.admins.includes("Shoya") && (<>
                             <div style={{textAlign:'center'}}>
                                 <h3>JOIN</h3>
                             </div>
@@ -434,18 +507,17 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     const editMessage = (theMessage) => {
         setShowThreeOptions(false)
 
-        if(typeof theMessage.msg === "object"){
-            if(theMessage.comment !== ''){
-                setAttachedFilesComment(theMessage.comment)
+            if(typeof theMessage.msg === "object"){
+                if(theMessage.comment !== ''){
+                    setAttachedFilesComment(theMessage.comment)
+                }
+                setEditingAttachedFiles(true)
+                setAttachedFiles(theMessage.msg)
+                setSelectedFileMessageID(theMessage.id)
+            } else {
+                setInputValue(theMessage.msg)
+                setMessageToEdit(theMessage)
             }
-            setEditingAttachedFiles(true)
-            setAttachedFiles(theMessage.msg)
-            setSelectedFileMessageID(theMessage.id)
-        } else {
-            setInputValue(theMessage.msg)
-            setMessageToEdit(theMessage)
-        }
-        
         setSendStatus('edit')
     }
 
@@ -481,7 +553,6 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
     const {showPinnedMessages} = useContext(pinnedMessagesContext)
     const {showPostComments, setShowPostComments} = useContext(postCommentsContext)
-
 
     return (
     <>
@@ -526,7 +597,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                 <div style={{display:'flex', justifyContent:'flex-end' ,textAlign:'right'}}>
 
                                 {chat.type === 'channel' && (<><h5 style={{bottom:'6px', right:'68px'}}>
-                                {message.author}, </h5></>)}
+                                {message.from}, </h5></>)}
                                 <h5> {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>
@@ -594,7 +665,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                         </div>
                     )
 
-                } else {
+                } else if(message.from === "Shoya") {
                     
                     return (
                     <div className={`message-wrapper right ${highlightMsgId == `${index}` ? 'highlight' : ''} `} 
@@ -629,8 +700,8 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                 openModal('forward', message)
                                 }}>Forward</h5>
                             
-                            {showModal && <OptionsModal {...(modalType === 'forward' ? { 
-                                selectedModalMsg, setSelectedModalMsg } : {})}
+                            {showModal && <OptionsModal 
+                            {...(modalType === 'forward' ? { selectedModalMsg, setSelectedModalMsg } : {})}
                                 {...(modalType === "delete" ? {onDeleteMessage, selectedModalMsg} : {})}
                                 {...(modalType === "pin" ? {pinMessage, selectedModalMsg} : {})}
                                 
@@ -638,7 +709,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
                             <h5 onClick={() => editMessage(message)}>Edit</h5>
                             <h5 onClick={() => {
-                                openModal('delete', message)                                
+                                openModal('delete', message)
                                 setShowThreeOptions(false)}}>Delete</h5>
                         
                         
@@ -697,7 +768,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                         </>
                                         
                                     ) : (
-                                        <><h4>{message.msg}</h4></>
+                                        <></>
                                     )}
                                     </>
                                 )}
@@ -705,28 +776,35 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
 
 
-                                <h5>
-                                {message.type == "edited" || message.type == "edited-files" ? "Edited, " : ""}
-                                    {chat.type === 'channel' && (<><h5>{message.author}</h5></>)}
-                                    {new Date(message.createdAt)
+                                <h4 style={{marginTop:'4px'}}>
+                                    {message.msg}
+                                </h4>
+
+                                <div style={{display:'flex', justifyContent:'flex-end'}}>
+
+                                {chat.type === 'channel' && (<><h5 style={{bottom:'6px', right:'68px'}}>
+                                {message.from}, </h5></>)}
+                                {message.type === 'edited' && (<><h5>edited, </h5></>)}
+                                <h5> {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>
-                                    {chat.type === 'channel' && (
-                                    <>    
-                                    <hr />
-                                    <div style={{textAlign:'left'}}
-                                    onClick={() => {
-                                        setSelectedPost(message)
-                                        setShowPostComments(true)}}>
+                                </div>
 
+                                    {chat.type === 'channel' && (
+                                    <div style={{position:'relative', top:'-3px'}} 
+                                    onClick={() => { setSelectedPost(message)
+                                        setShowPostComments(true)}}>    
+                                    <hr />
+                                    
                                         {message.msgComments.length === 0 ? (<><h5>No comment...</h5></>)
                                         : (<>{message.msgComments.length === 1 ? (<><h5>1 Comment</h5></>)
                                         : (<> <h5>{message.msgComments.length} Comments</h5></>)}
                                         </>)}
                                         
                                     </div>
-                                    </>
                                     )}
+
+
 
                                 </div>
                                 
@@ -962,11 +1040,19 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions,
 
 }
 
-const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex, showThreeOptions, setShowThreeOptions,
-        openModal, replyMessage, showModal, setShowModal, editMessage, highlightMsgId, modalType,onDeleteMessage, 
+const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex, showThreeOptions, 
+    setShowThreeOptions, openModal, replyMessage, showModal, setShowModal, editMessage, highlightMsgId, modalType, 
         selectedModalMsg, setSelectedModalMsg}) => {
 
     const {setShowPostComments} = useContext(postCommentsContext)
+
+
+
+    const onDeleteComment = (selectedMessage) => {
+        post.msgComments = post.msgComments.filter((comment) => comment.id !== selectedMessage.id)
+    }
+
+
 
     return (
         <>
@@ -994,7 +1080,7 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
 
                                 <div style={{display:'flex', justifyContent:'flex-end'}}>
 
-                                <h5 style={{bottom:'6px', right:'68px'}}>{post.author}, </h5>
+                                <h5 style={{bottom:'6px', right:'68px'}}>{post.from}, </h5>
 
                                 <h5> {new Date(post.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1005,7 +1091,7 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
                             </div>
 
 
-        {post.msgComments.length !== 0 ? (<>
+            {post.msgComments.length !== 0 ? (<>
             <h5 style={{position:'relative', left:'45%', width:'120px'}}>Discussion started</h5>
             <br />
             {post.msgComments.map((comment, index) => {
@@ -1100,12 +1186,12 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
                                 
                                 {showModal && <OptionsModal {...(modalType === 'forward' ? { 
                                     selectedModalMsg, setSelectedModalMsg } : {})}
-                                    {...(modalType === "delete" ? {onDeleteMessage, selectedModalMsg} : {})}                             
+                                    {...(modalType === "delete-comment" ? {onDeleteComment, selectedModalMsg} : {})}                             
                                 modalType={modalType} setShowModal={setShowModal}/>}
 
                                 <h5 onClick={() => editMessage(comment)}>Edit</h5>
                                 <h5 onClick={() => {
-                                    openModal('delete', comment)                                
+                                    openModal('delete-comment', comment)                                
                                     setShowThreeOptions(false)}}>Delete</h5>
                             
                             
