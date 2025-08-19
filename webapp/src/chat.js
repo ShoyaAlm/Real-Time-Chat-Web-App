@@ -1,5 +1,6 @@
 
 import { people } from "./people"
+import { allChats } from "./data"
 import './css/chat.css'
 import { useEffect, useState, useContext, useRef } from "react"
 import { chatsContext, showChatContext, pinnedMessagesContext, postCommentsContext } from "./chats"
@@ -24,6 +25,7 @@ const ChatParent = ({ name }) => {
 const Chat = ({name}) => {
     
     const {chats, setChats} = useContext(chatsContext)
+    const {setShowChat} = useContext(showChatContext)
 
     const [inputValue, setInputValue] = useState('')
 
@@ -132,6 +134,30 @@ const Chat = ({name}) => {
     const [selectedPost, setSelectedPost] = useState(null) // for when we click on comment-section of a post
     const [canShowOtherChat, setCanShowOtherChat] = useState(true)
 
+    const [showChatOptions, setShowChatOptions] = useState(false)
+
+    const [showModal, setShowModal] = useState(false)
+    const [modalType, setModalType] = useState(null)
+    const [selectedModalMsg, setSelectedModalMsg] = useState(null)
+
+    const openModal = (type, message) => {
+        if(showChatOptions) setShowChatOptions(false)
+        setModalType(type)
+        setSelectedModalMsg(message)
+        setShowModal(true)
+    }
+
+
+    const leaveChat = (chosenChat) => {
+        setShowChat(false)
+        const filteredChats = allChats.filter((chat) => chat.id !== chosenChat.id)
+        setChats(filteredChats)
+    }
+
+    const setupVote = (chosenChat) => {
+        console.log(chosenChat);
+    }
+
     return (
     <>
             <div className="chat-container">
@@ -145,19 +171,51 @@ const Chat = ({name}) => {
                     {!showPinnedMessages && !showPostComments && (
                         <>
 
-                    <div className="user-info" onClick={() => user.type === "chat" 
-                        ? setShowUserInfo(true) : (user.type === 'group' 
-                        ? setShowGroupInfo(true) : setShowChannelInfo(true))}>
+                    <div className="user-info">
                         
-                        <img alt="" src={user.img}/>
-                        <div className="user">
-                            <h2>{user.name}</h2>
-                            {user.type === 'group' ? (<><h5>{user.users.length} members</h5></>)
-                                : (<>
-                                {user.type === 'channel' ? (<>{user.users.length} subscribers</>)
-                                : (<><h5>Last seen recently</h5></>)} </>)}
+                        <div onClick={() => user.type === "chat" 
+                        ? setShowUserInfo(true) : (user.type === 'group' 
+                        ? setShowGroupInfo(true) : setShowChannelInfo(true))} style={{position:'relative', 
+                        display:'flex', width:'90%'}}>
+
+                            <img alt="" src={user.img}/>
+                            <div className="user">
+                                <h2>{user.name}</h2>
+                                {user.type === 'group' ? (<><h5>{user.users.length} members</h5></>)
+                                    : (<>
+                                    {user.type === 'channel' ? (<>{user.users.length} subscribers</>)
+                                    : (<><h5>Last seen recently</h5></>)} </>)}
 
                             </div>
+
+                        </div>
+                        
+                        <div className="chat-options-container">
+                        <button onClick={() => console.log('searching')}>Search</button>
+                            <button className="chat-options-button" 
+                            onClick={() => setShowChatOptions(!showChatOptions)}>dots</button>
+                            
+                            {showChatOptions && (<>
+                                <div className={`chat-options-menu ${showChatOptions ? 'show' : ''}`}>
+                                        {(user.type === 'channel' || user.type === 'group') && (
+                                            <><h5 onClick={() => openModal('setup-vote', user)}>Setup Vote</h5></>
+                                        )}
+                                        {chatHistory && (<><h5 style={{color:'#ae1212ff'}}
+                                        onClick={() => openModal('leave-chat', user)} //deleting the chat from our list
+                                        >Leave</h5></>)}
+                        
+                        
+                                        {showModal && <OptionsModal 
+                                        {...(modalType === 'setup-vote' ? { setupVote, selectedModalMsg } : {})}
+                                        {...(modalType === "leave-chat" ? { leaveChat, selectedModalMsg } : {})}
+                                        modalType={modalType} setShowModal={setShowModal}/>}
+                        
+                                        
+                                </div>
+                            </>)}
+
+                        </div>
+
                     </div>
                         </>
                     )}
@@ -232,7 +290,10 @@ const Chat = ({name}) => {
                                 setSelectedFileMessageID={setSelectedFileMessageID}
                                 setAttachedFilesComment={setAttachedFilesComment} highlightMsgId={highlightMsgId}
                                 highlightMessage={highlightMessage} selectedPost={selectedPost} 
-                                setSelectedPost={setSelectedPost} updatedMessages={updatedMessages}
+                                setSelectedPost={setSelectedPost} updatedMessages={updatedMessages} openModal={openModal}
+                                showModal={showModal} setShowModal={setShowModal} modalType={modalType} 
+                                setModalType={setModalType} selectedModalMsg={selectedModalMsg} 
+                                setSelectedModalMsg={setSelectedModalMsg} leaveChat={leaveChat} setupVote={setupVote}
                             />}
                         
                     </div>
@@ -486,7 +547,8 @@ const Chat = ({name}) => {
 
 const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMessageToReply, inputValue,
     setInputValue, setSendStatus, setAttachedFiles, setEditingAttachedFiles, setSelectedFileMessageID,
-    setAttachedFilesComment, highlightMsgId, highlightMessage, selectedPost, setSelectedPost}) => {
+    setAttachedFilesComment, highlightMsgId, highlightMessage, selectedPost, setSelectedPost, openModal,
+    showModal, setShowModal, modalType, setModalType, selectedModalMsg, setSelectedModalMsg, leaveChat, setupVote}) => {
     
     const messages = chat.messages    
         
@@ -538,18 +600,8 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
     const [optionsIndex, setOptionsIndex] = useState(null)
 
-    const [showModal, setShowModal] = useState(false)
-
     const [messageToForward, setMessageToForward] = useState(null)
-
-    const [modalType, setModalType] = useState(null)
-    const [selectedModalMsg, setSelectedModalMsg] = useState(null)
-
-    const openModal = (type, message) => {            
-        setModalType(type)
-        setSelectedModalMsg(message)
-        setShowModal(true)
-    }
+    
 
     const {showPinnedMessages} = useContext(pinnedMessagesContext)
     const {showPostComments, setShowPostComments} = useContext(postCommentsContext)
@@ -653,6 +705,9 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                             {showModal && <OptionsModal {...(modalType === 'forward' ? {
                                 selectedModalMsg, setSelectedModalMsg} : {})}
                                 {...(modalType === "pin" ? {pinMessage, selectedModalMsg} : {})}
+                                {...(modalType === 'setup-vote' ? { setupVote, selectedModalMsg } : {})}
+                                {...(modalType === "leave-chat" ? { leaveChat, selectedModalMsg } : {})}
+
                                 
                               modalType={modalType} setShowModal={setShowModal}/>}
                         
@@ -704,7 +759,9 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                             {...(modalType === 'forward' ? { selectedModalMsg, setSelectedModalMsg } : {})}
                                 {...(modalType === "delete" ? {onDeleteMessage, selectedModalMsg} : {})}
                                 {...(modalType === "pin" ? {pinMessage, selectedModalMsg} : {})}
-                                
+                                {...(modalType === 'setup-vote' ? { setupVote, selectedModalMsg } : {})}
+                                {...(modalType === "leave-chat" ? { leaveChat, selectedModalMsg } : {})}
+
                               modalType={modalType} setShowModal={setShowModal}/>}
 
                             <h5 onClick={() => editMessage(message)}>Edit</h5>
@@ -854,7 +911,6 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
     </>
 
-
     )
 }
 
@@ -924,7 +980,7 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions,
                             {showModal && <OptionsModal {...(modalType === 'forward' ? {
                                 messageToForward, setMessageToForward} : {})}
                                 {...(modalType === "delete" ? {onDeleteMessage, selectedModalMsg} : {})}
-                                
+ 
                               modalType={modalType} setShowModal={setShowModal}/>}
                             
                             <h5 onClick={() => {
@@ -973,6 +1029,7 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions,
                             {showModal && <OptionsModal {...(modalType === 'forward' ? {
                                 messageToForward, setMessageToForward} : {})}
                                 {...(modalType === "delete" ? {onDeleteMessage, selectedModalMsg} : {})}
+
                               modalType={modalType} setShowModal={setShowModal}/>}
                             
                             <h5 onClick={() => {
@@ -1145,6 +1202,7 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
 
                                 {showModal && <OptionsModal {...(modalType === 'forward' ? {
                                     selectedModalMsg, setSelectedModalMsg} : {})}
+
                                 modalType={modalType} setShowModal={setShowModal}/>}                        
                             </div>
 
@@ -1186,6 +1244,7 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
                                 
                                 {showModal && <OptionsModal {...(modalType === 'forward' ? { 
                                     selectedModalMsg, setSelectedModalMsg } : {})}
+
                                     {...(modalType === "delete-comment" ? {onDeleteComment, selectedModalMsg} : {})}                             
                                 modalType={modalType} setShowModal={setShowModal}/>}
 

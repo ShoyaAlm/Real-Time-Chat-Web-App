@@ -3,14 +3,14 @@ import Modal from 'react-modal'
 import { chatsContext } from './chats'
 import './css/modal.css'
 
-const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, onDeleteComment, pinMessage,
-                        modalType, setShowModal}) => {
+const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, onDeleteComment, 
+                       setupVote ,leaveChat, user, pinMessage, modalType, setShowModal}) => {
 
     const {chats, setChats} = useContext(chatsContext)
 
     const [chosenChats, setChosenChats] = useState([])
     
-    console.log(modalType, selectedModalMsg);
+    console.log(leaveChat, user);
     
 
     const forwardMessages = (selectedChats) => {
@@ -215,6 +215,58 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
                                 onClick={() => {
                                     setShowModal(false)
                                     onDeleteComment(selectedModalMsg)
+                                    }}>Yes</button>
+                            
+                        </div>
+                        <br/>
+                            
+                    </Modal>
+                )
+
+        case "leave-chat":
+            return (
+                    <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
+                            contentLabel="Delete Modal" ariaHideApp={false}
+                            overlayClassName="delete-modal-overlay" className="delete-modal-content"
+                        >
+
+                        <h4 style={{marginTop:'0', textAlign:'center'}}>Do you want to leave this chat?</h4>
+                        
+                        <div style={{position:'relative', flexDirection:'row', marginBottom:'10px'}}>
+                            
+                            <button style={{position:'absolute', left:'0px'}} 
+                                onClick={() => setShowModal(false)}>No</button>
+                            
+                            <button style={{position:'absolute', right:'0px'}}
+                                onClick={() => {
+                                    setShowModal(false)
+                                    leaveChat(selectedModalMsg)
+                                    }}>Yes</button>
+                            
+                        </div>
+                        <br/>
+                            
+                    </Modal>
+                )
+        
+        case "setup-vote":
+            return (
+                    <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
+                            contentLabel="Delete Modal" ariaHideApp={false}
+                            overlayClassName="delete-modal-overlay" className="delete-modal-content"
+                        >
+
+                        <h4 style={{marginTop:'0', textAlign:'center'}}>Do you want to vote?</h4>
+                        
+                        <div style={{position:'relative', flexDirection:'row', marginBottom:'10px'}}>
+                            
+                            <button style={{position:'absolute', left:'0px'}} 
+                                onClick={() => setShowModal(false)}>No</button>
+                            
+                            <button style={{position:'absolute', right:'0px'}}
+                                onClick={() => {
+                                    setShowModal(false)
+                                    setupVote(selectedModalMsg)
                                     }}>Yes</button>
                             
                         </div>
