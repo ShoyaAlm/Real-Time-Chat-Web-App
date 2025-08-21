@@ -8,10 +8,31 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
 
     const {chats, setChats} = useContext(chatsContext)
 
-    const [chosenChats, setChosenChats] = useState([])
-    
-    console.log(leaveChat, user);
-    
+    const [chosenChats, setChosenChats] = useState([])    
+
+    const [voteTopic, setVoteTopic] = useState('')
+    const [voteOptions, setVoteOptions] = useState(['', ''])
+
+    const alterOptions = (value, index) => {
+        console.log(value, index);
+        
+        if(value === 'remove'){
+            const filteredVoteOptions = voteOptions.filter((option) => option.id !== index)
+            setVoteOptions(filteredVoteOptions)
+        } else {
+            setVoteOptions([...voteOptions, ''])
+        }
+    }
+
+    const onVoteSubmit = () => {
+        setupVote(voteTopic, voteOptions)
+    }
+
+    const handleVoteOptionChange = (index, value) => {
+        const updatedOptions = [...voteOptions];
+        updatedOptions[index] = value;
+        setVoteOptions(updatedOptions);
+    }
 
     const forwardMessages = (selectedChats) => {
         
@@ -252,23 +273,61 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
         case "setup-vote":
             return (
                     <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
-                            contentLabel="Delete Modal" ariaHideApp={false}
-                            overlayClassName="delete-modal-overlay" className="delete-modal-content"
+                            contentLabel="Voting Modal" ariaHideApp={false}
+                            overlayClassName="voting-modal-overlay" className="voting-modal-content"
                         >
 
-                        <h4 style={{marginTop:'0', textAlign:'center'}}>Do you want to vote?</h4>
-                        
                         <div style={{position:'relative', flexDirection:'row', marginBottom:'10px'}}>
                             
-                            <button style={{position:'absolute', left:'0px'}} 
-                                onClick={() => setShowModal(false)}>No</button>
+                            <div className='topic'>
+                                <h4>What's the topic</h4>
+                                <input type='text' placeholder='topic...' value={voteTopic}
+                                    onChange={(e) => setVoteTopic(e.target.value)} required
+                                />
+                            </div>
+
+                            <br />
+                            <hr />
+
+                            <div className='voting-options-wrapper'>
+
+                                {voteOptions.map((option, index) => {
+                                    return (
+                                        <div className='voting-options'>
+                                        <label key={index}>
+                                        {index + 1}
+                                        <input type='text' placeholder={`option ${index + 1}`} value={option} required
+                                        onChange={(e) => handleVoteOptionChange(index, e.target.value)}
+                                        style={{position:'relative', left:'10px'}}
+                                        />
+                                        </label>
+                                        {voteOptions.length > 2 && (<>
+                                            <button onClick={() => alterOptions('remove', index + 1)}
+                                            style={{position:'absolute', right:'0px'}}>remove</button>
+                                        </>)}
+                                        </div>
+                                    )
+                                })}
                             
-                            <button style={{position:'absolute', right:'0px'}}
-                                onClick={() => {
-                                    setShowModal(false)
-                                    setupVote(selectedModalMsg)
-                                    }}>Yes</button>
+                            </div>
                             
+                            <hr/>
+
+                            <div className='voting-buttons'>
+                                <button style={{position:'absolute', left:'0px'}} 
+                                    onClick={() => setShowModal(false)}>cancel</button>
+                                
+                                <button style={{position:'absolute', right:'0px'}}
+                                    onClick={() => {
+                                        if(!voteOptions.includes('')){
+                                            setShowModal(false)
+                                            onVoteSubmit()
+                                        } else {
+                                            alert('options Cannot be empty')
+                                        }
+                                        }}>submit</button>
+                            </div>
+
                         </div>
                         <br/>
                             

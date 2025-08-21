@@ -106,7 +106,11 @@ const ChatPreview = () => {
                     
                     lastMessageOrigin = chat.messages[chat.messages.length - 1].from 
 
-                    lastMessage = chat.messages[chat.messages.length - 1].msg
+                    if(chat.messages[chat.messages.length - 1].type !== 'vote'){
+                        lastMessage = chat.messages[chat.messages.length - 1].msg
+                    } else {
+                        lastMessage = chat.messages[chat.messages.length - 1].topic
+                    }
 
                 if(chat.messages[chat.messages.length - 1].type === "files"){
                     
@@ -146,6 +150,11 @@ const ChatPreview = () => {
                             : `${lastMessage.length} files`
                         }
                 
+                } else if(chat.messages[chat.messages.length - 1].type === 'vote'){
+
+                    previewLastMessage = previewLastMessage = lastMessage.length > 60 ? 
+                            lastMessage.slice(0, 60) + "..." : lastMessage;
+
                 } else {
                         previewLastMessage = lastMessage.length > 60 ? 
                             lastMessage.slice(0, 60) + "..." : lastMessage;

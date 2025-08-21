@@ -102,7 +102,15 @@ export const allChats = [
                 msg:"I'm game.", createdAt: new Date().toISOString(),
                 type:'normal'
             },
+
+            {id:4, from:"Peter",
+                topic:"Who's partying tonight?", options:["Yes", "no"],
+                allVotes:[{"Josh":1}, {"Peter":2}, {"Slick":1}, {"Fred":1}],
+                createdAt: new Date().toISOString(),
+                type:'vote'
+            },
             
+
         ],
         users:[{id:1, name:"Maxim", 
             img:'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg'},
@@ -123,7 +131,6 @@ export const allChats = [
             img: 'https://wallpaper.dog/large/20675505.jpg',
         lastUpdatedAt: new Date().toISOString()
 
-
     },
 
     {id: 5, name: "Hacker News", type: 'channel', admins:["Josh", "Shoya"],
@@ -138,6 +145,12 @@ export const allChats = [
             {id:3, msg:"And this will be the third & final message in here",
                 createdAt: new Date().toISOString(), type:'normal', from: "Shoya", msgComments:[]
             },
+
+            // {id:4, from:"Peter",
+            //     topic:"Who's partying tonight?", options:["I know I am!", "psshhh, get da F out, bro"],
+            //     createdAt: new Date().toISOString(),
+            //     type:'vote'
+            // },
             
         ], 
         users:[{id: 1, name:"Shoya"}],

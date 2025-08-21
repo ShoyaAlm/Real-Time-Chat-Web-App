@@ -41,6 +41,9 @@ const Chat = ({name}) => {
 
     const updatedMessages = (newMessages) => {
 
+        console.log(newMessages);
+        
+
         setChats( prevChats => prevChats.map((chat) => chat.name === name
          ? {...chat, messages: newMessages, 
             lastUpdatedAt: newMessages[newMessages.length - 1].createdAt} : chat))
@@ -154,8 +157,12 @@ const Chat = ({name}) => {
         setChats(filteredChats)
     }
 
-    const setupVote = (chosenChat) => {
-        console.log(chosenChat);
+    const setupVote = (voteTopic, voteOptions) => {
+        const newMessages = [...user.messages, {
+                id:user.messages.length, from:"Shoya",
+                topic:voteTopic, options:voteOptions, createdAt: new Date().toISOString(), type:'vote'
+            }]
+        updatedMessages(newMessages)
     }
 
     return (
@@ -256,7 +263,7 @@ const Chat = ({name}) => {
                                 }}
                             >
                             <h5 style={{marginBottom:'0px', marginTop:'10px', color:'#ffffffff'}}>
-                            Pinned Message {currentLine === 0 ? `${user.pinnedMessages.length}` 
+                            Pinned Message #{currentLine === 0 ? `${user.pinnedMessages.length}` 
                             : `${user.pinnedMessages.length - currentLine + 1}`}</h5>
                                 
                                 <h5 style={{marginTop:'10px', color:'#ffffffff'}}>
@@ -606,6 +613,26 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     const {showPinnedMessages} = useContext(pinnedMessagesContext)
     const {showPostComments, setShowPostComments} = useContext(postCommentsContext)
 
+    const [selectedOption, setSelectedOption] = useState(null)
+    const [showVoteOption, setShowVoteOption] = useState(false)
+
+    const voteCounts = (message) => {
+
+        return message.options.map((_, index) => 
+            
+            {
+                const optionNumber = index + 1
+                return message.allVotes.filter(vote => Object.values(vote)[0] === optionNumber).length
+            })
+    }
+
+    const votePercentage = (num, message) => {
+        console.log(num);
+        
+        const totalVotes = message.allVotes.length 
+        return ((num/totalVotes) * 100).toFixed(1)
+    }
+
     return (
     <>
 
@@ -640,11 +667,65 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                 {chat.type === 'group' ? (
                                     <><h5 style={{position:'relative', textAlign:'left'}}>{message.from}</h5></>
                                 ) : (<></>)}
-                                        
-                                
-                                <h4 style={{marginTop:'4px'}}>
-                                    {message.msg}
-                                </h4>
+                                    
+                                    {message.type === 'vote' && (<>
+                                    <h3 style={{marginTop:'5px'}}>{message.topic}</h3>
+                                    {message.options.map((option, index) => {
+                                    
+                                    if(message.allVotes.some(vote => Object.keys(vote).includes("Shoya"))){
+                                        return (<>
+                                        <div className="vote-message-options"
+                                        style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
+                                        key={index}>
+                                            <h5>{option}</h5>
+                                        <span> - {voteCounts(message)[index]} votes - 
+                                        ({votePercentage(voteCounts(message)[index], message)}%)
+                                        </span>
+                                        </div>
+                                        </>)
+                                    } else {
+                                        return (<>
+
+                                        <div className="vote-message-options"
+                                        style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
+                                        key={index}>
+                                            <input type="radio" onClick={() => {
+                                                if(selectedOption === null) {
+                                                    setShowVoteOption(true)
+                                                    setSelectedOption(index+1)
+                                                    }
+                                                else {
+                                                    if(selectedOption === index+1){
+                                                        setSelectedOption(null)
+                                                        setShowVoteOption(false)
+                                                    } else {
+                                                        setSelectedOption(index+1)
+                                                        setShowVoteOption(true)
+                                                    }
+                                                }
+                                            }
+                                                }/>
+                                            <h5>{option}</h5>
+                                        </div>
+                                        </>)
+                                    }
+                                    
+
+                                    })}
+                                    {showVoteOption && (<>
+                                        <h4 style={{textAlign:'center'}} onClick={() => {
+                                            message.allVotes = [...message.allVotes, {"Shoya":selectedOption}]
+                                            setShowVoteOption(false)
+                                        }}>vote</h4>
+                                    </>)}
+                                </>)}
+
+
+                                {typeof message.msg === 'string' && (<>
+                                    <h4 style={{marginTop:'4px'}}>
+                                        {message.msg}
+                                    </h4>
+                                </>)}
 
                                 <div style={{display:'flex', justifyContent:'flex-end' ,textAlign:'right'}}>
 
@@ -832,10 +913,41 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
 
 
+                                {message.type === 'vote' && (<>
+                                    <h3 style={{marginTop:'5px'}}>{message.topic}</h3>
+                                    {message.options.map((option, index) => {
+                                    
+                                    if("Shoya" !== message.allVotes.includes("Shoya")){
+                                        return (<div className="vote-message-options"
+                                        style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
+                                        key={index}>
+                                            <input type="radio" onClick={() => setSelectedOption(index+1)}/>
+                                            <h5>{option}</h5>
+                                        </div>)
 
-                                <h4 style={{marginTop:'4px'}}>
-                                    {message.msg}
-                                </h4>
+                                    } else {
+                                        return (<div className="vote-message-options"
+                                        style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
+                                        key={index}>
+                                            <h5>{option}</h5>
+
+                                        </div>)
+                                    }
+
+                                    })}
+                                    {selectedOption && (<>
+                                        <h4 style={{textAlign:'center'}} onClick={() => console.log("VOTE!")}>vote</h4>
+                                    </>)}
+                                    {/* if at least one input is checkboxed, we let a new button appear */}
+                                </>)}
+
+
+
+                                {typeof message.msg === 'string' && (<>
+                                    <h4 style={{marginTop:'4px'}}>
+                                        {message.msg}
+                                    </h4>
+                                </>)}
 
                                 <div style={{display:'flex', justifyContent:'flex-end'}}>
 
