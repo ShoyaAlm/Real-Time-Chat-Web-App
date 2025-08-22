@@ -109,7 +109,6 @@ export const allChats = [
                 createdAt: new Date().toISOString(),
                 type:'vote'
             },
-            
 
         ],
         users:[{id:1, name:"Maxim", 

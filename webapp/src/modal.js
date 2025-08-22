@@ -4,7 +4,7 @@ import { chatsContext } from './chats'
 import './css/modal.css'
 
 const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, onDeleteComment, 
-                       setupVote ,leaveChat, user, pinMessage, modalType, setShowModal}) => {
+                       setupVote ,leaveChat, pinMessage, modalType, setShowModal}) => {
 
     const {chats, setChats} = useContext(chatsContext)
 
@@ -183,7 +183,7 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
                             <button style={{position:'absolute', right:'0px'}}
                                 onClick={() => {
                                     setShowModal(false)
-                                    onDeleteMessage(selectedModalMsg.msg)
+                                    onDeleteMessage(selectedModalMsg)
                                     }}>Yes</button>
                             
                         </div>

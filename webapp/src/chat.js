@@ -39,10 +39,7 @@ const Chat = ({name}) => {
     
     const [attachedFiles, setAttachedFiles] = useState(null)
 
-    const updatedMessages = (newMessages) => {
-
-        console.log(newMessages);
-        
+    const updatedMessages = (newMessages) => {        
 
         setChats( prevChats => prevChats.map((chat) => chat.name === name
          ? {...chat, messages: newMessages, 
@@ -159,8 +156,8 @@ const Chat = ({name}) => {
 
     const setupVote = (voteTopic, voteOptions) => {
         const newMessages = [...user.messages, {
-                id:user.messages.length, from:"Shoya",
-                topic:voteTopic, options:voteOptions, createdAt: new Date().toISOString(), type:'vote'
+                id:user.messages.length + 1, from:"Shoya", topic:voteTopic, options:voteOptions, 
+                allVotes:[] ,createdAt: new Date().toISOString(), type:'vote'
             }]
         updatedMessages(newMessages)
     }
@@ -288,7 +285,7 @@ const Chat = ({name}) => {
 
                         
                             {<ShowMessages chat={user} setChats={setChats} onDeleteMessage={ theMessage => {
-                                const filteredMessages = user.messages.filter((message) => message.msg !== theMessage)
+                                const filteredMessages = user.messages.filter((message) => message.id !== theMessage.id)
                                 updatedMessages(filteredMessages)
                             }}
                                 setMessageToEdit={setMessageToEdit} setMessageToReply={setMessageToReply}
@@ -613,8 +610,8 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     const {showPinnedMessages} = useContext(pinnedMessagesContext)
     const {showPostComments, setShowPostComments} = useContext(postCommentsContext)
 
-    const [selectedOption, setSelectedOption] = useState(null)
-    const [showVoteOption, setShowVoteOption] = useState(false)
+    const [selectedOptions, setSelectedOptions] = useState({})
+    const [showVoteOptions, setShowVoteOptions] = useState({})
 
     const voteCounts = (message) => {
 
@@ -626,9 +623,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
             })
     }
 
-    const votePercentage = (num, message) => {
-        console.log(num);
-        
+    const votePercentage = (num, message) => {        
         const totalVotes = message.allVotes.length 
         return ((num/totalVotes) * 100).toFixed(1)
     }
@@ -668,10 +663,13 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                     <><h5 style={{position:'relative', textAlign:'left'}}>{message.from}</h5></>
                                 ) : (<></>)}
                                     
-                                    {message.type === 'vote' && (<>
+                                {message.type === 'vote' && (<>
                                     <h3 style={{marginTop:'5px'}}>{message.topic}</h3>
                                     {message.options.map((option, index) => {
                                     
+                                    const optionChecked = selectedOptions[message.id] === index + 1
+                                    const selectedOption = selectedOptions[message.id] || false 
+
                                     if(message.allVotes.some(vote => Object.keys(vote).includes("Shoya"))){
                                         return (<>
                                         <div className="vote-message-options"
@@ -689,20 +687,15 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                         <div className="vote-message-options"
                                         style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
                                         key={index}>
-                                            <input type="radio" onClick={() => {
-                                                if(selectedOption === null) {
-                                                    setShowVoteOption(true)
-                                                    setSelectedOption(index+1)
-                                                    }
-                                                else {
-                                                    if(selectedOption === index+1){
-                                                        setSelectedOption(null)
-                                                        setShowVoteOption(false)
+                                            <input type="radio" checked={optionChecked} 
+                                            onClick={() => {
+                                                    if(selectedOptions[message.id] === index+1){
+                                                        setSelectedOptions(prev => ({...prev, [message.id]:null}))
+                                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
                                                     } else {
-                                                        setSelectedOption(index+1)
-                                                        setShowVoteOption(true)
+                                                        setSelectedOptions(prev => ({...prev, [message.id]:index+1}))
+                                                        setShowVoteOptions(prev => ({...prev, [message.id]:true}))
                                                     }
-                                                }
                                             }
                                                 }/>
                                             <h5>{option}</h5>
@@ -712,10 +705,10 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                     
 
                                     })}
-                                    {showVoteOption && (<>
+                                    {showVoteOptions[message.id] && (<>
                                         <h4 style={{textAlign:'center'}} onClick={() => {
-                                            message.allVotes = [...message.allVotes, {"Shoya":selectedOption}]
-                                            setShowVoteOption(false)
+                                        message.allVotes = [...message.allVotes, {"Shoya":selectedOptions[message.id]}]
+                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
                                         }}>vote</h4>
                                     </>)}
                                 </>)}
@@ -910,35 +903,55 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                     )}
                                     </>
                                 )}
-
-
-
+                                
                                 {message.type === 'vote' && (<>
                                     <h3 style={{marginTop:'5px'}}>{message.topic}</h3>
                                     {message.options.map((option, index) => {
                                     
-                                    if("Shoya" !== message.allVotes.includes("Shoya")){
-                                        return (<div className="vote-message-options"
+                                    const optionChecked = selectedOptions[message.id] === index + 1
+                                    const selectedOption = selectedOptions[message.id] || false 
+
+                                    if(message.allVotes.some(vote => Object.keys(vote).includes("Shoya"))){
+                                        return (<>
+                                        <div className="vote-message-options"
                                         style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
                                         key={index}>
-                                            <input type="radio" onClick={() => setSelectedOption(index+1)}/>
                                             <h5>{option}</h5>
-                                        </div>)
-
+                                        <span> - {voteCounts(message)[index]} votes - 
+                                        ({votePercentage(voteCounts(message)[index], message)}%)
+                                        </span>
+                                        </div>
+                                        </>)
                                     } else {
-                                        return (<div className="vote-message-options"
+                                        return (<>
+
+                                        <div className="vote-message-options"
                                         style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
                                         key={index}>
+                                            <input type="radio" checked={optionChecked} 
+                                            onClick={() => {
+                                                    if(selectedOptions[message.id] === index+1){
+                                                        setSelectedOptions(prev => ({...prev, [message.id]:null}))
+                                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
+                                                    } else {
+                                                        setSelectedOptions(prev => ({...prev, [message.id]:index+1}))
+                                                        setShowVoteOptions(prev => ({...prev, [message.id]:true}))
+                                                    }
+                                            }
+                                                }/>
                                             <h5>{option}</h5>
-
-                                        </div>)
+                                        </div>
+                                        </>)
                                     }
+                                    
 
                                     })}
-                                    {selectedOption && (<>
-                                        <h4 style={{textAlign:'center'}} onClick={() => console.log("VOTE!")}>vote</h4>
+                                    {showVoteOptions[message.id] && (<>
+                                        <h4 style={{textAlign:'center'}} onClick={() => {
+                                        message.allVotes = [...message.allVotes, {"Shoya":selectedOptions[message.id]}]
+                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
+                                        }}>vote</h4>
                                     </>)}
-                                    {/* if at least one input is checkboxed, we let a new button appear */}
                                 </>)}
 
 
