@@ -142,6 +142,8 @@ const Chat = ({name}) => {
 
     const openModal = (type, message) => {
         if(showChatOptions) setShowChatOptions(false)
+        console.log(type, message);
+        
         setModalType(type)
         setSelectedModalMsg(message)
         setShowModal(true)
@@ -159,6 +161,19 @@ const Chat = ({name}) => {
                 id:user.messages.length + 1, from:"Shoya", topic:voteTopic, options:voteOptions, 
                 allVotes:[] ,createdAt: new Date().toISOString(), type:'vote'
             }]
+        updatedMessages(newMessages)
+    }
+
+    const editVote = (voteTopic, voteOptions, id) => {
+        const newMessages = user.messages.map((message) => {
+            if(message.id === id){
+                message.topic = voteTopic
+                message.options = voteOptions
+                return message
+            } else {
+                return message
+            }
+        })
         updatedMessages(newMessages)
     }
 
@@ -298,6 +313,7 @@ const Chat = ({name}) => {
                                 showModal={showModal} setShowModal={setShowModal} modalType={modalType} 
                                 setModalType={setModalType} selectedModalMsg={selectedModalMsg} 
                                 setSelectedModalMsg={setSelectedModalMsg} leaveChat={leaveChat} setupVote={setupVote}
+                                editVote={editVote}
                             />}
                         
                     </div>
@@ -322,8 +338,13 @@ const Chat = ({name}) => {
                                                     </>
                                                 ) : (
                                                     <>
-                                                <h5>Reply: {messageToReply.msg.slice(0, 50)}
-                                                {messageToReply.msg.length > 50 ? '...' : ''}</h5>  
+                                                {messageToReply.type === 'vote' ? (<>
+                                                    <h5>Reply: {messageToReply.topic.slice(0, 50)}
+                                                    {messageToReply.topic.length > 50 ? '...' : ''}</h5>  
+                                                </>) : (<>
+                                                    <h5>Reply: {messageToReply.msg.slice(0, 50)}
+                                                    {messageToReply.msg.length > 50 ? '...' : ''}</h5>  
+                                                </>)}
 
                                                     </>
                                                 )}
@@ -552,7 +573,8 @@ const Chat = ({name}) => {
 const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMessageToReply, inputValue,
     setInputValue, setSendStatus, setAttachedFiles, setEditingAttachedFiles, setSelectedFileMessageID,
     setAttachedFilesComment, highlightMsgId, highlightMessage, selectedPost, setSelectedPost, openModal,
-    showModal, setShowModal, modalType, setModalType, selectedModalMsg, setSelectedModalMsg, leaveChat, setupVote}) => {
+    showModal, setShowModal, modalType, setModalType, selectedModalMsg, setSelectedModalMsg, leaveChat,
+    setupVote, editVote}) => {
     
     const messages = chat.messages    
         
@@ -571,6 +593,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     }
 
     const editMessage = (theMessage) => {
+        
         setShowThreeOptions(false)
 
             if(typeof theMessage.msg === "object"){
@@ -581,8 +604,12 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                 setAttachedFiles(theMessage.msg)
                 setSelectedFileMessageID(theMessage.id)
             } else {
-                setInputValue(theMessage.msg)
-                setMessageToEdit(theMessage)
+                if(theMessage.type === 'vote'  || theMessage.topic !== undefined){
+                    openModal('edit-vote', theMessage)
+                } else {
+                    setInputValue(theMessage.msg)
+                    setMessageToEdit(theMessage)
+                }
             }
         setSendStatus('edit')
     }
@@ -592,9 +619,16 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
         setChats(prevChats => prevChats.map((selectedChat) => {
             
             if(selectedChat.id === chat.id){
+                if(theMessage.type === 'vote' || theMessage.topic !== undefined) {
                 return {...selectedChat, pinnedMessages:[...selectedChat.pinnedMessages,
                     {id: chat.pinnedMessages.length + 1, messageID: theMessage.id, from: theMessage.from,
-                    phrase: theMessage.msg, createdAt: theMessage.createdAt, type: theMessage.type}]}
+                    phrase: theMessage.topic, topic: theMessage.topic, options: theMessage.options, 
+                    allVotes: theMessage.allVotes, createdAt: theMessage.createdAt, type: theMessage.type}]}    
+                } else {
+                    return {...selectedChat, pinnedMessages:[...selectedChat.pinnedMessages,
+                        {id: chat.pinnedMessages.length + 1, messageID: theMessage.id, from: theMessage.from,
+                        phrase: theMessage.msg, createdAt: theMessage.createdAt, type: theMessage.type}]}
+                }
             } else {
                 return selectedChat
             }
@@ -658,12 +692,43 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                 })} </>) : (<></>)}
                             
                             <div className="messages-received">
+                            {message.ref ? (
+                                <>
+                                    <div className="reply-preview" onClick={() => highlightMessage(message.ref.id)}>
+                                    <h5 style={{fontSize:"13px"}}>{message.ref.from}</h5>
+                                        {message.ref.type === "files" || message.ref.type === "edited-files" ? (
+                                            <>
+                                                <h5>{message.ref.msg.length > 1 ? (<>
+                                                {message.ref.msg.length} files
+                                                </>) : (<>{message.ref.msg.length} file</>)}</h5>
+                                            </>
+                                        ) : (
+                                            <>
+                                            {typeof message.ref.msg !== "object" ? (
+                                                <>
+                                                {message.ref.type === 'vote' ? (<>
+                                                    <h5>{message.ref.topic.slice(0, 30)}
+                                                    {message.ref.topic.length > 30 ? '...' : ''}</h5>
+                                                </>) : (<>
+                                                    <h5>{message.ref.msg.slice(0, 30)}
+                                                    {message.ref.msg.length > 30 ? '...' : ''}</h5>
+                                                </>)}
+                                                </>
+                                            ) : (
+                                                <></>
+                                            )}
+                                            </>
+                                        )}
+
+                                    </div>
+                                </>
+                            ) : (<></>)}
 
                                 {chat.type === 'group' ? (
                                     <><h5 style={{position:'relative', textAlign:'left'}}>{message.from}</h5></>
                                 ) : (<></>)}
                                     
-                                {message.type === 'vote' && (<>
+                                {(message.type === 'vote'  || message.topic !== undefined) && (<>
                                     <h3 style={{marginTop:'5px'}}>{message.topic}</h3>
                                     {message.options.map((option, index) => {
                                     
@@ -834,11 +899,12 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                 {...(modalType === "delete" ? {onDeleteMessage, selectedModalMsg} : {})}
                                 {...(modalType === "pin" ? {pinMessage, selectedModalMsg} : {})}
                                 {...(modalType === 'setup-vote' ? { setupVote, selectedModalMsg } : {})}
+                                {...(modalType === 'edit-vote' ? { editVote, selectedModalMsg } : {})}
                                 {...(modalType === "leave-chat" ? { leaveChat, selectedModalMsg } : {})}
 
                               modalType={modalType} setShowModal={setShowModal}/>}
 
-                            <h5 onClick={() => editMessage(message)}>Edit</h5>
+                            <h5 onClick={() => editMessage(message) }>Edit</h5>
                             <h5 onClick={() => {
                                 openModal('delete', message)
                                 setShowThreeOptions(false)}}>Delete</h5>
@@ -864,8 +930,13 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                             <>
                                             {typeof message.ref.msg !== "object" ? (
                                                 <>
-                                                <h5>{message.ref.msg.slice(0, 30)}
-                                                {message.ref.msg.length > 30 ? '...' : ''}</h5>
+                                                {message.ref.type === 'vote' ? (<>
+                                                    <h5>{message.ref.topic.slice(0, 30)}
+                                                    {message.ref.topic.length > 30 ? '...' : ''}</h5>
+                                                </>) : (<>
+                                                    <h5>{message.ref.msg.slice(0, 30)}
+                                                    {message.ref.msg.length > 30 ? '...' : ''}</h5>
+                                                </>)}
                                                 </>
                                             ) : (
                                                 <></>
@@ -904,7 +975,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                     </>
                                 )}
                                 
-                                {message.type === 'vote' && (<>
+                                {(message.type === 'vote' || message.topic !== undefined) && (<>
                                     <h3 style={{marginTop:'5px'}}>{message.topic}</h3>
                                     {message.options.map((option, index) => {
                                     
@@ -1014,7 +1085,9 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                 optionsIndex={optionsIndex} setOptionsIndex={setOptionsIndex} showModal={showModal}
                 setShowModal={setShowModal} messageToForward={messageToForward} setMessageToForward={setMessageToForward}
                 openModal={openModal} modalType={modalType} setModalType={setModalType} onDeleteMessage={onDeleteMessage}
-                selectedModalMsg={selectedModalMsg}
+                selectedModalMsg={selectedModalMsg} selectedOptions={selectedOptions}
+                setSelectedOptions={setSelectedOptions} showVoteOptions={showVoteOptions} 
+                setShowVoteOptions={setShowVoteOptions} voteCounts={voteCounts} votePercentage={votePercentage}
                 />
 
                 </>) : (<>
@@ -1040,9 +1113,10 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 }
 
 
-const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, 
-    setShowThreeOptions, optionsIndex, setOptionsIndex, showModal, setShowModal, messageToForward, setMessageToForward,
-    openModal, modalType, setModalType, onDeleteMessage, selectedModalMsg}) => {
+const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptions, optionsIndex, setOptionsIndex,
+    showModal, setShowModal, messageToForward, setMessageToForward, openModal, modalType, setModalType, onDeleteMessage,
+    selectedModalMsg, selectedOptions, setSelectedOptions, showVoteOptions, setShowVoteOptions, voteCounts,
+    votePercentage}) => {
 
     const {setShowPinnedMessages} = useContext(pinnedMessagesContext)
 
@@ -1066,14 +1140,93 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions,
                         
                             <div className="messages-received">
 
-                                <h4 style={{marginTop:'4px'}}>
-                                    {message.phrase}
-                                </h4>
-                                <h5 >
-                                
+                            {message.type === 'forwarded' ? (
+                                <>
+                                <div className="forward-preview">
+                                    <h5>from: {message.sentFrom}</h5>
+                                </div>
+                                </>) : (<></>)}
+
+                                {message.type === "files" || message.type === "edited-files" ? (
+                                    <>
+                                    <ShowcaseFiles files={message} />                                        
+                                    </>
+                                ) : (
+                                    <>
+                                    {typeof message.phrase === "object" ? (
+                                        <>
+                                        <ShowcaseFiles files={message} />
+                                        </>
+                                        
+                                    ) : (
+                                        <>
+                                    {message.topic !== undefined ? (<>
+
+
+
+                                    <h3 style={{marginTop:'5px'}}>{message.topic}</h3>
+                                    {message.options.map((option, index) => {
+                                    
+                                    const optionChecked = selectedOptions[message.id] === index + 1
+                                    const selectedOption = selectedOptions[message.id] || false 
+
+                                    if(message.allVotes.some(vote => Object.keys(vote).includes("Shoya"))){
+                                        return (<>
+                                        <div className="vote-message-options"
+                                        style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
+                                        key={index}>
+                                            <h5>{option}</h5>
+                                        <span> - {voteCounts(message)[index]} votes - 
+                                        ({votePercentage(voteCounts(message)[index], message)}%)
+                                        </span>
+                                        </div>
+                                        </>)
+                                    } else {
+                                        return (<>
+
+                                        <div className="vote-message-options"
+                                        style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
+                                        key={index}>
+                                            <input type="radio" checked={optionChecked} 
+                                            onClick={() => {
+                                                    if(selectedOptions[message.id] === index+1){
+                                                        setSelectedOptions(prev => ({...prev, [message.id]:null}))
+                                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
+                                                    } else {
+                                                        setSelectedOptions(prev => ({...prev, [message.id]:index+1}))
+                                                        setShowVoteOptions(prev => ({...prev, [message.id]:true}))
+                                                    }
+                                            }
+                                                }/>
+                                            <h5>{option}</h5>
+                                        </div>
+                                        </>)
+                                    }
+                                    
+
+                                    })}
+                                    {showVoteOptions[message.id] && (<>
+                                        <h4 style={{textAlign:'center'}} onClick={() => {
+                                        message.allVotes = [...message.allVotes, {"Shoya":selectedOptions[message.id]}]
+                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
+                                        }}>vote</h4>
+                                    </>)}
+
+                                        </>) : (<>
+                                            <><h4>{message.phrase}</h4></>
+                                        </>)}
+                                        </>
+                                    )}
+                                    </>
+                                )}
+
+
+                                <h5 style={{textAlign:'right'}}>
+                                {message.type == "edited" || message.type == "edited-files" ? "Edited, " : ""}
                                     {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>
+ 
                             </div>
 
                         <div className="dot-container">
@@ -1188,7 +1341,71 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions,
                                         </>
                                         
                                     ) : (
-                                        <><h4>{message.phrase}</h4></>
+                                        <>
+                                    {message.topic !== undefined ? (<>
+
+
+
+                                    <h3 style={{marginTop:'5px'}}>{message.topic}</h3>
+                                    {message.options.map((option, index) => {
+                                    
+                                    const optionChecked = selectedOptions[message.id] === index + 1
+                                    const selectedOption = selectedOptions[message.id] || false 
+
+                                    if(message.allVotes.some(vote => Object.keys(vote).includes("Shoya"))){
+                                        return (<>
+                                        <div className="vote-message-options"
+                                        style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
+                                        key={index}>
+                                            <h5>{option}</h5>
+                                        <span> - {voteCounts(message)[index]} votes - 
+                                        ({votePercentage(voteCounts(message)[index], message)}%)
+                                        </span>
+                                        </div>
+                                        </>)
+                                    } else {
+                                        return (<>
+
+                                        <div className="vote-message-options"
+                                        style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
+                                        key={index}>
+                                            <input type="radio" checked={optionChecked} 
+                                            onClick={() => {
+                                                    if(selectedOptions[message.id] === index+1){
+                                                        setSelectedOptions(prev => ({...prev, [message.id]:null}))
+                                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
+                                                    } else {
+                                                        setSelectedOptions(prev => ({...prev, [message.id]:index+1}))
+                                                        setShowVoteOptions(prev => ({...prev, [message.id]:true}))
+                                                    }
+                                            }
+                                                }/>
+                                            <h5>{option}</h5>
+                                        </div>
+                                        </>)
+                                    }
+                                    
+
+                                    })}
+                                    {showVoteOptions[message.id] && (<>
+                                        <h4 style={{textAlign:'center'}} onClick={() => {
+                                        message.allVotes = [...message.allVotes, {"Shoya":selectedOptions[message.id]}]
+                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
+                                        }}>vote</h4>
+                                    </>)}
+
+
+
+
+
+
+
+
+
+                                        </>) : (<>
+                                            <><h4>{message.phrase}</h4></>
+                                        </>)}
+                                        </>
                                     )}
                                     </>
                                 )}
@@ -1196,7 +1413,7 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions,
 
 
 
-                                <h5>
+                                <h5 style={{textAlign:'right'}}>
                                 {message.type == "edited" || message.type == "edited-files" ? "Edited, " : ""}
                                     {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

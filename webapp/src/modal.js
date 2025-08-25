@@ -4,14 +4,14 @@ import { chatsContext } from './chats'
 import './css/modal.css'
 
 const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, onDeleteComment, 
-                       setupVote ,leaveChat, pinMessage, modalType, setShowModal}) => {
+                       setupVote, editVote, editMessage ,leaveChat, pinMessage, modalType, setShowModal}) => {
 
     const {chats, setChats} = useContext(chatsContext)
 
     const [chosenChats, setChosenChats] = useState([])    
 
-    const [voteTopic, setVoteTopic] = useState('')
-    const [voteOptions, setVoteOptions] = useState(['', ''])
+    const [voteTopic, setVoteTopic] = useState(selectedModalMsg?.topic || '')
+    const [voteOptions, setVoteOptions] = useState( selectedModalMsg?.options || ['', ''])
 
     const alterOptions = (value, index) => {
         console.log(value, index);
@@ -27,6 +27,11 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
     const onVoteSubmit = () => {
         setupVote(voteTopic, voteOptions)
     }
+
+    const onVoteEdit = (id) => {
+        editVote(voteTopic, voteOptions, id)
+    }
+    
 
     const handleVoteOptionChange = (index, value) => {
         const updatedOptions = [...voteOptions];
@@ -48,13 +53,22 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
                      sentFrom:selectedModalMsg.from, from:"Shoya", msg: selectedModalMsg.msg, 
                      createdAt: new Date().toISOString(), type:'forwarded', comment: selectedModalMsg.comment}],
                      lastUpdatedAt: new Date().toISOString()}
-                    } else {
+
+                    } else if(selectedModalMsg.type === 'vote') {
                         
                         return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
-                                sentFrom:selectedModalMsg.from, from:"Shoya", msg: selectedModalMsg.msg,
+                                sentFrom:selectedModalMsg.from, from:"Shoya", topic: selectedModalMsg.topic,
+                                options: selectedModalMsg.options, allVotes: selectedModalMsg.allVotes,
                                 createdAt: new Date().toISOString(), type:'forwarded'}],
-                             lastUpdatedAt: new Date().toISOString()}
-                    }
+                                lastUpdatedAt: new Date().toISOString()}
+
+                    } else {
+                        
+                    return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
+                        sentFrom:selectedModalMsg.from, from:"Shoya", msg: selectedModalMsg.msg, 
+                        createdAt: new Date().toISOString(), type:'forwarded', comment: selectedModalMsg.comment}],
+                        lastUpdatedAt: new Date().toISOString()}
+                    } 
 
                 } else {
                     return chat
@@ -333,7 +347,73 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
                             
                     </Modal>
                 )
+        
+        case "edit-vote":
+            return (
             
+                <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
+                            contentLabel="Voting Modal" ariaHideApp={false}
+                            overlayClassName="voting-modal-overlay" className="voting-modal-content"
+                        >
+
+                        <div style={{position:'relative', flexDirection:'row', marginBottom:'10px'}}>
+                            
+                            <div className='topic'>
+                                <h4>What's the topic</h4>
+                                <input type='text' placeholder='topic...' value={voteTopic}
+                                    onChange={(e) => setVoteTopic(e.target.value)} required
+                                />
+                            </div>
+
+                            <br />
+                            <hr />
+
+                            <div className='voting-options-wrapper'>
+
+                                {voteOptions.map((option, index) => {
+                                    return (
+                                        <div className='voting-options'>
+                                        <label key={index}>
+                                        {index + 1}
+                                        <input type='text' placeholder={`option ${index + 1}`} value={option} required
+                                        onChange={(e) => handleVoteOptionChange(index, e.target.value)}
+                                        style={{position:'relative', left:'10px'}}
+                                        />
+                                        </label>
+                                        {voteOptions.length > 2 && (<>
+                                            <button onClick={() => alterOptions('remove', index + 1)}
+                                            style={{position:'absolute', right:'0px'}}>remove</button>
+                                        </>)}
+                                        </div>
+                                    )
+                                })}
+                                
+                                <button onClick={() => setVoteOptions([...voteOptions, ''])}>add option</button>
+                            
+                            </div>
+                            
+                            <hr/>
+
+                            <div className='voting-buttons'>
+                                <button style={{position:'absolute', left:'0px'}} 
+                                    onClick={() => setShowModal(false)}>cancel</button>
+                                
+                                <button style={{position:'absolute', right:'0px'}}
+                                    onClick={() => {
+                                        if(!voteOptions.includes('')){
+                                            setShowModal(false)
+                                            onVoteEdit(selectedModalMsg.id)
+                                        } else {
+                                            alert('options Cannot be empty')
+                                        }
+                                        }}>edit</button>
+                            </div>
+
+                        </div>
+                        <br/>
+                            
+                    </Modal>
+            )
         
         default:
             break;

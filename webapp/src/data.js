@@ -103,7 +103,7 @@ export const allChats = [
                 type:'normal'
             },
 
-            {id:4, from:"Peter",
+            {id:4, from:"Shoya",
                 topic:"Who's partying tonight?", options:["Yes", "no"],
                 allVotes:[{"Josh":1}, {"Peter":2}, {"Slick":1}, {"Fred":1}],
                 createdAt: new Date().toISOString(),
