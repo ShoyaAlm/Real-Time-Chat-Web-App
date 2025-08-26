@@ -3,7 +3,7 @@ import { people } from "./people"
 import { allChats } from "./data"
 import './css/chat.css'
 import { useEffect, useState, useContext, useRef } from "react"
-import { chatsContext, showChatContext, pinnedMessagesContext, postCommentsContext } from "./chats"
+import { chatsContext, showChatContext, pinnedMessagesContext, postCommentsContext, searchTermsContext } from "./chats"
 
 import {OptionsModal, AttachedFileModal} from './modal'
 import { UserInfo, GroupInfo, ChannelInfo } from "./chat-info"
@@ -177,6 +177,15 @@ const Chat = ({name}) => {
         updatedMessages(newMessages)
     }
 
+
+    // ##########################################################
+    // ##########################################################
+    // ##########################################################
+    // ##########################################################
+
+    const {setSearchMod} = useContext(searchTermsContext)
+
+
     return (
     <>
             <div className="chat-container">
@@ -210,7 +219,11 @@ const Chat = ({name}) => {
                         </div>
                         
                         <div className="chat-options-container">
-                        <button onClick={() => console.log('searching')}>Search</button>
+                        <button onClick={() => {
+                                setSearchMod('terms')
+                            }}>Search</button>
+                        
+                        
                             <button className="chat-options-button" 
                             onClick={() => setShowChatOptions(!showChatOptions)}>dots</button>
                             

@@ -60,6 +60,17 @@
 }
 
 
+.searched-term-results{
+    width: 40%;
+    position: relative;
+}
+
+.searched-term{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
 
 .chatPreviews{
     position: relative;

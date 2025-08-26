@@ -11,6 +11,8 @@ export const showChatContext = createContext(null)
 export const pinnedMessagesContext = createContext(null)
 export const postCommentsContext = createContext(null)
 
+export const searchTermsContext = createContext(null)
+
 const ChatPage = () => {
     
     const [chats, setChats] = useState(allChats)
@@ -36,9 +38,6 @@ const ChatPreview = () => {
     const [showPostComments, setShowPostComments] = useState(false)
 
 
-
-    const [isLoadingUsers, setIsLoadingUsers] = useState(false)
-
     const [searchInputValue, setSearchInputValue] = useState('')
 
     const [searchedUsers, setSearchedUsers] = useState([])
@@ -47,25 +46,74 @@ const ChatPreview = () => {
 
     useEffect(() => {
 
-        const users = people.filter((person) => {
-        
-            const personLCName = person.name.toLowerCase()
-            return personLCName.startsWith(searchInputValue)
-        
-        })
-        setSearchedUsers(users)
+        if(searchMod === 'people'){
+            const users = people.filter((person) => {
+            
+                const personLCName = person.name.toLowerCase()
+                return personLCName.startsWith(searchInputValue)
+            
+            })
+            setSearchedUsers(users)
+        }
         
     }, [searchInputValue])
+
+    useEffect(() => {
+
+        if(searchMod === 'terms' && user.messages && searchInputValue !== ''){
+            
+            const foundTerms = user.messages.filter((message) => {
+
+                if(message.type === 'file' || typeof message.msg === 'object'){
+                    return message.comment.includes(searchInputValue)
+                }
+                else if(message.type === 'vote' || message.topic !== undefined){
+                    return message.topic.includes(searchInputValue)                
+                }
+                else {
+                    return message.msg.includes(searchInputValue)
+                }
+
+
+
+            }).map((message) => {
+                
+                if(message.type === 'file' || typeof message.msg === 'object'){
+                    return {id: message.id, from: message.from, msg: message.msg, createdAt: message.createdAt, 
+                        type: message.type}
+                }
+                else if(message.type === 'vote' || message.topic !== undefined){
+                    return {id: message.id, from: message.from, topic: message.topic, options:message.options,
+                        allVotes: message.allVotes, createdAt: message.createdAt, type: message.type}                
+                }
+                else {
+                    return {id: message.id, from: message.from, msg: message.msg, createdAt: message.createdAt, 
+                        type: message.type}
+                }
+            })
+            setFilteredResults(foundTerms)
+        } else {
+            setFilteredResults([])
+        }
+
+
+    }, [searchInputValue, user])
     
     const {chats} = useContext(chatsContext)
 
-    return (
+    const [searchMod, setSearchMod] = useState('')
 
+    const [filteredResults, setFilteredResults] = useState([])
+    
+
+
+    return (
 
         <showChatContext.Provider value={{showChat, setShowChat}}>
             <pinnedMessagesContext.Provider value={{showPinnedMessages, setShowPinnedMessages}}>
                 <postCommentsContext.Provider value={{showPostComments, setShowPostComments}}>
-            
+                    <searchTermsContext.Provider value={{filteredResults, setFilteredResults, setSearchMod}}>
+
         <div className="front-end" style={{display:'flex', flexDirection:'row'}}>
             
             <div className="left-side-container" style={{backgroundColor:'rgba(59, 110, 148, 0.89)', width:'40%',
@@ -75,14 +123,15 @@ const ChatPreview = () => {
                 
                 <input type="text" onChange={(e) => {
                         setSearchInputValue(e.target.value)
-                        setIsLoadingUsers(true)
+
+                        if(searchMod === '') setSearchMod('people')
                     
                 }} placeholder="search..." value={searchInputValue}/>
             
             {searchInputValue && (
                 <button onClick={() => {
+                    if(searchMod !== '') setSearchMod('')
                     setSearchInputValue('')
-                    setIsLoadingUsers(false)
                 }} className="clear-btn" aria-label="Clear search">
                     X
                 </button>
@@ -91,7 +140,7 @@ const ChatPreview = () => {
             </div>
 
 
-            {!isLoadingUsers || !searchInputValue ? (
+            {(!searchInputValue || searchMod === '' ) ? (
                 <>
 
             <div className="chatPreviews">
@@ -173,7 +222,7 @@ const ChatPreview = () => {
                         if(!showChat){
                             setShowChat(true)
                         }
-                        setUser(chat.name)
+                        setUser(chat)
                         }}>
                         <img alt="" src={chat.img} className="profile-img"/>
                         <div style={{position:'relative', display:'flex', flexDirection:'column', left:'20px'}}>
@@ -195,6 +244,7 @@ const ChatPreview = () => {
             ) : (
                 <>
 
+                {(searchInputValue !== '' && searchMod === 'people') && (<>
                     <div className="searched-users-container">
 
                     {searchedUsers.length !== 0 ? 
@@ -207,8 +257,7 @@ const ChatPreview = () => {
                             return (
                                 <div key={user.id} className="searched-user" onClick={() => {
                                     setShowChat(true)
-                                    setUser(user.name)
-                                    setIsLoadingUsers(false)
+                                    setUser(user)
                                     setSearchInputValue('')
                                 }}>
                                 <div style={{position:'relative', display:'flex', flexDirection:'row'}}>
@@ -244,6 +293,52 @@ const ChatPreview = () => {
 
 
                     </div>
+                </>)}
+
+
+                
+                {(searchInputValue !== '' || searchMod === 'terms') && (<>
+                    
+                    <div className="searched-term-results">
+                    
+                        <>
+                        {searchInputValue === '' ? (<>
+                            <h4 style={{textAlign: 'center', top: '50px', position: 'relative'}}>Find something</h4>
+                        </>) : (<>
+
+
+                        
+                        {filteredResults.map((result) => {
+                            return (
+
+                            <div key={result.id} className="searched-term" onClick={() => {
+                                // when clicked, we are brought into the position of that message
+                                }}>
+                                <div style={{position:'relative', display:'flex', flexDirection:'row'}}>
+                                    <h3>{result.from}</h3>
+
+                                    <div style={{position:'relative', display:'flex', flexDirection:'column', 
+                                    textAlign:'center', left:'40%'}}>
+                                    
+                                    <h4>{result.type}</h4>  
+                                    <h4>{result.msg}</h4>                                              
+                                    
+                                    
+                                    </div>
+                                    
+                                </div>
+                                
+                            </div>
+
+                            )
+                        })}
+
+                        </>)}
+                            
+                        </>
+                    
+                    </div>
+                </>)}
 
                 </>
             )}
@@ -251,7 +346,7 @@ const ChatPreview = () => {
             </div>
                 
                 <div>
-                {showChat && <ChatParent name={user} />}
+                {showChat && <ChatParent name={user.name} />}
                 </div>
 
                 {!showChat && (
@@ -262,7 +357,7 @@ const ChatPreview = () => {
                 )}
 
         </div>
-
+                        </searchTermsContext.Provider>
                     </postCommentsContext.Provider>
                 </pinnedMessagesContext.Provider>
             </showChatContext.Provider>
