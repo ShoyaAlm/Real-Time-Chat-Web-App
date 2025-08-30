@@ -1,5 +1,12 @@
 export const allChats = [
-    {id: 1, name: "Peter", type:'chat',
+    {id: 1, name: "Saved Messages", type:'chat',
+        messages:[],
+        pinnedMessages:[], // have its OWN id, plus taking in the message id that we pinned
+        bio:'',
+        img:'',
+        lastUpdatedAt: new Date().toISOString()
+    },
+    {id: 2, name: "Peter", type:'chat',
         messages:[
             {id:1, from:"Peter", 
             msg:"This was the most helpful thing i have ever read to help me finish my thesis",
@@ -26,7 +33,7 @@ export const allChats = [
         lastUpdatedAt: new Date().toISOString()
     },
 
-    {id: 2, name: "Josh", type:'chat',
+    {id: 3, name: "Josh", type:'chat',
          messages:[
                 {id:1, from:"Josh" ,
                     msg:"I think we should take the alternative way to infiltrate the detection system?",
@@ -67,7 +74,7 @@ export const allChats = [
         lastUpdatedAt: new Date().toISOString()
     },
     
-    {id: 3, name: "Maxim", type:'chat',
+    {id: 4, name: "Maxim", type:'chat',
         messages:[
             {id:1, from:"Maxim", 
                 msg:"Not to be redundant or anything, but do any of you suggest we regroup at a certain cafe?",
@@ -86,7 +93,7 @@ export const allChats = [
         lastUpdatedAt: new Date().toISOString()
     },
 
-    {id: 4, name: "Group 1", type:'group',
+    {id: 5, name: "Group 1", type:'group',
         messages:[
             {id:1, from:"Maxim",
                 msg:"Hi everyone to this wonderful GroupChat!", createdAt: new Date().toISOString(),
@@ -132,7 +139,7 @@ export const allChats = [
 
     },
 
-    {id: 5, name: "Hacker News", type: 'channel', admins:["Josh", "Shoya"],
+    {id: 6, name: "Hacker News", type: 'channel', admins:["Josh", "Shoya"],
         messages:[{id:1, msg:"Hi everyone",
                 createdAt: new Date().toISOString(), type:'normal', from: "Alex",
                 msgComments:[{id:1, from:"Shoya", msg:"It begins...", createdAt: new Date().toISOString(),type:'normal'}, 

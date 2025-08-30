@@ -1,3 +1,136 @@
+.navbar-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(16, 16, 16, 0.557);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-modal-content {
+  position: absolute;
+  height: 100%;
+  top: 50% !important;
+  left: -1.5% !important;
+  right: auto !important;
+  bottom: auto !important;
+  margin-right: -50% !important;
+  transform: translateX(-100%) translateY(-50%) !important;
+  background-color: rgba(59, 110, 148, 0.95);
+  border-radius: 8px;
+  width: 16%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  transition: transform 0.3s ease-out;
+  z-index: 1001;
+}
+
+.navbar-modal-content.ReactModal__Content--after-open {
+  transform: translateX(8%) translateY(-50%) !important;
+}
+
+.navbar-modal-content.ReactModal__Content--before-close {
+  transform: translateX(-100%) translateY(-50%) !important;
+}
+
+.navbar-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  color: '#fff'
+}
+
+.navbar-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  width: 30px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.navbar-icon span {
+  display: block;
+  width: 25px;
+  height: 4px;
+  background-color: #fff;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.navbar-icon:hover span {
+  background-color: #00aaffc6;
+}
+
+
+.navbar-close-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+}
+
+.navbar-profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+  top: 50px;
+}
+
+.navbar-profile-info img {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+  display: block;
+}
+
+.navbar-profile-info div {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.navbar-options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 200px;
+  gap: 20px;
+}
+
+.navbar-options button {
+  padding: 10px 20px;
+  background-color: #436087;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.navbar-options button:hover {
+  background-color: #35567a;
+}
+
+
+
+
+
 
 
 .searchbar {

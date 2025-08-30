@@ -4,6 +4,9 @@ import './css/chat.css'
 import ChatParent from "./chat";
 import { useEffect, useState, createContext, useContext } from "react";
 
+import Modal from 'react-modal'
+
+
 import { people } from "./people";
 
 export const chatsContext = createContext(null)
@@ -106,6 +109,8 @@ const ChatPreview = () => {
     const [filteredResults, setFilteredResults] = useState([])
     
 
+    const [showcaseNavbar, setShowcaseNavbar] = useState(false)
+
 
     return (
 
@@ -116,7 +121,26 @@ const ChatPreview = () => {
 
         <div className="front-end" style={{display:'flex', flexDirection:'row'}}>
             
-            <div className="left-side-container" style={{backgroundColor:'rgba(59, 110, 148, 0.89)', width:'40%',
+        {/* Navbar code here */}
+
+        {showcaseNavbar && <NavbarContent showcaseNavbar={showcaseNavbar} setShowcaseNavbar={setShowcaseNavbar} />}
+        
+        
+        {/* when opened, showcase options such as 'my-profile', 'new group or channel', 'saved-messages' */}
+        <div className="navbar-container" style={{width:'3%', backgroundColor:'#041547c2'}}>
+            <div onClick={() => setShowcaseNavbar(true)}>
+                <p className="navbar-icon" style={{width:'2%',position: 'relative', left: '20px', top: '0px'}}>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </p>
+            </div>
+        </div>
+
+
+
+
+            <div className="left-side-container" style={{backgroundColor:'rgba(59, 110, 148, 0.89)', width:'37%',
             height:'100vh'}}>
 
             <div className="searchbar">
@@ -229,8 +253,14 @@ const ChatPreview = () => {
                             <h3 className="name">{chat.name}</h3>
                             
                             <h5 className="chat-msg">
-                            {chat.type === 'channel' ? (<></>) : (<>{lastMessageOrigin}: </>)}
-                            {previewLastMessage}</h5>
+                            {chat.type === 'channel' ? (<>{lastMessageOrigin}: {previewLastMessage}</>) : (<>
+                            {lastMessageOrigin ? (<>{lastMessageOrigin}: {previewLastMessage}</>) 
+                            : (<>{previewLastMessage}</>)}
+                            </>
+                            
+                            )}
+                            </h5>
+
                         </div>
                     </div>
                     </div>
@@ -365,6 +395,55 @@ const ChatPreview = () => {
 
 
 }
+
+
+const NavbarContent = ({showcaseNavbar,setShowcaseNavbar}) => {
+
+    // receive the current user's info after handling the backend(verifying the token, receiving user's info)
+    return (
+
+    <Modal isOpen={showcaseNavbar} onRequestClose={() => setShowcaseNavbar(false)}
+            contentLabel="Navbar Modal" ariaHideApp={false} overlayClassName="navbar-modal-overlay" 
+            className="navbar-modal-content">
+
+        <div className="navbar-content" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', 
+        height: '100%', color: '#fff',width:'100%'}}>
+
+        <button onClick={() => setShowcaseNavbar(false)} style={{background: 'none', border: 'none', color: '#fff',
+          fontSize: '20px', position: 'absolute', top: '10px', right: '10px', cursor: 'pointer'}}
+          className="navbar-close-btn">X</button>
+
+            <div className="navbar-profile-info"> 
+                 <img src="https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg" 
+                 alt="User" style={{ width: '75px', height: '75px',borderRadius:'50%',marginRight:'10px',
+                 objectFit: 'cover', display: 'block'}}/> 
+                 <div style={{position:'relative', display:'flex', flexDirection:'row', gap:'20px'}}>
+                    <h4>Shoya</h4> {/* user's name */}
+                    <h5>@shoya_alm</h5>{/* username */}
+                 </div>
+            </div>
+
+            
+            <div className="navbar-options">
+                <button onClick={() => console.log('Edit profile modal')}>
+                My Profile</button> {/* Modal to modify profile details */}
+                
+                <button>New Group</button> {/* Modal to make a new group */}
+                <button>New Channel</button> {/* Modal to make a new channel */}
+                <button>Saved Messages</button> {/* get to the saved messages chat */}
+            </div>
+
+        </div>
+
+                </Modal>
+
+    )
+
+
+}
+
+
+
 
 
 export default ChatPage
