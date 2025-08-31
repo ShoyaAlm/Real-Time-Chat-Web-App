@@ -80,6 +80,48 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
         setSelectedModalMsg(null)
         setShowModal(false)
     }
+
+
+    const createGroup = (groupName, bio) => {
+        setShowModal(false)
+        setChats([...chats,{id: chats.length + 1, name: groupName, type:'group',messages:[],
+        users:[{id:1, name:"Shoya", type:'admin', 
+            img:'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg'},
+        ],
+        admins:["Shoya"],
+        pinnedMessages:[], bio:bio,
+            img: 'https://wallpapers.com/images/hd/aesthetic-computer-4k-c9qdhe02pr84wh3a.jpg',
+            lastUpdatedAt: new Date().toISOString()
+
+    }])
+
+    }
+
+    const createChannel = (channelName, bio) => {
+        setShowModal(false)
+        setChats([...chats,{id: chats.length + 1, name: channelName, type:'channel',
+        messages:[],
+        users:[{id:1, name:"Shoya", type:'admin', 
+            img:'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg'},
+        ],
+        admins:["Shoya"],
+        pinnedMessages:[], bio:bio,
+            img: 'https://wallpapers.com/images/hd/aesthetic-computer-4k-c9qdhe02pr84wh3a.jpg',
+            lastUpdatedAt: new Date().toISOString()
+
+    }])
+
+    }
+    
+
+
+    const [name, setName] = useState("Shoya")
+    const [username, setUsername] = useState("@shoya_alm")
+    const [bio, setBio] = useState("this is my cool little bio")
+    
+    const [groupOrChannelName, setGroupOrChannelName] = useState('')
+    const [groupOrChannelAbout, setGroupOrChannelAbout] = useState('')
+    const [channelLink, setChannelLink] = useState('')
     
     switch (modalType) {
         case 'forward':
@@ -414,6 +456,136 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
                             
                     </Modal>
             )
+
+        case "edit-profile":
+            // user's info will be received by the token in the browser's local storage
+            return (
+            <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
+                    contentLabel="Edit Profile Modal" ariaHideApp={false} 
+                    overlayClassName="edit-profile-modal-overlay" className="edit-profile-modal-content">
+
+                    <div style={{position:'relative', display:'flex', flexDirection:'column', alignItems:'center'}}>
+
+                    <h3 style={{textAlign:'center'}}>You are</h3>
+
+                    <img src='https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg' 
+                        style={{  width: '150px',height: '150px',borderRadius: '50%',objectFit: 'cover',flexShrink: 0}}
+                    /> 
+                    {/* add a button, which represents a camera emoji, and when clicked, we choose a new image */}
+
+                        {/* for this part, i'll be adding a backend 'patch' functionality for updating user info */}
+                        <div style={{gap:'30px', height:'100px', display:'flex', 
+                                    flexDirection:'column', marginTop:'20px'}}>
+                            <input value={name} onChange={(e) => setName(e.target.value)} />
+                            <input value={username} onChange={(e) => setUsername(e.target.value)} />
+                            <input value={bio} onChange={(e) => setBio(e.target.value)} />
+                        </div> 
+                    </div>
+
+                    <div style={{marginTop:'40px', display:'flex', flexDirection:'row'}}>
+                    <button onClick={() => setShowModal(false)}>close</button>
+                    <button style={{position:'absolute', right:'15px'}}>save</button>
+                    </div>
+                </Modal>
+
+            )
+
+        case "create-group":
+            return (
+
+                <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
+                    contentLabel="Create Group Modal" ariaHideApp={false} overlayClassName="create-group-modal-overlay"
+                    className="create-group-modal-content">
+
+                    <div style={{position:'relative', alignItems:'center', display:'flex', flexDirection:'column'}}>
+                        <h4>Let's make a new group!</h4>
+
+                        <span>Upload an image</span>
+                        <img src='https://wallpapers.com/images/hd/aesthetic-computer-4k-c9qdhe02pr84wh3a.jpg' 
+                        alt='group pic' style={{width: '150px', height: '150px', borderRadius: '50%',marginRight: '10px',
+                        objectFit: 'cover', display: 'block'}}/>
+
+                        <div style={{display:'flex', flexDirection:'column', marginTop:'40px'}}>
+                           
+                           <label>group name<input placeholder='group name...' value={groupOrChannelName}
+                            onChange={(e) => setGroupOrChannelName(e.target.value)}/></label>
+
+                           <label>about<input placeholder='about...' value={groupOrChannelAbout}
+                            onChange={(e) => setGroupOrChannelAbout(e.target.value)}/></label>
+                           
+                        </div>
+                        
+                        <div style={{marginTop:'40px', display:'flex', flexDirection:'row', width:'100%'}}>
+                            <button onClick={() => setShowModal(false)}>close</button>
+                            
+                            <button disabled={!groupOrChannelName || !groupOrChannelAbout}
+                            style={{position:'absolute', right:'10px',
+                            backgroundColor: (!groupOrChannelName || !groupOrChannelAbout) ? 'grey' : 'initial',
+                            cursor: (!groupOrChannelName || !groupOrChannelAbout) ? 'not-allowed' : 'pointer',
+                            }} onClick={() => createGroup(groupOrChannelName, groupOrChannelAbout)}>create</button> 
+                        </div>
+                    </div>
+                </Modal>
+            )
+        
+        case "group-invite-link":
+            return (
+
+                <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
+                    contentLabel="Group Invite Link Modal" ariaHideApp={false} 
+                    overlayClassName="group-invite-link-modal-overlay" className="group-invite-link-modal-content">
+
+                
+                </Modal>
+
+            )
+
+        
+        case "create-channel":
+            return (
+
+                <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
+                    contentLabel="Create Channel Modal" ariaHideApp={false} overlayClassName="create-channel-modal-overlay"
+                    className="create-channel-modal-content">
+
+                    <div style={{position:'relative', alignItems:'center', display:'flex', flexDirection:'column'}}>
+                        <h4>Let's make a new channel!</h4>
+
+                        <span>Upload an image</span>
+                        <img src='https://wallpapers.com/images/hd/aesthetic-computer-4k-c9qdhe02pr84wh3a.jpg' 
+                        alt='group pic' style={{width: '150px', height: '150px', borderRadius: '50%',marginRight: '10px',
+                        objectFit: 'cover', display: 'block'}}/>
+
+                        <div style={{display:'flex', flexDirection:'column', marginTop:'40px'}}>
+                           
+                           <label>channel name<input placeholder='channel name...' value={groupOrChannelName}
+                            onChange={(e) => setGroupOrChannelName(e.target.value)}/></label>
+
+                           <label>channel name: @<input placeholder='channel link...' value={channelLink}
+                            onChange={(e) => setChannelLink(e.target.value)}/></label>
+
+                           <label>about<input placeholder='about...' value={groupOrChannelAbout}
+                            onChange={(e) => setGroupOrChannelAbout(e.target.value)}/></label>
+                           
+                        </div>
+                        
+                        <div style={{marginTop:'40px', display:'flex', flexDirection:'row', width:'100%'}}>
+                            <button onClick={() => setShowModal(false)}>close</button>
+                            
+                            <button disabled={!groupOrChannelName || !groupOrChannelAbout}
+                            style={{position:'absolute', right:'10px', backgroundColor: 
+                            (!groupOrChannelName || !channelLink || !groupOrChannelAbout) ? 'grey' : 'initial',
+                            cursor: (!groupOrChannelName || !channelLink || !groupOrChannelAbout) 
+                            ? 'not-allowed' : 'pointer',
+                            }} onClick={() => createChannel(groupOrChannelName, groupOrChannelAbout)}>create</button> 
+                        </div>
+                    </div>
+                
+                </Modal>
+
+            )
+
+
         
         default:
             break;

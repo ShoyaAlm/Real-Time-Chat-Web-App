@@ -3,7 +3,8 @@ import { people } from "./people"
 import { allChats } from "./data"
 import './css/chat.css'
 import { useEffect, useState, useContext, useRef } from "react"
-import { chatsContext, showChatContext, pinnedMessagesContext, postCommentsContext, searchTermsContext } from "./chats"
+import { chatsContext, showChatContext, pinnedMessagesContext, postCommentsContext, searchTermsContext,
+        modalContext, } from "./chats"
 
 import {OptionsModal, AttachedFileModal} from './modal'
 import { UserInfo, GroupInfo, ChannelInfo } from "./chat-info"
@@ -136,13 +137,11 @@ const Chat = ({name}) => {
 
     const [showChatOptions, setShowChatOptions] = useState(false)
 
-    const [showModal, setShowModal] = useState(false)
-    const [modalType, setModalType] = useState(null)
+    const {modalType, setModalType, showModal, setShowModal} = useContext(modalContext)
     const [selectedModalMsg, setSelectedModalMsg] = useState(null)
 
     const openModal = (type, message) => {
         if(showChatOptions) setShowChatOptions(false)
-        console.log(type, message);
         
         setModalType(type)
         setSelectedModalMsg(message)
@@ -178,10 +177,6 @@ const Chat = ({name}) => {
     }
 
 
-    // ##########################################################
-    // ##########################################################
-    // ##########################################################
-    // ##########################################################
 
     const {setSearchMod} = useContext(searchTermsContext)
 

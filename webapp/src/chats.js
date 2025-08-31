@@ -6,6 +6,7 @@ import { useEffect, useState, createContext, useContext } from "react";
 
 import Modal from 'react-modal'
 
+import { OptionsModal } from "./modal";
 
 import { people } from "./people";
 
@@ -15,6 +16,8 @@ export const pinnedMessagesContext = createContext(null)
 export const postCommentsContext = createContext(null)
 
 export const searchTermsContext = createContext(null)
+
+export const modalContext = createContext(null)
 
 const ChatPage = () => {
     
@@ -108,9 +111,11 @@ const ChatPreview = () => {
 
     const [filteredResults, setFilteredResults] = useState([])
     
+    const [modalType, setModalType] = useState(null)
+
 
     const [showcaseNavbar, setShowcaseNavbar] = useState(false)
-
+    const [showModal, setShowModal] = useState(false)
 
     return (
 
@@ -118,12 +123,15 @@ const ChatPreview = () => {
             <pinnedMessagesContext.Provider value={{showPinnedMessages, setShowPinnedMessages}}>
                 <postCommentsContext.Provider value={{showPostComments, setShowPostComments}}>
                     <searchTermsContext.Provider value={{filteredResults, setFilteredResults, setSearchMod}}>
+                        <modalContext.Provider value={{modalType, setModalType, showModal, setShowModal}}>
 
         <div className="front-end" style={{display:'flex', flexDirection:'row'}}>
             
         {/* Navbar code here */}
 
-        {showcaseNavbar && <NavbarContent showcaseNavbar={showcaseNavbar} setShowcaseNavbar={setShowcaseNavbar} />}
+        {showcaseNavbar && <NavbarContent showcaseNavbar={showcaseNavbar} setShowcaseNavbar={setShowcaseNavbar} 
+            setUser={setUser}
+        />}
         
         
         {/* when opened, showcase options such as 'my-profile', 'new group or channel', 'saved-messages' */}
@@ -387,6 +395,7 @@ const ChatPreview = () => {
                 )}
 
         </div>
+                            </modalContext.Provider>
                         </searchTermsContext.Provider>
                     </postCommentsContext.Provider>
                 </pinnedMessagesContext.Provider>
@@ -397,14 +406,24 @@ const ChatPreview = () => {
 }
 
 
-const NavbarContent = ({showcaseNavbar,setShowcaseNavbar}) => {
+const NavbarContent = ({showcaseNavbar,setShowcaseNavbar, setUser}) => {
 
+    const {modalType, setModalType, showModal, setShowModal} = useContext(modalContext)
+    const {chats} = useContext(chatsContext)
+
+    const openNavbarModal = (type) => {
+        // setShowcaseNavbar(false)
+        setShowModal(true)
+        setModalType(type)
+    }
     // receive the current user's info after handling the backend(verifying the token, receiving user's info)
     return (
 
     <Modal isOpen={showcaseNavbar} onRequestClose={() => setShowcaseNavbar(false)}
             contentLabel="Navbar Modal" ariaHideApp={false} overlayClassName="navbar-modal-overlay" 
             className="navbar-modal-content">
+
+
 
         <div className="navbar-content" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', 
         height: '100%', color: '#fff',width:'100%'}}>
@@ -418,19 +437,22 @@ const NavbarContent = ({showcaseNavbar,setShowcaseNavbar}) => {
                  alt="User" style={{ width: '75px', height: '75px',borderRadius:'50%',marginRight:'10px',
                  objectFit: 'cover', display: 'block'}}/> 
                  <div style={{position:'relative', display:'flex', flexDirection:'row', gap:'20px'}}>
-                    <h4>Shoya</h4> {/* user's name */}
-                    <h5>@shoya_alm</h5>{/* username */}
+                    <h4>Shoya</h4>
+                    <h5>@shoya_alm</h5>
                  </div>
             </div>
 
             
+            {showModal && <OptionsModal modalType={modalType} setShowModal={setShowModal} />}
             <div className="navbar-options">
-                <button onClick={() => console.log('Edit profile modal')}>
-                My Profile</button> {/* Modal to modify profile details */}
+                <button onClick={() => openNavbarModal('edit-profile')}>My Profile</button>
                 
-                <button>New Group</button> {/* Modal to make a new group */}
-                <button>New Channel</button> {/* Modal to make a new channel */}
-                <button>Saved Messages</button> {/* get to the saved messages chat */}
+                <button onClick={() => openNavbarModal('create-group')}>New Group</button>
+                <button onClick={() => openNavbarModal('create-channel')}>New Channel</button>
+                <button onClick={() => {
+                        setShowcaseNavbar(false)
+                        setUser(chats[0])
+                    }}>Saved Messages</button>
             </div>
 
         </div>
