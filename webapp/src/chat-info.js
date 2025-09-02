@@ -37,9 +37,8 @@ const UserInfo = ({chat, setShowUserInfo}) => {
 }
 
 
-const GroupInfo = ({chat, setShowGroupInfo, showUserInfo, setShowUserInfo}) => {
+const GroupInfo = ({chat, setShowGroupInfo}) => {
 
-    const [selectedUser, setSelectedUser] = useState(null)
 
     return (
         <Modal isOpen={true} onRequestClose={() => setShowGroupInfo(false)}
@@ -74,12 +73,7 @@ const GroupInfo = ({chat, setShowGroupInfo, showUserInfo, setShowUserInfo}) => {
         {chat.users.map((user, index) => {
             return (
                 <>
-                {showUserInfo && <UserInfo chat={selectedUser} setShowUserInfo={setShowUserInfo} />}
-                
-                <div key={index} style={{position:'relative', display:'flex', flexDirection:'row'}}
-                   onClick={() => {
-                    setSelectedUser(user)
-                    setShowUserInfo(true) }} >
+                <div key={index} style={{position:'relative', display:'flex', flexDirection:'row'}} >
 
                 <img src={user.img} style={{position:'absolute', left:'10px', width:'54px', height:'54px', top:'8px',
                     borderRadius:'50%', objectFit: 'cover'}} alt=""/>

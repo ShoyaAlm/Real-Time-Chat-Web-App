@@ -186,8 +186,7 @@ const Chat = ({name}) => {
             <div className="chat-container">
 
                     {showUserInfo && <UserInfo chat={user} setShowUserInfo={setShowUserInfo} />}
-                    {showGroupInfo && <GroupInfo chat={user} setShowGroupInfo={setShowGroupInfo} 
-                        showUserInfo={showUserInfo} setShowUserInfo={setShowUserInfo}/>}
+                    {showGroupInfo && <GroupInfo chat={user} setShowGroupInfo={setShowGroupInfo} />}
                     
                     {showChannelInfo && <ChannelInfo chat={user} setShowChannelInfo={setShowChannelInfo} />}
 
@@ -207,7 +206,9 @@ const Chat = ({name}) => {
                                 {user.type === 'group' ? (<><h5>{user.users.length} members</h5></>)
                                     : (<>
                                     {user.type === 'channel' ? (<>{user.users.length} subscribers</>)
-                                    : (<><h5>Last seen recently</h5></>)} </>)}
+                                    : (<>
+                                    {user.name === 'Saved Messages' ? (<></>) : (<><h5>Last seen recently</h5></>) } 
+                                    </>)} </>)}
 
                             </div>
 

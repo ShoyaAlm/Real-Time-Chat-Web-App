@@ -3,8 +3,8 @@ import Modal from 'react-modal'
 import { chatsContext } from './chats'
 import './css/modal.css'
 
-const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, onDeleteComment, 
-                       setupVote, editVote, editMessage ,leaveChat, pinMessage, modalType, setShowModal}) => {
+const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, onDeleteComment, setupVote, editVote, 
+    editMessage ,leaveChat, pinMessage, modalType, setShowModal, showcaseNavbar, setShowcaseNavbar}) => {
 
     const {chats, setChats} = useContext(chatsContext)
 
@@ -94,7 +94,7 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
             lastUpdatedAt: new Date().toISOString()
 
     }])
-
+    if(showcaseNavbar) setShowcaseNavbar(false)
     }
 
     const createChannel = (channelName, bio) => {
@@ -110,7 +110,7 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
             lastUpdatedAt: new Date().toISOString()
 
     }])
-
+    if(showcaseNavbar) setShowcaseNavbar(false)
     }
     
 

@@ -1,0 +1,130 @@
+const mongoose = require('mongoose')
+
+const MessageSchema = new mongoose.Schema({
+    
+    from:{
+        type:mongoose.Types.ObjectId,
+        ref:'User',
+        required:true
+    },
+
+    createdAt:{
+        type:Date, 
+        default: Date.now
+    },
+
+    type:{
+      type:String,
+      required:true,
+      enum:['normal', 'files', 'edited-files', 'vote', 'reply', 'edited']
+    },
+
+}, { discriminatorKey:'type'})
+
+
+const Message = mongoose.model('Message', MessageSchema)
+
+
+const TextMessageSchema = new mongoose.Schema({
+  msg:{
+    type:String,
+    maxLength:120,
+  },
+  
+  status:{
+    type:String,
+    enum:['original', 'modified'],
+    default:'original'
+  }
+})
+
+const VoteMessageSchema = new mongoose.Schema({
+  
+  topic:{
+    type:String,
+    maxLength:40,
+    minLength:5,
+    required:[true, 'Please provide the topic']
+  },
+  options:{
+    type:[String],
+    validate:{
+      validator: function(array) {
+        return array.length >= 2 && array.length <= 8
+      },
+      message:'provide a minimum of 2 or maximum of 8 options'
+    },
+    required:[true, 'Please provide options']
+  },
+  allVotes:[{
+    voter:{
+      type:mongoose.Types.ObjectId,
+      ref:'User',
+      required:true
+    },
+    selectedOption:{
+      type:Number,
+      required:true
+    }
+  }],
+  status:{
+    type:String,
+    enum:['original', 'modified'],
+    default:'original'
+  }
+})
+
+const FileMessageSchema = new mongoose.Schema({
+
+  msg:{
+    type:[Object],
+    validate:{
+      validator: function(array){
+        return array.length <= 10;
+      },
+      message:'Up to 10 files are allowed'
+    },
+  },
+  comment:{
+    type:String,
+    maxLength:100
+  },
+  status:{
+    type:String, 
+    enum:['original', 'modified'],
+    default:'original'
+  }
+
+})
+
+const ReplyMessageSchema = new mongoose.Schema({
+
+  msg:{
+    type:String,
+    maxLength:120,
+  },
+  ref:{
+    type: mongoose.Types.ObjectId,
+    ref:'Message',
+    required:true
+  },
+
+  status:{
+    type:String,
+    enum:['original', 'modified'],
+    default:'original'
+  }
+
+})
+
+
+const TextMessage = Message.discriminator( 'Normal', TextMessageSchema)
+
+const VoteMessage = Message.discriminator('Vote', VoteMessageSchema)
+
+const FileMessage = Message.discriminator('Files', FileMessageSchema)
+
+const ReplyMessage = Message.discriminator('Reply', ReplyMessageSchema)
+
+
+module.exports = { Message, TextMessage, VoteMessage, FileMessage, ReplyMessage };

@@ -261,7 +261,8 @@ const ChatPreview = () => {
                             <h3 className="name">{chat.name}</h3>
                             
                             <h5 className="chat-msg">
-                            {chat.type === 'channel' ? (<>{lastMessageOrigin}: {previewLastMessage}</>) : (<>
+                            {(chat.type === 'channel' && lastMessageOrigin) ? 
+                            (<>{lastMessageOrigin}: {previewLastMessage}</>) : (<>
                             {lastMessageOrigin ? (<>{lastMessageOrigin}: {previewLastMessage}</>) 
                             : (<>{previewLastMessage}</>)}
                             </>
@@ -443,7 +444,9 @@ const NavbarContent = ({showcaseNavbar,setShowcaseNavbar, setUser}) => {
             </div>
 
             
-            {showModal && <OptionsModal modalType={modalType} setShowModal={setShowModal} />}
+            {showModal && <OptionsModal modalType={modalType} setShowModal={setShowModal} 
+               showcaseNavbar={showcaseNavbar} setShowcaseNavbar={setShowcaseNavbar}/>}
+            
             <div className="navbar-options">
                 <button onClick={() => openNavbarModal('edit-profile')}>My Profile</button>
                 
