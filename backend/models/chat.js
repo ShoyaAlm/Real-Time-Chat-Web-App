@@ -4,22 +4,19 @@ const crypto = require('crypto')
 
 const ChatSchema = new mongoose.Schema({
 
-    name:{
-        type:String,
-        required:[true, 'Please provide the name'],
-        minLength:3,
-        maxLength:30,
-    },
+    // name:{
+
+    // },
 
     img:{
         type:String,
         default:"https://wallpaper.dog/large/20675505.jpg"
     },
     
-    messages:{
+    messages:[{
         type:mongoose.Types.ObjectId,
         ref:'Message',
-    },
+    }],
 
     pinnedMessages:[{
         type:mongoose.Types.ObjectId,
@@ -28,7 +25,8 @@ const ChatSchema = new mongoose.Schema({
 
 
     type:{
-        enum:['chat', 'group', 'channel']
+        enum:['chat', 'group', 'channel'],
+        // required:true
     },
 
     createdAt:{
@@ -46,10 +44,17 @@ const Chat = mongoose.model('Chat', ChatSchema)
 
 const GroupChatSchema = new mongoose.Schema({
 
-    users:{
+    name:{
+        type:String,
+        required:[true, 'Please provide the name'],
+        minLength:3,
+        maxLength:30,
+    },
+
+    users:[{
         type: mongoose.Types.ObjectId,
         ref:'User',
-    },
+    }],
 
     bio:{
         type:String,
@@ -65,14 +70,20 @@ const GroupChatSchema = new mongoose.Schema({
 
 })
 
-// GroupChatSchema.methods.
 
 const ChannelSchema = new mongoose.Schema({
 
-    users:{
+    name:{
+        type:String,
+        required:[true, 'Please provide the name'],
+        minLength:3,
+        maxLength:30,
+    },
+
+    users:[{
         type: mongoose.Types.ObjectId,
         ref:'User',
-    },
+    }],
     
     bio:{
         type:String,

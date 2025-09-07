@@ -15,9 +15,14 @@ const MessageSchema = new mongoose.Schema({
 
     type:{
       type:String,
-      required:true,
       enum:['normal', 'files', 'edited-files', 'vote', 'reply', 'edited']
     },
+
+    chat:{
+        type:mongoose.Types.ObjectId,
+        ref:'Chat',
+        required:true
+    }
 
 }, { discriminatorKey:'type'})
 

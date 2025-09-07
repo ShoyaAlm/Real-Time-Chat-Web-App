@@ -1,4 +1,3 @@
-const express = require('express')
 
 const getAllMessages = (req, res) => {
     // when we click on a specific chat, all the messages should appear
@@ -7,6 +6,7 @@ const getAllMessages = (req, res) => {
 }
 
 const sendMessage = (req, res) => {
+    // const {} = req.body
     // whenever this function is called, we receive the id of the chat, and add the message to it
     // then we send our text, attach files, or a vote
     res.send('sending message')
@@ -26,13 +26,13 @@ const editMessage = (req, res) => {
 
 const deleteMessage = (req, res) => {
     // remove it by its id
-    res.send('getting all messages')
+    res.send('deleting message')
 }
 
 
 const pinMessage = (req, res) => {
     // add this message with its properties to the pinnedMessages
-    res.send('getting all messages')
+    res.send('pin message')
 }
 
 

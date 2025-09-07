@@ -1,14 +1,38 @@
 const express = require('express');
-
 const app = express();
+require('dotenv').config()
+
+const connectDB = require('./db/connect')
+
+const userRouter = require('./routes/user')
+
+const chatRouter = require('./routes/chat')
+
+const messageRouter = require('./routes/message')
 
 
-const port = 8080
+app.use(express.json())
 
-app.get('/', (req, res) => {
-    res.status(200).send('We are LIVE!')
-})
+app.use('/api/v1/user', userRouter)
+app.use('/api/v1/chats', chatRouter)
+// app.use('/api/v1/chats/:id/messages', messageRouter)
 
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-})
+
+
+const port = 3000
+
+const start = async () => {
+    
+    try {
+        await connectDB(process.env.MONGO_URI)
+        app.listen(port, () => {
+            console.log(`Server running on port ${port}`);
+        })
+    
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+start();
+

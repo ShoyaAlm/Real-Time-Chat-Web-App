@@ -17,6 +17,12 @@ const UserSchema = new mongoose.Schema({
         unique:true
     },
 
+    password:{
+        type:String,
+        // required:[true, 'Please provide your password'],
+        minLength:5,
+    },
+
     img:{
         type:String,
         default:'https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg'
@@ -28,8 +34,8 @@ const UserSchema = new mongoose.Schema({
     },
 
     chats:{
-        type:mongoose.Types.ObjectId,
-        ref:'Chat',
+        type:[{type:mongoose.Types.ObjectId,ref:'Chat'}],
+        default:[]
     }
     
 
