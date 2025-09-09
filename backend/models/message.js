@@ -15,9 +15,15 @@ const MessageSchema = new mongoose.Schema({
 
     type:{
       type:String,
-      enum:['normal', 'files', 'edited-files', 'vote', 'reply', 'edited']
+      enum:['Text', 'Files', 'Edited-Files', 'Vote', 'Reply', 'Edited'],
+      required:true
     },
 
+    edited:{
+      type:Boolean,
+      default:false
+    },
+    
     chat:{
         type:mongoose.Types.ObjectId,
         ref:'Chat',
@@ -35,12 +41,6 @@ const TextMessageSchema = new mongoose.Schema({
     type:String,
     maxLength:120,
   },
-  
-  status:{
-    type:String,
-    enum:['original', 'modified'],
-    default:'original'
-  }
 })
 
 const VoteMessageSchema = new mongoose.Schema({
@@ -72,11 +72,6 @@ const VoteMessageSchema = new mongoose.Schema({
       required:true
     }
   }],
-  status:{
-    type:String,
-    enum:['original', 'modified'],
-    default:'original'
-  }
 })
 
 const FileMessageSchema = new mongoose.Schema({
@@ -94,12 +89,6 @@ const FileMessageSchema = new mongoose.Schema({
     type:String,
     maxLength:100
   },
-  status:{
-    type:String, 
-    enum:['original', 'modified'],
-    default:'original'
-  }
-
 })
 
 const ReplyMessageSchema = new mongoose.Schema({
@@ -114,16 +103,10 @@ const ReplyMessageSchema = new mongoose.Schema({
     required:true
   },
 
-  status:{
-    type:String,
-    enum:['original', 'modified'],
-    default:'original'
-  }
-
 })
 
 
-const TextMessage = Message.discriminator( 'Normal', TextMessageSchema)
+const TextMessage = Message.discriminator('Text', TextMessageSchema)
 
 const VoteMessage = Message.discriminator('Vote', VoteMessageSchema)
 

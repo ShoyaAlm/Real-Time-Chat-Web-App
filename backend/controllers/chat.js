@@ -1,5 +1,5 @@
 const User = require('../models/user')
-const {Chat, GroupChat, Channel} = require('../models/chat')
+const {Chat, NormalChat, GroupChat, Channel} = require('../models/chat')
 const {Message, TextMessage, VoteMessage, FileMessage, ReplyMessage} = require('../models/message')
 
 
@@ -10,18 +10,33 @@ const getAllChats = async (req, res) => {
         return res.status(400).json({msg:"No user ID provided"})
     }
 
-    const chats = await User.findById(userId)
-
-    if(!chats){
-        return res.status(404).json({msg:"Wrong user credentials"})
-    }
+    try {
+        const user = await User.findById(userId)
     
+        if(!user){
+            return res.status(404).json({msg:"Wrong user credentials"})
+        }
+        
+        res.status(200).json({chats: user.chats})
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({msg:error})
+    }
+}
 
-    res.status(200).json({chats: chats})
+const allChats = async (req, res) => {
+    try {
+        const chats = await Chat.find()
+        
+        res.status(200).json({chats:chats})
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({msg:error})
+    }
 }
 
 const makeChat = async (req, res) => {
-    const {userId1, userId2, message, type} = req.body
+    const {userId1, userId2, message} = req.body
 
     if(!userId1 || !userId2){
         return res.status(400).json({msg:"Please provide the id of both users"})
@@ -42,8 +57,9 @@ const makeChat = async (req, res) => {
 
 
 
-        const newChat = new Chat({
-            type:"chat",
+        const newChat = new NormalChat({
+            name:`${user1.name} ${user2.name}`,
+            users:[userId1, userId2],
             messages:[]
         })
 
@@ -86,14 +102,37 @@ const makeGroup = (req, res) => {
     res.send('creating group')
 }
 
-const makeChannel = (req, res) => {
+const makeChannel = async (req, res) => {
     res.send('creating channel')
 }
 
-const deleteChat = (req, res) => {
-    res.send('deleting chat')
+const deleteChat = async (req, res) => {
+
+    const {chatId} = req.params
+
+    if(!chatId){
+        return res.status(400).json({msg:"Chat ID required!"})
+    }
+
+    try {
+        
+        const chat = await Chat.findOneAndDelete({_id:chatId})
+
+        if(chat){
+            return res.status(404).json({msg:"Invalid chat ID"})
+        }
+
+        res.status(200).json({msg:"chat successfully deleted"})
+
+
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({msg:error})
+        
+    }
+
 }
 
 
-module.exports = {getAllChats, makeChat, makeGroup, makeChannel, deleteChat}
+module.exports = {getAllChats, allChats, makeChat, makeGroup, makeChannel, deleteChat}
 

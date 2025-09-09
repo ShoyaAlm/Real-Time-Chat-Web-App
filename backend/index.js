@@ -14,7 +14,9 @@ const messageRouter = require('./routes/message')
 app.use(express.json())
 
 app.use('/api/v1/user', userRouter)
-app.use('/api/v1/chats', chatRouter)
+// app.use('/api/v1/chats', chatRouter)
+app.use('/api/v1/chats', messageRouter)
+
 // app.use('/api/v1/chats/:id/messages', messageRouter)
 
 

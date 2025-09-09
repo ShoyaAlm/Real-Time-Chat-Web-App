@@ -2,11 +2,9 @@ const mongoose = require('mongoose')
 const crypto = require('crypto')
 
 
+
 const ChatSchema = new mongoose.Schema({
 
-    // name:{
-
-    // },
 
     img:{
         type:String,
@@ -18,6 +16,13 @@ const ChatSchema = new mongoose.Schema({
         ref:'Message',
     }],
 
+
+    users:[{
+        type: mongoose.Types.ObjectId,
+        ref:'User',
+        unique:true
+    }],
+
     pinnedMessages:[{
         type:mongoose.Types.ObjectId,
         ref:'Message'
@@ -25,8 +30,9 @@ const ChatSchema = new mongoose.Schema({
 
 
     type:{
-        enum:['chat', 'group', 'channel'],
-        // required:true
+        type:String,
+        enum:['Normal', 'Group', 'Channel'],
+        required:true
     },
 
     createdAt:{
@@ -40,7 +46,15 @@ const ChatSchema = new mongoose.Schema({
     }
 },{discriminatorKey:'type'})
 
-const Chat = mongoose.model('Chat', ChatSchema)
+
+const NormalChatSchema = new mongoose.Schema({
+
+    name:{
+        type:String,
+    },
+
+})
+
 
 const GroupChatSchema = new mongoose.Schema({
 
@@ -50,11 +64,6 @@ const GroupChatSchema = new mongoose.Schema({
         minLength:3,
         maxLength:30,
     },
-
-    users:[{
-        type: mongoose.Types.ObjectId,
-        ref:'User',
-    }],
 
     bio:{
         type:String,
@@ -80,11 +89,6 @@ const ChannelSchema = new mongoose.Schema({
         maxLength:30,
     },
 
-    users:[{
-        type: mongoose.Types.ObjectId,
-        ref:'User',
-    }],
-    
     bio:{
         type:String,
         default:'',
@@ -99,8 +103,9 @@ const ChannelSchema = new mongoose.Schema({
         unique:true
     },
 
-
 })
+
+
 
 function inviteLinkGeneration() {
     return crypto.randomBytes(8).toString('hex')
@@ -122,9 +127,10 @@ GroupChatSchema.pre('save', async function (next){
 })
 
 
-const GroupChat = Chat.discriminator('Group', GroupChatSchema)
+const Chat = mongoose.model('Chat', ChatSchema)
 
+const NormalChat = Chat.discriminator('Normal', NormalChatSchema)
+const GroupChat = Chat.discriminator('Group', GroupChatSchema)
 const Channel = Chat.discriminator('Channel', ChannelSchema)
 
-
-module.exports = { Chat, GroupChat, Channel }
+module.exports = { Chat, NormalChat, GroupChat, Channel }
