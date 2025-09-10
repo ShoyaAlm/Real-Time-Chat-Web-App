@@ -1,6 +1,8 @@
 const mongoose = require('mongoose')
 const crypto = require('crypto')
+const User = require('./user')
 
+const {Message} = require('./message')
 
 
 const ChatSchema = new mongoose.Schema({
@@ -8,7 +10,7 @@ const ChatSchema = new mongoose.Schema({
 
     img:{
         type:String,
-        default:"https://wallpaper.dog/large/20675505.jpg"
+        default:"https://www.pngkey.com/png/detail/230-2301779_best-classified-apps-default-user-profile.png"
     },
     
     messages:[{
@@ -20,7 +22,6 @@ const ChatSchema = new mongoose.Schema({
     users:[{
         type: mongoose.Types.ObjectId,
         ref:'User',
-        unique:true
     }],
 
     pinnedMessages:[{
@@ -73,14 +74,13 @@ const GroupChatSchema = new mongoose.Schema({
     
     inviteLink:{
         type:String,
-        required:[true],
         unique:true
     },
 
 })
 
 
-const ChannelSchema = new mongoose.Schema({
+const ChannelChatSchema = new mongoose.Schema({
 
     name:{
         type:String,
@@ -123,14 +123,65 @@ GroupChatSchema.pre('save', async function (next){
         }
         this.inviteLink = link
     }
-    next()
+
+    try {
+        if (this.isNew && this.users && this.users.length > 0){
+            await User.updateMany(
+                {_id: {$in: this.users}}, // checks if the _id exists $in the 'this.user'
+                {$addToSet:{ chats:this._id}} // we add a value to an array if it doesn't already exist
+            )
+        }
+
+        next()
+
+    } catch (error) {
+        next(error)
+    }
+
 })
 
+ChannelChatSchema.pre('save', async function (next){
+
+    try {
+        if(this.isNew && this.users && this.users.length >= 0){
+            await User.updateMany(
+                {_id: {$in: this.users}},
+                {$addToSet: {chats:this._id}}
+            )
+        }
+    } catch (error) {
+        next()   
+    }
+
+})
+
+
+ChatSchema.pre('findOneAndDelete', async function(next){
+
+    try {
+        const chat = await this.model.findOne(this.getFilter())
+
+        if(chat){
+            await Message.deleteMany({chat:chat._id})
+        }
+
+        await mongoose.model('User').updateMany(
+            {chats:chat._id},
+            {$pull:{chats: chat._id}}
+        )
+
+        next()
+        
+    } catch (error) {
+        next(error)
+    }
+
+})
 
 const Chat = mongoose.model('Chat', ChatSchema)
 
 const NormalChat = Chat.discriminator('Normal', NormalChatSchema)
 const GroupChat = Chat.discriminator('Group', GroupChatSchema)
-const Channel = Chat.discriminator('Channel', ChannelSchema)
+const ChannelChat = Chat.discriminator('Channel', ChannelChatSchema)
 
-module.exports = { Chat, NormalChat, GroupChat, Channel }
+module.exports = { Chat, NormalChat, GroupChat, ChannelChat }
