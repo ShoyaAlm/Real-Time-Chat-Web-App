@@ -28,6 +28,8 @@ const login = async (req, res) => {
     }
 
     const user = await User.findOne({ username:username, password:password})
+        .populate('chats', 'name')
+
     
     if(!user){
         return res.status(400).json({msg:'No such user was found'})

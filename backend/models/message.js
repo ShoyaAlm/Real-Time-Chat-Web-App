@@ -15,11 +15,16 @@ const MessageSchema = new mongoose.Schema({
 
     type:{
       type:String,
-      enum:['Text', 'Files', 'Edited-Files', 'Vote', 'Reply', 'Edited'],
+      enum:['Text', 'Files', 'Vote', 'Reply'],
       required:true
     },
 
     edited:{
+      type:Boolean,
+      default:false
+    },
+
+    forwarded:{
       type:Boolean,
       default:false
     },

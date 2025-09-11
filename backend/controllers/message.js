@@ -4,8 +4,8 @@ const {Chat, GroupChat, Channel} = require('../models/chat')
 
 
 const getAllMessages = async (req, res) => {
+    
     const {chatId} = req.params
-
 
     if(!chatId){
         return res.status(400).json({msg:"Chat ID required!"})
@@ -177,16 +177,118 @@ const deleteMessage = async (req, res) => {
 }
 
 
-const forwardMessage = (req, res) => {
-    // we have the current chat's id, and by clicking on any other chat on the modal(to forward our message)...
-    // we also save the id of the selected(destination) chats
-    res.send('forward message')
+const forwardMessage = async (req, res) => {
+
+    const {chatId} = req.params
+    const {messageId, selectedChatsId} = req.body
+
+
+    if(!messageId || !selectedChatsId){
+        return res.status(400).json({msg:"Must provide message ID and chosen chats ID"})
+    }
+
+    if(!chatId){
+        return res.status(400).json({msg:"Chat ID required!"})
+    }
+
+
+    try {
+        const chat = await Chat.findById(chatId)
+
+        if(!chat){
+            return res.status(404).json({msg:"Invalid chat ID"})
+        }
+
+        const message = await Message.findById(messageId)
+        
+        if(!message){
+            return res.status(404).json({msg:"Invalid message ID"})
+        }
+
+        selectedChatsId.map(async (chatId) => {
+            
+            const chat = await Chat.findById(chatId)
+            
+            if(!chat){
+                return res.status(404).json({msg:"Invalid chat ID"})
+            }
+
+            const newMessageData = {
+                from: message.from,
+                type: message.type,
+                forwarded: true,
+                msg: message.msg,
+                chat: chatId
+            }
+
+            const Model = Message.discriminators[message.type]
+            const newMessage = new Model(newMessageData)
+            await newMessage.save()
+
+            await Chat.findByIdAndUpdate(chatId,
+                {$push: {messages: newMessage._id}},
+                {$set: {$lastUpdatedAt: new Date()}}
+            )
+
+        })
+
+
+        res.status(201).json({msg:"message successfully forwarded"})
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:error})
+    }
 }
 
 
-const pinMessage = (req, res) => {
-    // add this message with its properties to the pinnedMessages
-    res.send('pin message')
+const pinMessage = async (req, res) => {
+
+    const {chatId} = req.params
+    const {messageId} = req.body
+
+
+    if(!messageId){
+        return res.status(400).json({msg:"Must provide message ID"})
+    }
+
+    if(!chatId){
+        return res.status(400).json({msg:"Chat ID required!"})
+    }
+
+
+    try {
+        const chat = await Chat.findById(chatId)
+
+        if(!chat){
+            return res.status(404).json({msg:"Invalid chat ID"})
+        }
+
+    
+        const message = await Message.findById(messageId)
+        
+        if(!message){
+            return res.status(404).json({msg:"Invalid message ID"})
+        }
+
+        if(!chat.pinnedMessages.includes(message._id)){
+            
+            chat.pinnedMessages.push(message)
+            
+            await chat.save()
+        } else {
+            return res.status(400).json({msg:"This message was already pinned!"})
+        }
+
+
+
+        res.status(201).json({msg:"message successfully pinned", chat:chat})
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:error})
+    }
+
 }
 
 

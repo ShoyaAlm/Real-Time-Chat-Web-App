@@ -1,9 +1,8 @@
-const User = require('../models/user')
-const {Chat, NormalChat, GroupChat, Channel} = require('../models/chat')
+const UserModel = require('../models/user')
+const {Chat, NormalChat, GroupChat, ChannelChat} = require('../models/chat')
 const {Message, TextMessage, VoteMessage, FileMessage, ReplyMessage} = require('../models/message')
 
-
-const getAllChats = async (req, res) => {
+const getUserChats = async (req, res) => {
     const {userId} = req.params
 
     if(!userId){
@@ -11,7 +10,7 @@ const getAllChats = async (req, res) => {
     }
 
     try {
-        const user = await User.findById(userId)
+        const user = await UserModel.findById(userId)
     
         if(!user){
             return res.status(404).json({msg:"Wrong user credentials"})
@@ -27,8 +26,11 @@ const getAllChats = async (req, res) => {
 const allChats = async (req, res) => {
     try {
         const chats = await Chat.find()
+            .populate('users', 'name')
+            .populate('messages')
         
-        res.status(200).json({chats:chats})
+        res.status(200).json({nb:chats.length, chats:chats})
+        
     } catch (error) {
         console.log(error);
         return res.status(400).json({msg:error})
@@ -43,8 +45,8 @@ const makeChat = async (req, res) => {
     }
 
     try {
-        const user1 = await User.findById(userId1)
-        const user2 = await User.findById(userId2)
+        const user1 = await UserModel.findById(userId1)
+        const user2 = await UserModel.findById(userId2)
 
 
         if(!user1 || !user2){
@@ -55,6 +57,17 @@ const makeChat = async (req, res) => {
             return res.status(400).json({msg:"Message cannot be empty"})
         }
 
+
+        const chatExists = await NormalChat.findOne({
+            type:'Normal',
+            users:{$all:[userId1, userId2]},
+            $expr:{ $eq: [{$size: "$users"}, 2]}
+            },
+        )
+
+        if(chatExists){
+            return res.status(400).json({msg:"Chat between 2 users already exists!", chat:chatExists})
+        }
 
 
         const newChat = new NormalChat({
@@ -98,32 +111,111 @@ const makeChat = async (req, res) => {
 
 }
 
-const makeGroup = (req, res) => {
-    res.send('creating group')
+const makeGroup = async (req, res) => {
+
+    const {userId, name, bio} = req.body
+
+    if(!userId || !name){
+        return res.status(400).json({msg:"Enter both user ID and group name!"})
+    }
+
+
+    try {
+
+        console.log('User model:', typeof UserModel);
+        
+        const user = await UserModel.findById(userId)
+
+        if(!user){
+            return res.status(404).json({msg:"User not found"})
+        }
+
+
+        const newGroup = new GroupChat({
+            name:name,
+            users:[userId],
+            messages:[],
+            bio:bio
+        })
+
+        await newGroup.save()
+
+
+        res.status(201).json({msg:"Group was successfully created", group:newGroup})
+
+    } catch (error) {
+        console.log(error);
+        return res.status(404).json({msg:error})        
+    }
+
+
 }
 
 const makeChannel = async (req, res) => {
-    res.send('creating channel')
+
+      const {userId, name, link, bio} = req.body
+
+    if(!userId || !name || !link){
+        return res.status(400).json({msg:"Enter user ID, channel name and a link"})
+    }
+
+
+    try {
+        
+        const user = await UserModel.findById(userId)
+
+        if(!user){
+            return res.status(404).json({msg:"User not found"})
+        }
+
+
+        const newChannel = new ChannelChat({
+            name:name,
+            users:[userId],
+            link:link,
+            messages:[],
+            bio:bio
+        })
+
+        await newChannel.save()
+
+        res.status(201).json({msg:"Channel was successfully created", channel: newChannel})
+
+    } catch (error) {
+        console.log(error);
+        return res.status(404).json({msg:error})        
+    }
+
 }
 
 const deleteChat = async (req, res) => {
 
     const {chatId} = req.params
+    const {userId} = req.body
 
     if(!chatId){
         return res.status(400).json({msg:"Chat ID required!"})
     }
 
+    if(!userId){
+        return res.status(401).json({msg:"Provide User ID!"})
+    }
+
     try {
         
-        const chat = await Chat.findOneAndDelete({_id:chatId})
+        const chat = await Chat.findById(chatId)
 
-        if(chat){
+        if(!chat){
             return res.status(404).json({msg:"Invalid chat ID"})
         }
 
-        res.status(200).json({msg:"chat successfully deleted"})
+        if(!chat.users.includes(userId)){
+            return res.status(401).json({msg:"Authentication failed. You are not part of the Chat to delete it"})
+        }
 
+        await Chat.findOneAndDelete({_id:chatId})
+
+        res.status(200).json({msg:"chat successfully deleted"})
 
     } catch (error) {
         console.log(error);
@@ -134,5 +226,5 @@ const deleteChat = async (req, res) => {
 }
 
 
-module.exports = {getAllChats, allChats, makeChat, makeGroup, makeChannel, deleteChat}
+module.exports = {getUserChats, allChats, makeChat, makeGroup, makeChannel, deleteChat}
 
