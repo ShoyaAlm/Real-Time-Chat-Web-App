@@ -5,11 +5,10 @@ require('dotenv').config()
 const connectDB = require('./db/connect')
 
 const userRouter = require('./routes/user')
-
 const chatRouter = require('./routes/chat')
-
 const messageRouter = require('./routes/message')
 
+const errorHandlerMiddleware = require('./middleware/error-handler')
 
 app.use(express.json())
 
@@ -19,6 +18,7 @@ app.use('/api/v1/chats', messageRouter)
 
 // app.use('/api/v1/chats/:id/messages', messageRouter)
 
+app.use(errorHandlerMiddleware)
 
 
 const port = 3000

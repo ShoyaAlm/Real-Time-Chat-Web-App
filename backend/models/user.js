@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const jwt = require('jsonwebtoken')
 
 
 const UserSchema = new mongoose.Schema({
@@ -19,7 +20,7 @@ const UserSchema = new mongoose.Schema({
 
     password:{
         type:String,
-        // required:[true, 'Please provide your password'],
+        required:[true, 'Please provide your password'],
         minLength:5,
     },
 
@@ -40,6 +41,12 @@ const UserSchema = new mongoose.Schema({
     
 
 })
+
+
+
+UserSchema.methods.generateJWT = function () {
+    return jwt.sign({userId:this._id, name:this.name}, process.env.MONGO_SECRET, {expiresIn:'14d'})
+}
 
 
 module.exports = mongoose.model('User', UserSchema)

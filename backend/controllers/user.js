@@ -1,19 +1,23 @@
 const User = require('../models/user')
 // const bcrypt = require('bcryptjs')
+const {BadRequestError, ServerError} = require('../errors/index')
 
 const register = async (req, res) => {
 
     const {name, username, password} = req.body
 
     if(!name || !username || !password) {
-       return res.status(400).json({msg:'Provide all the required values'})
+        throw new BadRequestError('Provide all the required values')
     }
 
     try {
         const newUser = await User.create(req.body)
-        res.status(201).json({user:newUser, msg:'user registered successfully'})    
+
+        const token = newUser.generateJWT()
+
+        res.status(201).json({user:newUser, msg:'user registered successfully', token:token})    
     } catch (error) {
-        res.status(500).json({msg:'Error while registering user', error: error})
+        throw new ServerError('Error while registering user')
     }
 
 }
@@ -24,7 +28,7 @@ const login = async (req, res) => {
     const {username, password} = req.body
 
     if(!username || !password){
-        return res.status(400).json({msg:'Provide both username & password to log in'})
+        throw new BadRequestError('Provide both username & password to log in')
     }
 
     const user = await User.findOne({ username:username, password:password})
@@ -32,10 +36,12 @@ const login = async (req, res) => {
 
     
     if(!user){
-        return res.status(400).json({msg:'No such user was found'})
+        throw new BadRequestError('No such user was found')
     }
 
-    res.status(200).json({msg:'successful login', user: user})
+    const token = user.generateJWT()
+
+    res.status(200).json({msg:'successful login', token:token})
 
 }
 

@@ -1,3 +1,4 @@
+const User = require('../controllers/user')
 const jwt = require('jsonwebtoken')
 
 const authenticate = async (req, res, next) => {
@@ -9,7 +10,7 @@ const authenticate = async (req, res, next) => {
     const token = header.split(' ')[1]
 
     try {
-        const payload = jwt.verify(token, 'jwtSecret')
+        const payload = jwt.verify(token, process.env.MONGO_SECRET)
         req.user = {userId:payload.userId, name:payload.name}
         next()
     } catch (error) {

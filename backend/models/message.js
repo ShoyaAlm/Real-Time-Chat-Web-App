@@ -28,6 +28,11 @@ const MessageSchema = new mongoose.Schema({
       type:Boolean,
       default:false
     },
+
+    seen:{
+      type: Boolean,
+      default:false
+    },
     
     chat:{
         type:mongoose.Types.ObjectId,
