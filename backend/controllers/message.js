@@ -47,7 +47,7 @@ const getAllMessages = async (req, res) => {
 const sendMessage = async (req, res) => {
 
     const {chatId} = req.params
-    const {userId, message} = req.body
+    const {userId, message, type, messageReplyId} = req.body
 
 
     if(!chatId){
@@ -62,19 +62,61 @@ const sendMessage = async (req, res) => {
             throw new NotFoundError('No chat was found')
         }
 
-        if(!message){
-            throw new BadRequestError('Provide a message!')
+        if(!message || !type){
+            throw new BadRequestError('Provide a message and the type!')
         }
 
         if(!chat.users.includes(userId)){
             throw new UnauthorizedError('Unauthorized access. You do not belong to this chat!')
         }
 
-        const newMessage = new TextMessage({
-            msg:message,
-            from:userId,
-            chat:chatId
-        })
+        let newMessage
+        
+        switch(type){
+            case 'Text':
+                newMessage = new TextMessage({
+                    msg:message,
+                    from:userId,
+                    chat:chatId
+                })
+                break
+
+            case 'Vote':
+                if(!message.topic || !Array.isArray(message.options) || !(message.options.length > 1)){
+                    throw new BadRequestError('Enter valid information for making a voting message')
+                }
+                newMessage = new VoteMessage({
+                    topic:message.topic,
+                    options:message.options,
+                    allVotes:message.allVotes,
+                    from:userId,
+                    chat:chatId
+                })
+                break
+
+            case 'Files':
+                newMessage = new FileMessage({
+                    msg:message.msg,
+                    comment:message.comment,
+                    from:userId,
+                    chat:chatId
+                })
+                break
+
+            case 'Reply':
+                newMessage = new ReplyMessage({
+                    msg:message,
+                    ref:messageReplyId,
+                    from:userId,
+                    chat:chatId
+                })
+                break
+
+
+            default:
+                throw new BadRequestError(`Message type (${type}) is not supported`)
+        }
+
 
         await newMessage.save()
 
