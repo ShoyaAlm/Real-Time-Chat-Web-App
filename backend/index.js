@@ -15,7 +15,7 @@ const authenticationMiddleware = require('./middleware/authentication')
 app.use(express.json())
 
 app.use('/api/v1/user', userRouter)
-app.use('/api/v1/chats', chatRouter)
+app.use('/api/v1/chats', authenticationMiddleware, chatRouter)
 app.use('/api/v1/chats/:chatId/messages', authenticationMiddleware, messageRouter)
 
 
