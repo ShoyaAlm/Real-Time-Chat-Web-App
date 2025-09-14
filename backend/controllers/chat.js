@@ -1,25 +1,26 @@
 const UserModel = require('../models/user')
 const {Chat, NormalChat, GroupChat, ChannelChat} = require('../models/chat')
 const {Message, TextMessage, VoteMessage, FileMessage, ReplyMessage} = require('../models/message')
+const {BadRequestError, NotFoundError, UnauthorizedError, ServerError} = require('../errors/index')
 
 const getUserChats = async (req, res) => {
-    const {userId} = req.params
+    const {user:{userId}} = req
 
     if(!userId){
-        return res.status(400).json({msg:"No user ID provided"})
+        throw new BadRequestError('No user ID provided')
     }
 
     try {
         const user = await UserModel.findById(userId)
     
         if(!user){
-            return res.status(404).json({msg:"Wrong user credentials"})
+            throw new NotFoundError('Wrong user credentials')
         }
         
         res.status(200).json({chats: user.chats})
     } catch (error) {
         console.log(error);
-        return res.status(400).json({msg:error})
+        throw new ServerError(error)
     }
 }
 
@@ -33,7 +34,7 @@ const allChats = async (req, res) => {
         
     } catch (error) {
         console.log(error);
-        return res.status(400).json({msg:error})
+        throw new ServerError(error)
     }
 }
 
@@ -41,7 +42,7 @@ const makeChat = async (req, res) => {
     const {userId1, userId2, message} = req.body
 
     if(!userId1 || !userId2){
-        return res.status(400).json({msg:"Please provide the id of both users"})
+        throw new BadRequestError('Please provide the id of both users')
     }
 
     try {
@@ -50,11 +51,11 @@ const makeChat = async (req, res) => {
 
 
         if(!user1 || !user2){
-            return res.status(404).json({msg:"at least 1 user id is wrong"})
+            throw new NotFoundError('Please provide valid user ID')
         }
 
         if(!message){
-            return res.status(400).json({msg:"Message cannot be empty"})
+            throw new BadRequestError('Message cannot be empty')
         }
 
 
@@ -66,7 +67,7 @@ const makeChat = async (req, res) => {
         )
 
         if(chatExists){
-            return res.status(400).json({msg:"Chat between 2 users already exists!", chat:chatExists})
+            throw new BadRequestError('Chat between 2 users already exists!')
         }
 
 
@@ -104,8 +105,7 @@ const makeChat = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        
-        return res.status(400).json({msg:"Error in creating the chat", err: error.message})
+        throw new ServerError('Error while creating the chat')
     }
 
 
@@ -127,7 +127,7 @@ const makeGroup = async (req, res) => {
         const user = await UserModel.findById(userId)
 
         if(!user){
-            return res.status(404).json({msg:"User not found"})
+            throw new BadRequestError('User not found')
         }
 
 
@@ -145,7 +145,7 @@ const makeGroup = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        return res.status(404).json({msg:error})        
+        throw new ServerError(error)        
     }
 
 
@@ -156,7 +156,7 @@ const makeChannel = async (req, res) => {
       const {userId, name, link, bio} = req.body
 
     if(!userId || !name || !link){
-        return res.status(400).json({msg:"Enter user ID, channel name and a link"})
+        throw new BadRequestError('Enter user ID, channel name and a link')
     }
 
 
@@ -165,7 +165,7 @@ const makeChannel = async (req, res) => {
         const user = await UserModel.findById(userId)
 
         if(!user){
-            return res.status(404).json({msg:"User not found"})
+            throw new NotFoundError('User not found')
         }
 
 
@@ -183,7 +183,7 @@ const makeChannel = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        return res.status(404).json({msg:error})        
+        throw new ServerError(error)       
     }
 
 }
@@ -194,11 +194,11 @@ const deleteChat = async (req, res) => {
     const {userId} = req.body
 
     if(!chatId){
-        return res.status(400).json({msg:"Chat ID required!"})
+        throw new BadRequestError('Chat ID required!')
     }
 
     if(!userId){
-        return res.status(401).json({msg:"Provide User ID!"})
+        throw new UnauthorizedError('Provide user ID!')
     }
 
     try {
@@ -206,11 +206,11 @@ const deleteChat = async (req, res) => {
         const chat = await Chat.findById(chatId)
 
         if(!chat){
-            return res.status(404).json({msg:"Invalid chat ID"})
+            throw new NotFoundError('Invalid chat ID!')
         }
 
         if(!chat.users.includes(userId)){
-            return res.status(401).json({msg:"Authentication failed. You are not part of the Chat to delete it"})
+            throw new UnauthorizedError('Authentication failed. You are not part of the Chat to delete it')
         }
 
         await Chat.findOneAndDelete({_id:chatId})
@@ -219,7 +219,7 @@ const deleteChat = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        return res.status(400).json({msg:error})
+        throw new ServerError(error)
         
     }
 

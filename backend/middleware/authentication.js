@@ -1,10 +1,10 @@
-const User = require('../controllers/user')
 const jwt = require('jsonwebtoken')
+const {UnauthorizedError} = require('../errors/index')
 
 const authenticate = async (req, res, next) => {
     const header = req.headers.authorization
     if(!header || !header.startsWith('Bearer ')){
-        return res.status(401).json({msg:"Bearer authorization is missing"})
+        throw new UnauthorizedError('Bearer authorization is missing')
     }
 
     const token = header.split(' ')[1]
@@ -14,7 +14,7 @@ const authenticate = async (req, res, next) => {
         req.user = {userId:payload.userId, name:payload.name}
         next()
     } catch (error) {
-        return res.status(400).json({msg:"Authentication failed"})
+        throw new UnauthorizedError('Authentication failed')
     }
 
 }

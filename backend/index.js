@@ -9,14 +9,15 @@ const chatRouter = require('./routes/chat')
 const messageRouter = require('./routes/message')
 
 const errorHandlerMiddleware = require('./middleware/error-handler')
+const authenticationMiddleware = require('./middleware/authentication')
+
 
 app.use(express.json())
 
 app.use('/api/v1/user', userRouter)
-// app.use('/api/v1/chats', chatRouter)
-app.use('/api/v1/chats', messageRouter)
+app.use('/api/v1/chats', chatRouter)
+app.use('/api/v1/chats/:chatId/messages', authenticationMiddleware, messageRouter)
 
-// app.use('/api/v1/chats/:id/messages', messageRouter)
 
 app.use(errorHandlerMiddleware)
 

@@ -6,8 +6,7 @@ const {BadRequestError, NotFoundError, UnauthorizedError, ServerError} = require
 
 const getAllMessages = async (req, res) => {
     
-    const {chatId} = req.params
-    const {userId} = req.body
+    const {user:{userId}, params:{chatId}} = req
 
     if(!chatId || !userId){
         throw new BadRequestError('Chat ID & userId required!')
@@ -38,7 +37,7 @@ const getAllMessages = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        return res.status(400).json({msg:error})
+        throw new ServerError(error)
     }
 
 
@@ -46,9 +45,7 @@ const getAllMessages = async (req, res) => {
 
 const sendMessage = async (req, res) => {
 
-    const {chatId} = req.params
-    const {userId, message, type, messageReplyId} = req.body
-
+    const {params:{chatId}, body:{message, type, messageReplyId}, user:{userId}} = req
 
     if(!chatId){
         throw new BadRequestError('Chat ID required!')
@@ -128,16 +125,13 @@ const sendMessage = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        return res.status(400).json({msg:error})
+        throw new ServerError(error)
     }
 }
 
 const editMessage = async (req, res) => {
 
-
-    const {chatId} = req.params
-    const {messageId, userId, userInput} = req.body
-
+    const {params:{messageId}, body:{userInput}, user:{userId}} = req
 
     if(!messageId || !userId || !userInput){
         throw new BadRequestError('Must provide message ID, user ID and an input')
@@ -172,7 +166,7 @@ const editMessage = async (req, res) => {
         res.status(200).json({msg:"message successfully updated"})
     } catch (error) {
         console.log(error);
-        return res.status(500).json({msg:error})
+        throw new ServerError(error)
     }
 
 
@@ -180,9 +174,7 @@ const editMessage = async (req, res) => {
 
 const deleteMessage = async (req, res) => {
 
-    const {chatId} = req.params
-    const {messageId, userId} = req.body
-
+    const {params:{chatId, messageId}, user:{userId}} = req
 
     if(!messageId || !userId){
         throw new BadRequestError('Must provide both message ID and user ID')
@@ -207,18 +199,20 @@ const deleteMessage = async (req, res) => {
             throw new NotFoundError('Invalid message ID')
         }
 
-        if(!!message.from._id.equals(new mongoose.Types.ObjectId(userId))){
+        if(!message.from._id.equals(new mongoose.Types.ObjectId(userId))){
             throw new UnauthorizedError('Unauthorized error. You do not have the permission to delete the message')
         }
 
-        chat.messages.splice(message._id.toString(), 1)
+        chat.messages = chat.messages.filter(id => !id.equals(message._id))
 
         await chat.save()
+
+        await Message.findByIdAndDelete(messageId)
 
         res.status(200).json({msg:"message successfully deleted"})
     } catch (error) {
         console.log(error);
-        return res.status(500).json({msg:error})
+        throw new ServerError(error)
     }
 
 }
@@ -226,9 +220,7 @@ const deleteMessage = async (req, res) => {
 
 const forwardMessage = async (req, res) => {
 
-    const {chatId} = req.params
-    const {messageId, selectedChatsId} = req.body
-
+    const {params:{chatId, messageId}, body:{selectedChatsId}} = req
 
     if(!messageId || !selectedChatsId){
         throw new BadRequestError('Must provide message ID and chosen chats ID')
@@ -283,16 +275,14 @@ const forwardMessage = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        return res.status(500).json({msg:error})
+        throw new ServerError(error)
     }
 }
 
 
 const pinMessage = async (req, res) => {
 
-    const {chatId} = req.params
-    const {messageId} = req.body
-
+    const {params:{chatId, messageId}} = req
 
     if(!messageId){
         throw new BadRequestError('Must provide message ID')
@@ -332,7 +322,7 @@ const pinMessage = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        return res.status(500).json({msg:error})
+        throw new ServerError(error)
     }
 
 }

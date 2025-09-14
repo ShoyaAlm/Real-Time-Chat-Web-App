@@ -1,6 +1,6 @@
 const User = require('../models/user')
 // const bcrypt = require('bcryptjs')
-const {BadRequestError, ServerError} = require('../errors/index')
+const {BadRequestError, ServerError, UnauthorizedError} = require('../errors/index')
 
 const register = async (req, res) => {
 
@@ -31,7 +31,8 @@ const login = async (req, res) => {
         throw new BadRequestError('Provide both username & password to log in')
     }
 
-    const user = await User.findOne({ username:username, password:password})
+
+    const user = await User.findOne({ username:username})
         .populate('chats', 'name')
 
     
@@ -39,9 +40,15 @@ const login = async (req, res) => {
         throw new BadRequestError('No such user was found')
     }
 
+    const isPasswordCorrect = await user.passwordValidation(password)
+
+    if(!isPasswordCorrect){
+        throw new UnauthorizedError('Wrong password!')
+    }
+
     const token = user.generateJWT()
 
-    res.status(200).json({msg:'successful login', token:token})
+    res.status(200).json({msg:'successful login', user:user, token:token})
 
 }
 
