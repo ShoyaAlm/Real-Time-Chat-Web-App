@@ -1,5 +1,4 @@
 const User = require('../models/user')
-// const bcrypt = require('bcryptjs')
 const {BadRequestError, ServerError, UnauthorizedError} = require('../errors/index')
 
 const register = async (req, res) => {
@@ -33,7 +32,6 @@ const login = async (req, res) => {
 
 
     const user = await User.findOne({ username:username})
-        .populate('chats', 'name')
 
     
     if(!user){

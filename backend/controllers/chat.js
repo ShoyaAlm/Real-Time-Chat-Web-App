@@ -88,7 +88,7 @@ const makeChat = async (req, res) => {
 
 
         const newChat = new NormalChat({
-            name:`${firstUser.name} ${secondUser.name}`,
+            name:[firstUser.name, secondUser.name],
             users:[userId, secondUserId],
             messages:[]
         })

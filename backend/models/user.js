@@ -51,7 +51,6 @@ UserSchema.pre('save', async function (next) {
 })
 
 UserSchema.methods.passwordValidation = async function (inputPass) {
-    if(inputPass === "12345") return true
     
     const isValid = await bcrypt.compare(inputPass, this.password)
     return isValid

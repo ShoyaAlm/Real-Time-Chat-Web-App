@@ -50,9 +50,9 @@ const ChatSchema = new mongoose.Schema({
 
 const NormalChatSchema = new mongoose.Schema({
 
-    name:{
+    name:[{
         type:String,
-    },
+    }],
 
 })
 
