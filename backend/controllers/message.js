@@ -4,6 +4,10 @@ const {Chat, GroupChat, Channel} = require('../models/chat')
 const {BadRequestError, NotFoundError, UnauthorizedError, ServerError} = require('../errors/index')
 
 
+const client = require('../utils/redisClient')
+
+
+
 const getAllMessages = async (req, res) => {
     
     const {user:{userId}, params:{chatId}} = req
@@ -14,25 +18,50 @@ const getAllMessages = async (req, res) => {
 
     try {
 
-        await Message.updateMany(
-            {chat: chatId, seen: false, from: {$ne: userId}},
-            {$set: {seen:true}}
-        )
+        const updateStart = Date.now()
+        
+        const cacheKey = `chats:${chatId}:messages`
+        
+        const cachedMessages = await client.get(cacheKey)
+
+        if(cachedMessages){
+
+            const parsedCachedMessages = JSON.parse(cachedMessages)
+
+            console.log('parsedCachedMessages', Date.now() - updateStart, 'ms')
+
+            return res.status(200).json({
+                msg:"redis output",
+                nb: parsedCachedMessages.length,
+                messages: parsedCachedMessages
+            })
+        }
+
+
 
         const chat = await Chat.findById(chatId).populate({
             path:"messages",
             populate:{
                 path:"from",
-                select:"name username"
+                select:"username"
             },
             options:{ sort: {createdAt: 1}}
-        })
+        }).lean()
         
+        console.log('Chat fetch took', Date.now() - updateStart, 'ms')
+
         if(!chat){
             throw new NotFoundError('No chat was found')
         }
 
-        res.status(200).json({nb:chat.messages.length, messages:chat.messages})
+
+                await client.set(cacheKey, JSON.stringify(chat.messages), {
+            EX: 600
+        })
+
+        console.log('client.set : ', Date.now() - updateStart, 'ms')
+
+        res.status(200).json({ nb:chat.messages.length, messages:chat.messages })
 
 
     } catch (error) {
@@ -53,19 +82,16 @@ const sendMessage = async (req, res) => {
 
     try {
     
-        const chat = await Chat.findById(chatId)
+        const chat = await Chat.findOne({_id:chatId, users:userId})
 
         if(!chat){
-            throw new NotFoundError('No chat was found')
+            throw new UnauthorizedError('Unauthorized access. You do not belong to this chat!')
         }
 
         if(!message || !type){
             throw new BadRequestError('Provide a message and the type!')
         }
 
-        if(!chat.users.includes(userId)){
-            throw new UnauthorizedError('Unauthorized access. You do not belong to this chat!')
-        }
 
         let newMessage
         
@@ -115,11 +141,28 @@ const sendMessage = async (req, res) => {
         }
 
 
+
         await newMessage.save()
 
 
-        chat.messages.push(newMessage._id)
-        await chat.save()
+        const updatedChat = await Chat.findByIdAndUpdate(
+            chatId,
+            {$push:{messages: newMessage._id}},
+            {new:true}
+        ).populate({
+            path:"messages",
+            populate:{
+                path:"from",
+                select:"name username"
+            },
+            options:{ sort: {createdAt: 1}}
+        })
+
+
+        const cacheKey = `chats:${chatId}:messages`
+        await client.set(cacheKey, JSON.stringify(updatedChat.messages), {
+            EX: 600
+        })
 
         res.status(201).json({msg:"new message created", message:newMessage})
 
@@ -193,13 +236,13 @@ const deleteMessage = async (req, res) => {
         }
 
     
-        const message = await Message.findById(messageId)
+        const message = await Message.findOne({
+            _id:messageId,
+            chat:chatId,            
+            from:userId
+        })
         
         if(!message){
-            throw new NotFoundError('Invalid message ID')
-        }
-
-        if(!message.from._id.equals(new mongoose.Types.ObjectId(userId))){
             throw new UnauthorizedError('Unauthorized error. You do not have the permission to delete the message')
         }
 
@@ -208,6 +251,17 @@ const deleteMessage = async (req, res) => {
         await chat.save()
 
         await Message.findByIdAndDelete(messageId)
+
+        const updatedChat = await Chat.findById(chatId).populate({
+            path: "messages",
+            populate: { path: "from", select: "username" },
+            options: { sort: { createdAt: 1 } }
+        })
+
+        const cacheKey = `chats:${chatId}:messages`
+        await client.set(cacheKey, JSON.stringify(updatedChat.messages), {
+            EX: 600
+        })
 
         res.status(200).json({msg:"message successfully deleted"})
     } catch (error) {
