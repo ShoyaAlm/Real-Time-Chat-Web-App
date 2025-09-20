@@ -2,6 +2,10 @@ const User = require('../models/user')
 const {Chat, NormalChat, GroupChat, ChannelChat} = require('../models/chat')
 const {Message, TextMessage, VoteMessage, FileMessage, ReplyMessage} = require('../models/message')
 const {BadRequestError, NotFoundError, UnauthorizedError, ServerError} = require('../errors/index')
+const {updateChatCache} = require('./cache')
+
+const client = require('../utils/redisClient')
+
 
 const getUserChats = async (req, res) => {
 
@@ -12,10 +16,26 @@ const getUserChats = async (req, res) => {
     }
 
     try {
+
+        const cacheKey = `chats:${userId}`
         
+        const cachedChats = await client.get(cacheKey)
+
+        if(cachedChats){
+            const parsedCachedChats = JSON.parse(cachedChats)
+            return res.status(200).json({msg:"cached chats", 
+                nb: parsedCachedChats.length,
+                messages: parsedCachedChats    
+            })
+        }
+
         const chats = await Chat.find({users:userId})
 
-        res.status(200).json({nb: chats.length, chats: chats})
+        await client.set(cacheKey, JSON.stringify(chats), {
+            EX: 600
+        })
+
+        res.status(200).json({msg:"non-cached chats", nb: chats.length, chats: chats})
     } catch (error) {
         console.log(error);
         throw new ServerError(error)
@@ -56,16 +76,15 @@ const getChat = async (req, res) => {
 
 const makeChat = async (req, res) => {
 
-    const {user:{userId}, body: {secondUserId, message} } = req
+    const {user:{userId, name}, body: {secondUserId, message} } = req
 
     if(!secondUserId){
         throw new BadRequestError('Please provide the id of the other user')
     }
 
     try {
-        const firstUser = await User.findById(userId)
+        
         const secondUser = await User.findById(secondUserId)
-
 
         if(!secondUser){
             throw new NotFoundError('Please provide valid user ID')
@@ -77,7 +96,7 @@ const makeChat = async (req, res) => {
 
         const chatExists = await NormalChat.findOne({
             type:'Normal',
-            users:{$all:[userId, secondUserId]},
+            users:{$all:[userId, secondUserId]}, 
             $expr:{ $eq: [{$size: "$users"}, 2]}
             },
         )
@@ -86,36 +105,31 @@ const makeChat = async (req, res) => {
             throw new BadRequestError('Chat between 2 users already exists!')
         }
 
-
-        const newChat = new NormalChat({
-            name:[firstUser.name, secondUser.name],
+        const newChat = await NormalChat.create({
+            name:[name, secondUser.name], // name is the current user's name
             users:[userId, secondUserId],
             messages:[]
         })
 
-        await newChat.save()
 
-        
-        const newMessage = new TextMessage({
+        const newMessage = await TextMessage.create({
             msg: message,
             from: userId,
             chat: newChat._id
         })
 
-        await newMessage.save()
+
+        await NormalChat.findByIdAndUpdate(newChat._id, {
+            $push: {messages:newMessage._id}
+        })
+
+        User.findByIdAndUpdate(secondUserId, { $push:{chats:newChat._id} })
 
 
-        newChat.messages.push(newMessage._id)
-        await newChat.save()
-
-
-        firstUser.chats.push(newChat._id)
-        secondUser.chats.push(newChat._id)
-
-
-        await firstUser.save()
-        await secondUser.save()
-        
+        await Promise.all([
+            updateChatCache(userId, newChat, 'add'),
+            updateChatCache(secondUserId, newChat, 'add')
+        ])
 
         res.status(201).json(newChat)
 
@@ -137,14 +151,15 @@ const makeGroup = async (req, res) => {
 
     try {
     
-        const newGroup = new GroupChat({
+        const newGroup = await GroupChat.create({
             name:name,
             users:[userId],
             messages:[],
             bio:bio
         })
 
-        await newGroup.save()
+        await Promise.all([updateChatCache(userId, newChannel, 'add')])
+
 
         res.status(201).json({msg:"Group was successfully created", group:newGroup})
 
@@ -166,7 +181,7 @@ const makeChannel = async (req, res) => {
 
     try {
         
-        const newChannel = new ChannelChat({
+        const newChannel = await ChannelChat.create({
             name:name,
             users:[userId],
             link:link,
@@ -174,7 +189,7 @@ const makeChannel = async (req, res) => {
             bio:bio
         })
 
-        await newChannel.save()
+        await Promise.all([updateChatCache(userId, newChannel, 'add')])
 
         res.status(201).json({msg:"Channel was successfully created", channel: newChannel})
 
@@ -204,6 +219,8 @@ const deleteChat = async (req, res) => {
         if(!chat.users.includes(userId)){
             throw new UnauthorizedError('Authentication failed. You are not part of the Chat to delete it')
         }
+
+        await Promise.all([updateChatCache(userId, chat, 'delete')])
 
         await Chat.findOneAndDelete({_id:chatId})
 

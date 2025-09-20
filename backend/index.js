@@ -24,10 +24,15 @@ app.use(errorHandlerMiddleware)
 
 const port = 3000
 
+// use this to connect to database
+// mongosh --host localhost --port 27017
+// db.users.find()  (to find all users)
+
 const start = async () => {
     
     try {
-        await connectDB(process.env.MONGO_URI)
+        // await connectDB(process.env.MONGO_URI)
+        await connectDB(process.env.LOCALDBURI)
         app.listen(port, () => {
             console.log(`Server running on port ${port}`);
         })
