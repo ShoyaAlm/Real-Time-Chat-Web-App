@@ -21,8 +21,8 @@ export const modalContext = createContext(null)
 
 const ChatPage = () => {
     
-    const [chats, setChats] = useState(allChats)
-
+    // const [chats, setChats] = useState(allChats)
+    const [chats, setChats] = useState([])
     return (
         <>
             <chatsContext.Provider value={{chats, setChats}}>
@@ -36,6 +36,7 @@ const ChatPage = () => {
 const ChatPreview = () => {
 
 
+    const baseURL = 'http://localhost:8080/api/v1'
 
     const [user, setUser] = useState('')
 
@@ -47,6 +48,13 @@ const ChatPreview = () => {
     const [searchInputValue, setSearchInputValue] = useState('')
 
     const [searchedUsers, setSearchedUsers] = useState([])
+
+
+    const [isLoadingChats, setIsLoadingChats] = useState(true)
+
+    const {chats, setChats} = useContext(chatsContext)
+
+    const [currentUser, setCurrentUser] = useState('')
 
     var lastMessageOrigin = ''
 
@@ -105,7 +113,47 @@ const ChatPreview = () => {
 
     }, [searchInputValue, user])
     
-    const {chats} = useContext(chatsContext)
+    useEffect(() => {
+
+        const fetchChats = async () => {
+            try {
+
+                const token = localStorage.getItem('token')
+
+                if(!token){
+                    throw new Error("No auth token was found")
+                }
+                
+                const response = await fetch(`${baseURL}/chats`, { 
+                    headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+                if(!response.ok){
+                    throw new Error("Fetching user chats failed")
+                }
+                
+                const chatData = await response.json()
+                console.log(chatData);
+                setCurrentUser(chatData.currentUser)
+                setChats(chatData.chats || [])
+
+            } catch (error) {
+                console.log(error);
+            } finally {
+                setIsLoadingChats(false)
+            }
+        }
+
+        fetchChats()
+    }, [])
+
+    const chatName = (users) => {
+        const secondUser = users.filter(user => user !== currentUser.name)        
+        return secondUser
+    }
+
 
     const [searchMod, setSearchMod] = useState('')
 
@@ -174,110 +222,122 @@ const ChatPreview = () => {
 
             {(!searchInputValue || searchMod === '' ) ? (
                 <>
+                {isLoadingChats ? (<>
+                    <h3>Loading users...</h3>
+                </>) : (<>
+                    <div className="chatPreviews">
 
-            <div className="chatPreviews">
+                    {chats.slice().sort((a, b) => new Date(b.lastUpdatedAt) - new Date(a.lastUpdatedAt)) 
+                    .map((chat) => {
 
-            {chats.slice().sort((a, b) => new Date(b.lastUpdatedAt) - new Date(a.lastUpdatedAt)) 
-            .map((chat) => {
+                        var lastMessage
+                        var previewLastMessage
+                        
+                    if(chat.messages.length !== 0){
+                            
+                            lastMessageOrigin = chat.messages[chat.messages.length - 1].from.name 
 
-                var lastMessage
-                var previewLastMessage
-                
-            if(chat.messages.length !== 0){
-                    
-                    lastMessageOrigin = chat.messages[chat.messages.length - 1].from 
+                            if(chat.messages[chat.messages.length - 1].type !== 'vote' 
+                                && chat.messages[chat.messages.length - 1].topic === undefined){
+                                lastMessage = chat.messages[chat.messages.length - 1].msg
+                            } else {
+                                lastMessage = chat.messages[chat.messages.length - 1].topic
+                            }
 
-                    if(chat.messages[chat.messages.length - 1].type !== 'vote' 
-                        && chat.messages[chat.messages.length - 1].topic === undefined){
-                        lastMessage = chat.messages[chat.messages.length - 1].msg
-                    } else {
-                        lastMessage = chat.messages[chat.messages.length - 1].topic
-                    }
-
-                if(chat.messages[chat.messages.length - 1].type === "files"){
-                    
-                    if(chat.messages[chat.messages.length - 1].comment !== ''){
-                        previewLastMessage = lastMessage.length == 1 ? 
-                        `${chat.messages[chat.messages.length - 1].comment} (1 file)` 
+                        if(chat.messages[chat.messages.length - 1].type === "files"){
+                            
+                            if(chat.messages[chat.messages.length - 1].comment !== ''){
+                                previewLastMessage = lastMessage.length == 1 ? 
+                                `${chat.messages[chat.messages.length - 1].comment} (1 file)` 
                                 : `${chat.messages[chat.messages.length - 1].comment} (${lastMessage.length} files)`
-                    } else {
-                        previewLastMessage = lastMessage.length == 1 ? `1 file` : `${lastMessage.length} files`
-                    }
+                            } else {
+                                previewLastMessage = lastMessage.length == 1 ? `1 file` : `${lastMessage.length} files`
+                            }
 
-                    
+                            
 
-                } else if (chat.messages[chat.messages.length - 1].type === "forwarded"
-                                && typeof chat.messages[chat.messages.length - 1].msg === "object") {
-                        
-                    if(chat.messages[chat.messages.length - 1].comment !== ''){
-                        previewLastMessage = lastMessage.length == 1 ? 
-                        `forwarded: ${chat.messages[chat.messages.length - 1].comment} (1 file)` 
-                                : `forwarded ${chat.messages[chat.messages.length - 1].comment} 
-                                (${lastMessage.length} files)`
-                    } else {
-                            previewLastMessage = lastMessage.length === 1 ? `forwarded 1 file`
-                            : `forwarded ${lastMessage.length} files`
-                    }
-                        
+                        } else if (chat.messages[chat.messages.length - 1].type === "forwarded"
+                                        && typeof chat.messages[chat.messages.length - 1].msg === "object") {
+                                
+                            if(chat.messages[chat.messages.length - 1].comment !== ''){
+                                previewLastMessage = lastMessage.length == 1 ? 
+                                `forwarded: ${chat.messages[chat.messages.length - 1].comment} (1 file)` 
+                                        : `forwarded ${chat.messages[chat.messages.length - 1].comment} 
+                                        (${lastMessage.length} files)`
+                            } else {
+                                    previewLastMessage = lastMessage.length === 1 ? `forwarded 1 file`
+                                    : `forwarded ${lastMessage.length} files`
+                            }
+                                
 
-                } else if((chat.messages[chat.messages.length - 1].type === "edited" || "edited-files")
-                        && typeof chat.messages[chat.messages.length - 1].msg === "object"){
-                        
-                        if(chat.messages[chat.messages.length - 1].comment !== ''){
-                            previewLastMessage = lastMessage.length === 1 ? 
-                        `${chat.messages[chat.messages.length - 1].comment} (1 file)` 
+                        } else if((chat.messages[chat.messages.length - 1].type === "edited" || "edited-files")
+                                && typeof chat.messages[chat.messages.length - 1].msg === "object"){
+                                
+                                if(chat.messages[chat.messages.length - 1].comment !== ''){
+                                    previewLastMessage = lastMessage.length === 1 ? 
+                                `${chat.messages[chat.messages.length - 1].comment} (1 file)` 
                                 : `${chat.messages[chat.messages.length - 1].comment} (${lastMessage.length} files)`
+                                } else {
+                                    previewLastMessage = lastMessage.length === 1 ? `1 file`
+                                    : `${lastMessage.length} files`
+                                }
+                        
+                        } else if(chat.messages[chat.messages.length - 1].type === 'vote' 
+                                    || chat.messages[chat.messages.length - 1].topic !== undefined){
+
+                            previewLastMessage = lastMessage.length > 60 ? 
+                                    lastMessage.slice(0, 60) + "..." : lastMessage;
+
                         } else {
-                            previewLastMessage = lastMessage.length === 1 ? `1 file`
-                            : `${lastMessage.length} files`
+                                previewLastMessage = lastMessage.length > 60 ? 
+                                    lastMessage.slice(0, 60) + "..." : lastMessage;
                         }
-                
-                } else if(chat.messages[chat.messages.length - 1].type === 'vote' 
-                            || chat.messages[chat.messages.length - 1].topic !== undefined){
-
-                    previewLastMessage = lastMessage.length > 60 ? 
-                            lastMessage.slice(0, 60) + "..." : lastMessage;
-
-                } else {
-                        previewLastMessage = lastMessage.length > 60 ? 
-                            lastMessage.slice(0, 60) + "..." : lastMessage;
-                }
 
 
-            } else {
-                    previewLastMessage = "(empty chat)"
-                }                
-                
-                return (
-                    <div key={chat.id}>
-                    <div className="preview" onClick={() => {
-                        if(!showChat){
-                            setShowChat(true)
-                        }
-                        setUser(chat)
-                        }}>
-                        <img alt="" src={chat.img} className="profile-img"/>
-                        <div style={{position:'relative', display:'flex', flexDirection:'column', left:'20px'}}>
-                            <h3 className="name">{chat.name}</h3>
-                            
-                            <h5 className="chat-msg">
-                            {(chat.type === 'channel' && lastMessageOrigin) ? 
-                            (<>{lastMessageOrigin}: {previewLastMessage}</>) : (<>
-                            {lastMessageOrigin ? (<>{lastMessageOrigin}: {previewLastMessage}</>) 
-                            : (<>{previewLastMessage}</>)}
-                            </>
-                            
-                            )}
-                            </h5>
+                    } else {
+                            previewLastMessage = "(empty chat)"
+                        }                
+                        
+                        return (
+                            <div key={chat.id}>
+                            <div className="preview" onClick={() => {
+                                if(!showChat){
+                                    setShowChat(true)
+                                }
+                                setUser(chat)
+                                }}>
+                                <img alt="" src={(() => {
+                                    const otherUser = chat.users.find(user => user._id !== currentUser.id)
+                                    return otherUser ? otherUser.img 
+                    : "https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg"                 
+                                })()
+                                } 
+                                
+                                className="profile-img"/>
+                                <div style={{position:'relative', display:'flex', flexDirection:'column', left:'20px'}}>
+                                    {/* <h3 className="name">{chat.name}</h3> */}
+                                    <h3 className="name">{chatName(chat.name)}</h3>
+                                    
+                                    <h5 className="chat-msg">
+                                    {(chat.type === 'channel' && lastMessageOrigin) ? 
+                                    (<>{lastMessageOrigin}: {previewLastMessage}</>) : (<>
+                                    {lastMessageOrigin ? (<>{lastMessageOrigin}: {previewLastMessage}</>) 
+                                    : (<>{previewLastMessage}</>)}
+                                    </>
+                                    
+                                    )}
+                                    </h5>
 
-                        </div>
+                                </div>
+                            </div>
+                            </div>
+                        )
+                    })}
+
+
                     </div>
-                    </div>
-                )
-            })}
+                </>)}
 
-
-            </div>
 
                 </>
             ) : (
