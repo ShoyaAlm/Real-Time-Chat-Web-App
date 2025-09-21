@@ -7,11 +7,6 @@ const {Message} = require('./message')
 
 const ChatSchema = new mongoose.Schema({
 
-
-    img:{
-        type:String,
-        default:"https://www.pngkey.com/png/detail/230-2301779_best-classified-apps-default-user-profile.png"
-    },
     
     messages:[{
         type:mongoose.Types.ObjectId,
@@ -59,6 +54,12 @@ const NormalChatSchema = new mongoose.Schema({
 
 const GroupChatSchema = new mongoose.Schema({
 
+
+    img:{
+        type:String,
+        default:"https://cdn-icons-png.flaticon.com/512/6540/6540763.png"
+    },
+    
     name:{
         type:String,
         required:[true, 'Please provide the name'],
@@ -81,6 +82,12 @@ const GroupChatSchema = new mongoose.Schema({
 
 
 const ChannelChatSchema = new mongoose.Schema({
+
+
+    img:{
+        type:String,
+        default:"https://www.pngkey.com/png/detail/230-2301779_best-classified-apps-default-user-profile.png"
+    },
 
     name:{
         type:String,

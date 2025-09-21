@@ -9,7 +9,7 @@ const client = require('../utils/redisClient')
 
 const getUserChats = async (req, res) => {
 
-    const {user:{userId}} = req
+    const {user:{userId, name}} = req
 
     if(!userId){
         throw new BadRequestError('No user ID provided')
@@ -25,17 +25,31 @@ const getUserChats = async (req, res) => {
             const parsedCachedChats = JSON.parse(cachedChats)
             return res.status(200).json({msg:"cached chats", 
                 nb: parsedCachedChats.length,
-                messages: parsedCachedChats    
+                chats: parsedCachedChats,
+                currentUser:{
+                    id:userId,
+                    name: name
+                }
             })
         }
 
         const chats = await Chat.find({users:userId})
+            .populate('users', 'name img')
+            .populate({
+                path:'messages',
+                options:{sort:{createdAt:-1}, limit:1},
+                populate:{path:'from', select:'name'}
+            })
+            
 
         await client.set(cacheKey, JSON.stringify(chats), {
             EX: 600
         })
 
-        res.status(200).json({msg:"non-cached chats", nb: chats.length, chats: chats})
+        res.status(200).json({msg:"non-cached chats", nb: chats.length, chats: chats, currentUser:{
+                    id:userId,
+                    name: name
+                }})
     } catch (error) {
         console.log(error);
         throw new ServerError(error)
@@ -123,7 +137,10 @@ const makeChat = async (req, res) => {
             $push: {messages:newMessage._id}
         })
 
-        User.findByIdAndUpdate(secondUserId, { $push:{chats:newChat._id} })
+        await Promise.all([
+            User.findByIdAndUpdate(userId, {$push:{chats:newChat._id}}),
+            User.findByIdAndUpdate(secondUserId, { $push:{chats:newChat._id} })
+        ])
 
 
         await Promise.all([
