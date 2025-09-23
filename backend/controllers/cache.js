@@ -41,8 +41,9 @@ const updateMessageCache = async (chatId, message, command) => {
                 parsedMessages = parsedMessages.map(msg => {
                 if(String(msg._id) === String(message._id)){
                     return {
-                        ...msg, //keeping all other properties(other than 'edited') 
-                        ...message //replacing the modified properties('edited') 
+                        ...msg,
+                        msg: message.msg,
+                        edited: true 
                     }
                 }
                 return msg
@@ -60,6 +61,7 @@ const updateMessageCache = async (chatId, message, command) => {
     }
 
 }
+
 
 const updatePinnedMessageCache = async (chatId, message, command) => {
     const cacheKey = `chats:${chatId}:pinnedMessages`

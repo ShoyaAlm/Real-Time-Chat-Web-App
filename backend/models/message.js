@@ -8,6 +8,12 @@ const MessageSchema = new mongoose.Schema({
         required:true
     },
 
+    origin:{
+      type:mongoose.Types.ObjectId,
+      ref:'User',
+      default:null
+    },
+
     createdAt:{
         type:Date, 
         default: Date.now

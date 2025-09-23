@@ -35,12 +35,12 @@ const getAllMessages = async (req, res) => {
 
         const chat = await Chat.findById(chatId).populate({
             path:"messages",
-            populate:{
-                path:"from",
-                select:"username"
-            },
-            options:{ sort: {createdAt: 1}}
-        }).lean()
+            populate:[
+                {path:"from",select:"name"},
+                {path:"origin", select:"name"}
+        ],
+            options:{ sort: {createdAt: 1}, limit:20}
+        })
         
 
         if(!chat){
@@ -127,9 +127,9 @@ const sendMessage = async (req, res) => {
 
         await newMessage.save()
 
+        await newMessage.populate({path:'from', select:'name'})
 
-        await Chat.findByIdAndUpdate(
-            chatId,
+        await Chat.findByIdAndUpdate(chatId,
             {$push:{messages: newMessage._id}},
             {new:true}
         ).exec()
@@ -241,10 +241,9 @@ const deleteMessage = async (req, res) => {
 
 }
 
-
 const forwardMessage = async (req, res) => {
 
-    const {params:{chatId, messageId}, body:{selectedChatsId}} = req
+    const {params:{chatId, messageId}, body:{selectedChatsId}, user:{userId}} = req
 
     if(!messageId || !selectedChatsId){
         throw new BadRequestError('Must provide message ID and chosen chats ID')
@@ -263,40 +262,55 @@ const forwardMessage = async (req, res) => {
 
         const message = await Message.findById(messageId)
         
+        console.log('forwarding msg: ', message);
+        
+
         if(!message){
             throw new NotFoundError('Invalid message ID')
         }
 
-        for (const chatId of selectedChatsId) {
+        console.log(selectedChatsId);
+        
+
+        for (const id of selectedChatsId) {
             
-            const chat = await Chat.findById(chatId)
+            const chat = await Chat.findById(id)
             
             if(!chat){
                 throw new NotFoundError('selected chat ID is invalid')
             }
 
             const newMessageData = {
-                from: message.from,
-                type: message.type,
+                from: userId,
+                origin:message.from,
                 forwarded: true,
                 msg: message.msg,
-                chat: chatId
+                chat: id
             }
 
             const Model = Message.discriminators[message.type]
             const newMessage = new Model(newMessageData)
             await newMessage.save()
 
-            await updateMessageCache(chatId, newMessage, 'add')
 
-            await Chat.findByIdAndUpdate(chatId, {
+
+
+            await newMessage.populate([
+                {path:'from', select:'name'},
+                {path:'origin',select:'name'}
+            ])
+
+            console.log('new Message: ', newMessage);
+
+            await updateMessageCache(id, newMessage, 'add')
+            
+            await Chat.findByIdAndUpdate(id, {
                 $push: {messages: newMessage._id},
                 $set: {$lastUpdatedAt: new Date()}
             })
-
-
+            
         }
-
+        
 
         res.status(201).json({msg:"message successfully forwarded"})
 
@@ -305,7 +319,6 @@ const forwardMessage = async (req, res) => {
         throw new ServerError(error)
     }
 }
-
 
 const pinMessage = async (req, res) => {
 
@@ -337,9 +350,9 @@ const pinMessage = async (req, res) => {
 
         if(!chat.pinnedMessages.includes(message._id)){
             
-            chat.pinnedMessages.push(message)
-            
-            await chat.save()
+            await Chat.findByIdAndUpdate(chatId,{
+                $push:{pinnedMessages:messageId}
+            })
             
             await updatePinnedMessageCache(chatId, message, 'add')
 
@@ -355,6 +368,8 @@ const pinMessage = async (req, res) => {
     }
 
 }
+
+
 
 
 module.exports = { getAllMessages, sendMessage,  forwardMessage, editMessage, deleteMessage, pinMessage }
