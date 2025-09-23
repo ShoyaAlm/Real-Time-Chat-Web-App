@@ -19,6 +19,8 @@ export const searchTermsContext = createContext(null)
 
 export const modalContext = createContext(null)
 
+export const userContext = createContext(null)
+
 const ChatPage = () => {
     
     // const [chats, setChats] = useState(allChats)
@@ -55,6 +57,9 @@ const ChatPreview = () => {
     const {chats, setChats} = useContext(chatsContext)
 
     const [currentUser, setCurrentUser] = useState('')
+    const [token, setToken] = useState(localStorage.getItem('token'))
+    const [chatID, setChatID] = useState('')
+
 
     var lastMessageOrigin = ''
 
@@ -118,7 +123,8 @@ const ChatPreview = () => {
         const fetchChats = async () => {
             try {
 
-                const token = localStorage.getItem('token')
+                // setToken()
+                // const token = localStorage.getItem('token')
 
                 if(!token){
                     throw new Error("No auth token was found")
@@ -172,6 +178,7 @@ const ChatPreview = () => {
                 <postCommentsContext.Provider value={{showPostComments, setShowPostComments}}>
                     <searchTermsContext.Provider value={{filteredResults, setFilteredResults, setSearchMod}}>
                         <modalContext.Provider value={{modalType, setModalType, showModal, setShowModal}}>
+                            <userContext.Provider value={{currentUser, token, chatID}}>
 
         <div className="front-end" style={{display:'flex', flexDirection:'row'}}>
             
@@ -304,6 +311,7 @@ const ChatPreview = () => {
                                 if(!showChat){
                                     setShowChat(true)
                                 }
+                                setChatID(chat._id)
                                 setUser(chat)
                                 }}>
                                 <img alt="" src={(() => {
@@ -456,6 +464,8 @@ const ChatPreview = () => {
                 )}
 
         </div>
+
+                                </userContext.Provider>
                             </modalContext.Provider>
                         </searchTermsContext.Provider>
                     </postCommentsContext.Provider>

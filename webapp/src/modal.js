@@ -3,12 +3,11 @@ import Modal from 'react-modal'
 import { chatsContext } from './chats'
 import './css/modal.css'
 
-const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, onDeleteComment, setupVote, editVote, 
-    editMessage ,leaveChat, pinMessage, modalType, setShowModal, showcaseNavbar, setShowcaseNavbar}) => {
+const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, selectedChatsId, setSelectedChatsId, sendingMessage,
+     onDeleteMessage, onDeleteComment, setupVote, editVote, editMessage ,leaveChat, pinMessage, modalType, setShowModal,
+     showcaseNavbar, setShowcaseNavbar}) => {
 
     const {chats, setChats} = useContext(chatsContext)
-
-    const [chosenChats, setChosenChats] = useState([])    
 
     const [voteTopic, setVoteTopic] = useState(selectedModalMsg?.topic || '')
     const [voteOptions, setVoteOptions] = useState( selectedModalMsg?.options || ['', ''])
@@ -39,47 +38,47 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
         setVoteOptions(updatedOptions);
     }
 
-    const forwardMessages = (selectedChats) => {
+    // const forwardMessages = (selectedChats) => {
         
-        setChats((prevChats) => {
+    //     setChats((prevChats) => {
             
-            return prevChats.map((chat) => {
+    //         return prevChats.map((chat) => {
                 
-                if(selectedChats.includes(chat.id)){
+    //             if(selectedChats.includes(chat.id)){
 
-                    if(typeof selectedModalMsg.msg === "object" && selectedModalMsg.comment !== null){
+    //                 if(typeof selectedModalMsg.msg === "object" && selectedModalMsg.comment !== null){
                     
-                    return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
-                     sentFrom:selectedModalMsg.from, from:"Shoya", msg: selectedModalMsg.msg, 
-                     createdAt: new Date().toISOString(), type:'forwarded', comment: selectedModalMsg.comment}],
-                     lastUpdatedAt: new Date().toISOString()}
+    //                 return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
+    //                  sentFrom:selectedModalMsg.from, from:"Shoya", msg: selectedModalMsg.msg, 
+    //                  createdAt: new Date().toISOString(), type:'forwarded', comment: selectedModalMsg.comment}],
+    //                  lastUpdatedAt: new Date().toISOString()}
 
-                    } else if(selectedModalMsg.type === 'vote') {
+    //                 } else if(selectedModalMsg.type === 'vote') {
                         
-                        return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
-                                sentFrom:selectedModalMsg.from, from:"Shoya", topic: selectedModalMsg.topic,
-                                options: selectedModalMsg.options, allVotes: selectedModalMsg.allVotes,
-                                createdAt: new Date().toISOString(), type:'forwarded'}],
-                                lastUpdatedAt: new Date().toISOString()}
+    //                     return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
+    //                             sentFrom:selectedModalMsg.from, from:"Shoya", topic: selectedModalMsg.topic,
+    //                             options: selectedModalMsg.options, allVotes: selectedModalMsg.allVotes,
+    //                             createdAt: new Date().toISOString(), type:'forwarded'}],
+    //                             lastUpdatedAt: new Date().toISOString()}
 
-                    } else {
+    //                 } else {
                         
-                    return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
-                        sentFrom:selectedModalMsg.from, from:"Shoya", msg: selectedModalMsg.msg, 
-                        createdAt: new Date().toISOString(), type:'forwarded', comment: selectedModalMsg.comment}],
-                        lastUpdatedAt: new Date().toISOString()}
-                    } 
+    //                 return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
+    //                     sentFrom:selectedModalMsg.from, from:"Shoya", msg: selectedModalMsg.msg, 
+    //                     createdAt: new Date().toISOString(), type:'forwarded', comment: selectedModalMsg.comment}],
+    //                     lastUpdatedAt: new Date().toISOString()}
+    //                 } 
 
-                } else {
-                    return chat
-                }
+    //             } else {
+    //                 return chat
+    //             }
 
-            }) 
-        })
+    //         }) 
+    //     })
 
-        setSelectedModalMsg(null)
-        setShowModal(false)
-    }
+    //     setSelectedModalMsg(null)
+    //     setShowModal(false)
+    // }
 
 
     const createGroup = (groupName, bio) => {
@@ -114,7 +113,6 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
     }
     
 
-
     const [name, setName] = useState("Shoya")
     const [username, setUsername] = useState("@shoya_alm")
     const [bio, setBio] = useState("this is my cool little bio")
@@ -129,8 +127,8 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
         
          <Modal isOpen={true} onRequestClose={() => setShowModal(false)}
         contentLabel="Forward Modal" ariaHideApp={false}
-        overlayClassName="forward-modal-overlay" className="forward-modal-content"
-      >
+        overlayClassName="forward-modal-overlay" className="forward-modal-content">
+
         {selectedModalMsg.type !== "files" && selectedModalMsg.type !== "edited-files" ? (
             <>
             {typeof selectedModalMsg.msg !== "object" ? (
@@ -161,8 +159,8 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
             
             {chats.map((chat) => {
 
-                const isChosen = chosenChats.includes(chat.id)
-
+                const isChosen = selectedChatsId.includes(chat._id)
+                
                 return (
                     <>
                     {chat.type !== 'channel' || chat.admin === "Shoya" ? (<>
@@ -171,15 +169,10 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
                         onClick={() => {
                             if(isChosen){
 
-                                setChosenChats(() => {
-                                    const filterChosenChats = chosenChats.filter(
-                                        (id) => id !== chat.id)
-                                    
-                                    return filterChosenChats
-                                })
+                            setSelectedChatsId(prevSelectedChatsId => prevSelectedChatsId.filter(id => id !== chat._id))
 
                             } else {
-                                setChosenChats([...chosenChats, chat.id])
+                                setSelectedChatsId(prevSelectedChatsId => [...prevSelectedChatsId, chat._id])
                             }
                             
                             }}>
@@ -211,7 +204,10 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
             <br/>
             <div className="modal-buttons" style={{position:'relative', height:'10px'}}>
         
-        {chosenChats.length !== 0 && (<button onClick={() => forwardMessages(chosenChats)}
+        {selectedChatsId.length !== 0 && (<button onClick={() => {
+            setShowModal(false)
+            sendingMessage('forward')
+            }}
             style={{position:'absolute', right:'0'}}>Confirm</button>)}
         
         <button onClick={() => setShowModal(false)} 
@@ -239,7 +235,7 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
                             <button style={{position:'absolute', right:'0px'}}
                                 onClick={() => {
                                     setShowModal(false)
-                                    onDeleteMessage(selectedModalMsg)
+                                    onDeleteMessage(selectedModalMsg._id)
                                     }}>Yes</button>
                             
                         </div>
@@ -264,7 +260,7 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, onDeleteMessage, o
                             
                             <button style={{position:'absolute', right:'0px'}}
                                 onClick={() => {
-                                    pinMessage(selectedModalMsg)
+                                    sendingMessage('pin')
                                     setShowModal(false)}}>Yes</button>
                             
                         </div>
