@@ -187,13 +187,9 @@ const Chat = ({name}) => {
         setChats(filteredChats)
     }
 
-    const setupVote = (voteTopic, voteOptions) => {
-        const newMessages = [...user.messages, {
-                id:user.messages.length + 1, from:"Shoya", topic:voteTopic, options:voteOptions, 
-                allVotes:[] ,createdAt: new Date().toISOString(), type:'vote'
-            }]
-        updatedMessages(newMessages)
-    }
+    const [voteTopic, setVoteTopic] = useState('')
+    const [voteOptions, setVoteOptions] = useState(['', ''])
+    const [selectedVoteOption,setSelectedVoteOption] = useState('')
 
     const editVote = (voteTopic, voteOptions, id) => {
         const newMessages = user.messages.map((message) => {
@@ -220,8 +216,8 @@ const Chat = ({name}) => {
 
     const [selectedChatsId, setSelectedChatsId] = useState([])
     
-    const sendingMessage = async (sendStatusType) => {
-
+    const sendingMessage = async (sendStatusType, message = null) => {
+        
         switch (sendStatusType) {
 
             case 'send':
@@ -255,7 +251,116 @@ const Chat = ({name}) => {
                 }
 
                 break;
+     
+            case 'setup-vote':
+                try {
+                    const response = await fetch(`${baseURL}/chats/${chatID}/messages`,
+                        {
+                            method:'POST',
+                            headers:{
+                                'Authorization':`Bearer ${token}`,
+                                'Content-Type':'application/json'
+                            },
+                            body: JSON.stringify({
+                                topic:voteTopic,
+                                options:voteOptions,
+                                allVotes:[],
+                                type:"Vote"
+                            })
+                        }
+                    )
 
+                    const messageData = await response.json()
+                    
+                    setVoteTopic('')
+                    setVoteOptions(['', ''])
+                    
+                    if(!response.ok){
+                        throw new Error('Error occurred while submitting the vote', messageData.message)
+                    }
+
+                    console.log('Vote has been sent', messageData);
+                    
+                } catch (error) {
+                    console.log(error);
+                } finally{
+                    
+                }
+
+                break;
+  
+            case 'send-vote':
+                
+                try {
+                    const response = await fetch(`${baseURL}/chats/${chatID}/messages/${message._id}/vote`,
+                        {
+                            method:'PATCH',
+                            headers:{
+                                'Authorization':`Bearer ${token}`,
+                                'Content-Type':'application/json'
+                            },
+                            body: JSON.stringify({
+                                selectedOption:selectedVoteOption
+                            })
+                        }
+                    )
+
+                    const messageData = await response.json()
+                    
+                    setVoteTopic('')
+                    setVoteOptions(['', ''])
+                    setSelectedVoteOption('')
+                    setSelectedModalMsg('')
+                    
+                    if(!response.ok){
+                        throw new Error('Error occurred while submitting the vote', messageData.message)
+                    }
+
+                    console.log('Vote has been sent', messageData);
+                    
+                } catch (error) {
+                    console.log(error);
+                } finally{
+                    
+                }
+
+                break;
+
+
+            case 'reply':
+                    try {
+                        const response = await fetch(`${baseURL}/chats/${chatID}/messages`,
+                            {
+                                method:'POST',
+                                headers:{
+                                    'Authorization':`Bearer ${token}`,
+                                    'Content-Type':'application/json'
+                                },
+                                body: JSON.stringify({
+                                    message:inputValue,
+                                    type:"Reply",
+                                    messageToReplyId: messageToReply._id
+                                })
+                            }
+                        )
+
+                        const messageData = await response.json()
+
+                        setSelectedModalMsg('')
+                        if(!response.ok){
+                            throw new Error('Error occurred while replying the message', messageData.message)
+                        }
+
+                        console.log('reply has been sent', messageData);
+                        
+                    } catch (error) {
+                        console.log(error);
+                    } finally{
+                        setInputValue('')
+                    }
+
+                    break;
+    
             case 'edit':
 
                 try {
@@ -302,6 +407,8 @@ const Chat = ({name}) => {
                     //         setMessageToEdit(theMessage)
                     //     }
                     // }
+
+       
 
             case 'forward':
                 try {
@@ -416,24 +523,28 @@ const Chat = ({name}) => {
 
                     <div className="user-info">
                         
-                        <div onClick={() => user.type === "chat" 
-                        ? setShowUserInfo(true) : (user.type === 'group' 
+                        <div onClick={() => user.type === "Normal" 
+                        ? setShowUserInfo(true) : (user.type === 'Group' 
                         ? setShowGroupInfo(true) : setShowChannelInfo(true))} style={{position:'relative', 
                         display:'flex', width:'90%'}}>
 
                             <img alt="" src={(() => {
+                                if(user.type === 'Normal'){
                                     const otherUser = user.users.find(user => user._id !== currentUser.id)
                                     return otherUser ? otherUser.img 
-                    : "https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg"                 
+                    : "https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg"
+                                } else {
+                                    return user.img
+                                }
                                 })()
                                 }
 
                             />
                             <div className="user">
                                 <h2>{getChatName(user.type)}</h2>
-                                {user.type === 'group' ? (<><h5>{user.users.length} members</h5></>)
+                                {user.type === 'Group' ? (<><h5>{user.users.length} members</h5></>)
                                     : (<>
-                                    {user.type === 'channel' ? (<>{user.users.length} subscribers</>)
+                                    {user.type === 'Channel' ? (<>{user.users.length} subscribers</>)
                                     : (<>
                                     {user.name === 'Saved Messages' ? (<></>) : (<><h5>Last seen recently</h5></>) } 
                                     </>)} </>)}
@@ -453,7 +564,7 @@ const Chat = ({name}) => {
                             
                             {showChatOptions && (<>
                                 <div className={`chat-options-menu ${showChatOptions ? 'show' : ''}`}>
-                                        {(user.type === 'channel' || user.type === 'group') && (
+                                        {(user.type === 'Channel' || user.type === 'Group') && (
                                             <><h5 onClick={() => openModal('setup-vote', user)}>Setup Vote</h5></>
                                         )}
                                         {chatHistory && (<><h5 style={{color:'#ae1212ff'}}
@@ -461,10 +572,11 @@ const Chat = ({name}) => {
                                         >Leave</h5></>)}
                         
                         
-                                        {showModal && <OptionsModal 
-                                        {...(modalType === 'setup-vote' ? { setupVote, selectedModalMsg } : {})}
-                                        {...(modalType === "leave-chat" ? { leaveChat, selectedModalMsg } : {})}
-                                        modalType={modalType} setShowModal={setShowModal}/>}
+                    {showModal && <OptionsModal 
+                    {...(modalType === 'setup-vote' 
+                    ? { sendingMessage, voteTopic, setVoteTopic, setVoteOptions, voteOptions, selectedModalMsg } : {})}
+                    {...(modalType === "leave-chat" ? { leaveChat, selectedModalMsg } : {})}
+                    modalType={modalType} setShowModal={setShowModal}/>}
                         
                                         
                                 </div>
@@ -511,17 +623,20 @@ const Chat = ({name}) => {
                         }
                         }}
                     >
-                            <h5 style={{marginBottom:'0px', marginTop:'10px', color:'#ffffffff'}}>
+                            <h5 style={{marginBottom:'0px', marginTop:'5px', color:'#ffffffff'}}>
                             Pinned Message #{currentLine === 0 ? `${user.pinnedMessages.length}` 
                             : `${user.pinnedMessages.length - currentLine + 1}`}</h5>
                                 
-                                <h5 style={{marginTop:'10px', color:'#ffffffff'}}>
-                                    {currentLine === 0 ? `${user.pinnedMessages[user.pinnedMessages.length - 1].phrase}`
-                                    : `${user.pinnedMessages[user.pinnedMessages.length - currentLine].phrase}`}
+                            <h6 style={{marginTop:'6px', marginBottom:'0px', color:'#d0db38ff'}}>
+                                {user.pinnedMessages[user.pinnedMessages.length - 1].from.name}
+                                </h6>
+                            <h5 style={{marginTop:'2px', marginBottom:'0px', color:'#ffffffff'}}>
+                                {currentLine === 0 ? `${user.pinnedMessages[user.pinnedMessages.length - 1].msg}`
+                                : `${user.pinnedMessages[user.pinnedMessages.length - currentLine].msg}`}
                                     </h5>
                             </div>
-                                <button style={{position:'relative', width:'60px', height:'20px', top:'20px', left:'100px'}}
-                                onClick={() => setShowPinnedMessages(true)}>Pinned Messages</button>
+                            <button style={{position:'relative', width:'60px', height:'20px', top:'20px', left:'100px'}}
+                            onClick={() => setShowPinnedMessages(true)}>Pinned Messages</button>
                             </div>
                             </>)}
                             
@@ -546,10 +661,10 @@ const Chat = ({name}) => {
                                 setSelectedPost={setSelectedPost} updatedMessages={updatedMessages} openModal={openModal}
                                 showModal={showModal} setShowModal={setShowModal} modalType={modalType} 
                                 setModalType={setModalType} selectedModalMsg={selectedModalMsg} 
-                                setSelectedModalMsg={setSelectedModalMsg} leaveChat={leaveChat} setupVote={setupVote}
+                                setSelectedModalMsg={setSelectedModalMsg} leaveChat={leaveChat}
                                 editVote={editVote} chatMessages={chatMessages} setChatMessages={setChatMessages}
                                 selectedChatsId={selectedChatsId} setSelectedChatsId={setSelectedChatsId}
-                                sendingMessage={sendingMessage}
+                                sendingMessage={sendingMessage} setSelectedVoteOption={setSelectedVoteOption}
                             />}
                         
                     </div>
@@ -605,8 +720,8 @@ const Chat = ({name}) => {
                                 </>
                             ) : (<></>)}
 
-                {!showPinnedMessages && ((user.type !== 'channel' || showPostComments === true) ||
-                (user.type === 'channel' && user.admins.includes("Shoya"))) && (<>
+                {!showPinnedMessages && ((user.type !== 'Channel' || showPostComments === true) ||
+                (user.type === 'Channel' && user.admins.includes("Shoya"))) && (<>
                 <div className="write-text">
 
                     
@@ -629,176 +744,15 @@ const Chat = ({name}) => {
                         setChatHistory={setChatHistory}
                     />}
 
-                    <button className="send" onClick={() =>
-                        sendingMessage(sendStatus)
-                        // () => 
-                    
-                    // {
-
-                    //     if(inputValue !== '' && sendStatus === 'send'){
-                            
-                    //         if(user.type !== 'channel'){
-                                
-                    //             if(chatHistory){
-
-                    //                 const newMessages = [...user.messages, 
-                    //                 {id: user.messages.length + 1, from: "Shoya", msg: inputValue,
-                    //                 createdAt: new Date().toISOString(), type:"normal"}]
-                                    
-                    //                 updatedMessages(newMessages)
-                                                                
-                    //             if(inputValue !== ''){
-                    //                 setInputValue('')
-                    //             } else if(fileInputRef.current !== null){
-                    //                 fileInputRef.current.value = null
-                    //             }
-                                
-                    //             } else {
-                    //                 setChats( prevChats => [...prevChats, {id: prevChats.length + 1,
-                    //                 name: user.name, messages: [{id: 1 ,from:"Shoya", msg: inputValue, 
-                    //                 createdAt: new Date().toISOString(), type:"normal"}],
-                    //                 img: user.img, lastUpdatedAt: new Date().toISOString()
-                    //                 }])
-
-                    //             if(inputValue !== ''){
-                    //                 setInputValue('')
-                    //             } else if(fileInputRef.current !== null){
-                    //                 fileInputRef.current.value = null
-                    //             }
-                    //                 setChatHistory(true)
-                    //             }
-                    //         } else if(user.type === 'channel'){
-                                
-                    //             // posting a comment within a channel
-                    //             if(showPostComments){
-
-                    //                 // then we add a comment to the selected post
-                    //                 selectedPost.msgComments = [...selectedPost.msgComments, 
-                    //                 { id: selectedPost.msgComments.length + 1, from: "Shoya", msg:inputValue,
-                    //                     createdAt: new Date().toISOString(), type:"normal"
-                    //                 }]
-
-                    //                 const newMessages = [...user.messages]
-                    //                 setCanShowOtherChat(false)
-                    //                 updatedMessages(newMessages)
-
-                    //             } else {
-                    //                 // We are an admin of the channel and sharing a post
-                    //                 const newMessages = [...user.messages, 
-                    //                 {id: user.messages.length + 1, msg: inputValue, 
-                    //                 createdAt: new Date().toISOString(), type:"normal", from:"Shoya", 
-                    //                 msgComments:[]}]
-
-                    //                 updatedMessages(newMessages)
-                    //             }
-                    //         }
-                        
-                    //     } else if(inputValue !== '' && sendStatus === 'edit') {
-                            
-                    //         if(user.type !== 'channel'){
-                                
-                    //         const selectedMessage = user.messages.find(
-                    //         (message) => message.id === messageToEdit.id)
-                            
-                    //         selectedMessage.msg = inputValue
-                    //         selectedMessage.type = 'edited'
-                            
-                    //         setChats( prevChats => prevChats.map((chat) => chat.name === name 
-                    //         ? {...chat, messages: chat.messages} : chat))
-
-                    //         setInputValue('')
-                    //         setSendStatus('send')
-
-                    //         }
-                    //         else if (user.type === 'channel'){ // while editing a post in a channel
-                                
-                    //             if(!showPostComments){
-                    //             const selectedMessage = user.messages.find(
-                    //             (message) => message.id === messageToEdit.id)
-                                
-                    //             selectedMessage.msg = inputValue
-                    //             selectedMessage.type = 'edited'
-                                
-                    //             setChats( prevChats => prevChats.map((chat) => chat.name === name 
-                    //             ? {...chat, messages: chat.messages} : chat))
-
-                    //             setInputValue('')
-                    //             setSendStatus('send')
-
-                    //             } else { // while editing a comment on a post 
-                    //                 const selectedComment = selectedPost.msgComments.find(
-                    //                     (comment) =>  comment.id === messageToEdit.id )
-                                    
-                    //                 selectedComment.msg = inputValue
-                    //                 selectedComment.type = 'edited'
-
-                    //                 setInputValue('')
-                    //                 setSendStatus('send')
-                                
-                    //             }
-
-                    //         }
-
-                    //         }
-                            
-                    //     else if(inputValue !== '' && sendStatus === 'reply'){
-
-                    //         if(user.type !== 'channel'){
-                    //             const selectedMessage = user.messages.find(
-                    //                 (message) => message.id === messageToReply.id)
-                                
-                    //             const newMessages = [...user.messages,
-                    //             {id:user.messages.length + 1 ,from:"Shoya", msg: inputValue,
-                    //             createdAt: new Date().toISOString(), type:"reply", ref:selectedMessage}]
-                                
-                    //             setInputValue('')
-                    //             setSendStatus('send')
-                    //             updatedMessages(newMessages)
-                    //         } else {
-
-                    //             if(!showPostComments){ // replying on channel posts
-                    //                 const selectedMessage = user.messages.find(
-                    //                 (message) => message.id === messageToReply.id)
-                                
-                    //                 const newMessages = [...user.messages,
-                    //                 {id:user.messages.length + 1 , msg: inputValue,
-                    //                 createdAt: new Date().toISOString(), type:"reply", from:"Shoya", 
-                    //                 msgComments:[], ref:selectedMessage
-                    //                 }]
-                                    
-                    //                 setInputValue('')
-                    //                 setSendStatus('send')
-                    //                 updatedMessages(newMessages)
-
-                    //             } else { // replying on a post's comment
-                    //                 const selectedComment = selectedPost.msgComments.find(
-                    //                     (comment) => comment.id === messageToReply.id
-                    //                 )
-                    //                 selectedPost.msgComments = [...selectedPost.msgComments, {
-                    //                     id:selectedPost.msgComments.length + 1, from:"Shoya", msg:inputValue,
-                    //                     createdAt: new Date().toISOString(), type:'reply', ref:selectedComment
-                    //                 }]
-
-                    //                 setInputValue('')
-                    //                 setSendStatus('send')
-
-                    //             }
-
-
-                    //         }
-                            
-                    //     }
-                        
-                    //     }
-
-                        }
+                    <button className="send" onClick={() => sendingMessage(sendStatus)}
                     >{sendStatus === 'send' && <>Send</>}
+                     {sendStatus === 'reply' && <>Reply</>}
                      {sendStatus === 'edit' && <>Edit</>}
                     </button>
                 </div>
                 </>)}
 
-                        {user.type === 'channel' && !showPostComments && !user.admins.includes("Shoya") && (<>
+                        {user.type === 'Channel' && !showPostComments && !user.admins.includes("Shoya") && (<>
                             <div style={{textAlign:'center'}}>
                                 <h3>JOIN</h3>
                             </div>
@@ -818,7 +772,8 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     setInputValue, setSendStatus, setAttachedFiles, setEditingAttachedFiles, setSelectedFileMessageID,
     setAttachedFilesComment, highlightMsgId, highlightMessage, selectedPost, setSelectedPost, openModal,
     showModal, setShowModal, modalType, setModalType, selectedModalMsg, setSelectedModalMsg, leaveChat,
-    setupVote, editVote, chatMessages, selectedChatsId, setSelectedChatsId, sendingMessage}) => {
+    editVote, chatMessages, selectedChatsId, setSelectedChatsId, sendingMessage, voteTopic, setVoteTopic,
+    voteOptions, setVoteOptions, setSelectedVoteOption }) => {
     
     const {currentUser} = useContext(userContext)
     
@@ -843,28 +798,6 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
         setSelectedModalMsg(theMessage)
     }
 
-    const pinMessage = (theMessage) => {
-
-        setChats(prevChats => prevChats.map((selectedChat) => {
-            
-            if(selectedChat.id === chat.id){
-                if(theMessage.type === 'vote' || theMessage.topic !== undefined) {
-                return {...selectedChat, pinnedMessages:[...selectedChat.pinnedMessages,
-                    {id: chat.pinnedMessages.length + 1, messageID: theMessage.id, from: theMessage.from,
-                    phrase: theMessage.topic, topic: theMessage.topic, options: theMessage.options, 
-                    allVotes: theMessage.allVotes, createdAt: theMessage.createdAt, type: theMessage.type}]}    
-                } else {
-                    return {...selectedChat, pinnedMessages:[...selectedChat.pinnedMessages,
-                        {id: chat.pinnedMessages.length + 1, messageID: theMessage.id, from: theMessage.from,
-                        phrase: theMessage.msg, createdAt: theMessage.createdAt, type: theMessage.type}]}
-                }
-            } else {
-                return selectedChat
-            }
-        
-        }))
-    }
-
     const [optionsIndex, setOptionsIndex] = useState(null)
 
     const [messageToForward, setMessageToForward] = useState(null)
@@ -877,12 +810,10 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     const [showVoteOptions, setShowVoteOptions] = useState({})
 
     const voteCounts = (message) => {
-
-        return message.options.map((_, index) => 
-            
+        return message.options.map((option, index) => 
             {
                 const optionNumber = index + 1
-                return message.allVotes.filter(vote => Object.values(vote)[0] === optionNumber).length
+                return message.allVotes.filter(vote => vote.selectedOption === optionNumber).length
             })
     }
 
@@ -893,8 +824,6 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
     return (
     <>
-
-
 
         {chatMessages && !showPinnedMessages && !showPostComments ?
         
@@ -908,10 +837,10 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                         key={index} id={`msg-${index}`}>
 
                         
-                            {chat.type === 'group' ? (<>
+                            {chat.type === 'Group' ? (<>
 
                                 {chat.users.map((user, index) => {
-                                    if(user.name == message.from){
+                                    if(user.name == message.from.name){
 
                                         return (<div key={index}> <img src={user.img} 
                                     style={{width:'36px', height:'36px', borderRadius:'50%', marginRight:'5px',
@@ -923,9 +852,10 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                             <div className="messages-received">
                             {message.ref ? (
                                 <>
-                                    <div className="reply-preview" onClick={() => highlightMessage(message.ref.id)}>
-                                    <h5 style={{fontSize:"13px"}}>{message.ref.from}</h5>
-                                        {message.ref.type === "files" || message.ref.type === "edited-files" ? (
+                                    <div className="reply-preview" onClick={() => highlightMessage(message.ref._id)}>
+                                    <h5 style={{fontSize:"13px"}}>{message.ref.from.name}</h5>
+                                        {message.ref.type === "Files" || 
+                                        (message.ref.type === "Files" && message.edited === true) ? (
                                             <>
                                                 <h5>{message.ref.msg.length > 1 ? (<>
                                                 {message.ref.msg.length} files
@@ -935,13 +865,13 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                             <>
                                             {typeof message.ref.msg !== "object" ? (
                                                 <>
-                                                {/* {message.ref.type === 'vote' ? (<>
+                                                {message.type === 'Vote' ? (<>
                                                     <h5>{message.ref.topic.slice(0, 30)}
                                                     {message.ref.topic.length > 30 ? '...' : ''}</h5>
                                                 </>) : (<>
                                                     <h5>{message.ref.msg.slice(0, 30)}
                                                     {message.ref.msg.length > 30 ? '...' : ''}</h5>
-                                                </>)} */}
+                                                </>)}
                                                 </>
                                             ) : (
                                                 <></>
@@ -953,18 +883,19 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                 </>
                             ) : (<></>)}
 
-                                {chat.type === 'group' ? (
-                                    <><h5 style={{position:'relative', textAlign:'left'}}>{message.from}</h5></>
+                                {chat.type === 'Group' ? (
+                                    <><h5 style={{position:'relative', textAlign:'left'}}>{message.from.name}</h5></>
                                 ) : (<></>)}
                                     
-                                {(message.type === 'vote'  || message.topic !== undefined) && (<>
+                                { message.type === 'Vote' && (<>
                                     <h3 style={{marginTop:'5px'}}>{message.topic}</h3>
+                                    
                                     {message.options.map((option, index) => {
                                     
-                                    const optionChecked = selectedOptions[message.id] === index + 1
-                                    const selectedOption = selectedOptions[message.id] || false 
+                                    const optionChecked = selectedOptions[message._id] === index + 1
+                                    const selectedOption = selectedOptions[message._id] || false 
 
-                                    if(message.allVotes.some(vote => Object.keys(vote).includes("Shoya"))){
+                                    if(message.allVotes.some(vote => String(vote.voter) === String(currentUser._id))){
                                         return (<>
                                         <div className="vote-message-options"
                                         style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
@@ -984,11 +915,13 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                             <input type="radio" checked={optionChecked} 
                                             onClick={() => {
                                                     if(selectedOptions[message.id] === index+1){
-                                                        setSelectedOptions(prev => ({...prev, [message.id]:null}))
-                                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
+                                                        setSelectedOptions(prev => ({...prev, [message._id]:null}))
+                                                        setShowVoteOptions(prev => ({...prev, [message._id]:false}))
+                                                        setSelectedVoteOption('')
                                                     } else {
-                                                        setSelectedOptions(prev => ({...prev, [message.id]:index+1}))
-                                                        setShowVoteOptions(prev => ({...prev, [message.id]:true}))
+                                                        setSelectedOptions(prev => ({...prev, [message._id]:index+1}))
+                                                        setShowVoteOptions(prev => ({...prev, [message._id]:true}))
+                                                        setSelectedVoteOption(index+1)
                                                     }
                                             }
                                                 }/>
@@ -999,11 +932,12 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                     
 
                                     })}
-                                    {showVoteOptions[message.id] && (<>
-                                        <h4 style={{textAlign:'center'}} onClick={() => {
-                                        message.allVotes = [...message.allVotes, {"Shoya":selectedOptions[message.id]}]
-                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
-                                        }}>vote</h4>
+                                    {showVoteOptions[message._id] && (<>
+                                    <h4 style={{textAlign:'center'}} onClick={() => {
+                                    setSelectedModalMsg(message)
+                                    setShowVoteOptions(prev => ({...prev, [message._id]:false}))
+                                    sendingMessage('send-vote')
+                                    }}>vote</h4>
                                     </>)}
                                 </>)}
 
@@ -1016,17 +950,19 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
                                 <div style={{display:'flex', justifyContent:'flex-end' ,textAlign:'right'}}>
 
-                                {chat.type === 'channel' && (<><h5 style={{bottom:'6px', right:'68px'}}>
+                                {chat.type === 'Channel' && (<><h5 style={{bottom:'6px', right:'68px'}}>
                                 {message.from}, </h5></>)}
                                 <h5> {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>
                                 </div>
 
-                                    {chat.type === 'channel' && (
+                                    {chat.type === 'Channel' && (
                                     <div style={{position:'relative', textAlign:'left', top:'-3px'}} 
-                                    onClick={() => { setSelectedPost(message)
-                                        setShowPostComments(true)}}>    
+                                    onClick={() => { 
+                                        setSelectedPost(message)
+                                        setShowPostComments(true)}
+                                        }>    
                                     <hr />
                                     
                                         {message.msgComments.length === 0 ? (<><h5>No comment...</h5></>)
@@ -1072,10 +1008,11 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
                     {showModal && <OptionsModal {...(modalType === 'forward' ? {
                     selectedModalMsg, setSelectedModalMsg, selectedChatsId, setSelectedChatsId, sendingMessage} : {})}
-                        {...(modalType === "pin" ? {sendingMessage, selectedModalMsg} : {})}
-                        {...(modalType === 'setup-vote' ? { setupVote, selectedModalMsg } : {})}
-                        {...(modalType === "leave-chat" ? { leaveChat, selectedModalMsg } : {})}
-                        modalType={modalType} setShowModal={setShowModal}/>}
+                    {...(modalType === "pin" ? {sendingMessage, selectedModalMsg} : {})}
+                    {...(modalType === 'setup-vote' 
+                    ? {sendingMessage, voteTopic, setVoteTopic, setVoteOptions, voteOptions, selectedModalMsg } : {})}
+                    {...(modalType === "leave-chat" ? { leaveChat, selectedModalMsg } : {})}
+                    modalType={modalType} setShowModal={setShowModal}/>}
                         
                         
                         </div>
@@ -1126,7 +1063,8 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                         
                     {...(modalType === "delete" ? {onDeleteMessage, selectedModalMsg} : {})}
                     {...(modalType === "pin" ? {sendingMessage, selectedModalMsg} : {})}
-                    {...(modalType === 'setup-vote' ? { setupVote, selectedModalMsg } : {})}
+                    {...(modalType === 'setup-vote' 
+                    ? { sendingMessage, voteTopic, setVoteTopic, setVoteOptions, voteOptions, selectedModalMsg } : {})}
                     {...(modalType === 'edit-vote' ? { editVote, selectedModalMsg } : {})}
                     {...(modalType === "leave-chat" ? { leaveChat, selectedModalMsg } : {})}
 
@@ -1147,8 +1085,9 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                             {message.ref ? (
                                 <>
                                     <div className="reply-preview" onClick={() => highlightMessage(message.ref.id)}>
-                                    <h5 style={{fontSize:"13px"}}>{message.ref.from}</h5>
-                                        {message.ref.type === "files" || message.ref.type === "edited-files" ? (
+                                    <h5 style={{fontSize:"13px"}}>{message.ref.from.name}</h5>
+                                        {message.ref.type === "Files" || 
+                                        (message.ref.type === "Files" && message.edited === true) ? (
                                             <>
                                                 <h5>{message.ref.msg.length > 1 ? (<>
                                                 {message.ref.msg.length} files
@@ -1158,12 +1097,12 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                             <>
                                             {typeof message.ref.msg !== "object" ? (
                                                 <>
-                                                {message.ref.type === 'vote' ? (<>
+                                                {message.ref.type === 'Vote' ? (<>
                                                     <h5>{message.ref.topic.slice(0, 30)}
                                                     {message.ref.topic.length > 30 ? '...' : ''}</h5>
                                                 </>) : (<>
-                                                    <h5>{message.ref.msg.slice(0, 30)}
-                                                    {message.ref.msg.length > 30 ? '...' : ''}</h5>
+                                                    <h5>{message.ref.msg.slice(0,20)}
+                                                    {message.ref.msg.length > 20 ? '...' : ''}</h5>
                                                 </>)}
                                                 </>
                                             ) : (
@@ -1186,7 +1125,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                             ) : (<></>)}
                                 
 
-                                {message.type === "files" || message.type === "edited-files" ? (
+                                {message.type === "Files" || (message.type === "Files" && message.edited === true) ? (
                                     <>
                                     <ShowcaseFiles files={message} />                                        
                                     </>
@@ -1203,14 +1142,15 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                     </>
                                 )}
                                 
-                                {(message.type === 'vote' || message.topic !== undefined) && (<>
+                                {(message.type === 'Vote' || message.topic !== undefined) && (<>
                                     <h3 style={{marginTop:'5px'}}>{message.topic}</h3>
                                     {message.options.map((option, index) => {
                                     
-                                    const optionChecked = selectedOptions[message.id] === index + 1
-                                    const selectedOption = selectedOptions[message.id] || false 
+                                    const optionChecked = selectedOptions[message._id] === index + 1
+                                    const selectedOption = selectedOptions[message._id] || false 
 
-                                    if(message.allVotes.some(vote => Object.keys(vote).includes("Shoya"))){
+                                    if(message.allVotes.some(vote => 
+                                    String(vote.voter.name) === String(currentUser.name))){
                                         return (<>
                                         <div className="vote-message-options"
                                         style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
@@ -1230,11 +1170,14 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                             <input type="radio" checked={optionChecked} 
                                             onClick={() => {
                                                     if(selectedOptions[message.id] === index+1){
-                                                        setSelectedOptions(prev => ({...prev, [message.id]:null}))
-                                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
+                                                        setSelectedOptions(prev => ({...prev, [message._id]:null}))
+                                                        setShowVoteOptions(prev => ({...prev, [message._id]:false}))
+                                                        setSelectedVoteOption('')
+
                                                     } else {
-                                                        setSelectedOptions(prev => ({...prev, [message.id]:index+1}))
-                                                        setShowVoteOptions(prev => ({...prev, [message.id]:true}))
+                                                        setSelectedOptions(prev => ({...prev, [message._id]:index+1}))
+                                                        setShowVoteOptions(prev => ({...prev, [message._id]:true}))
+                                                        setSelectedVoteOption(index+1)
                                                     }
                                             }
                                                 }/>
@@ -1245,10 +1188,10 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                     
 
                                     })}
-                                    {showVoteOptions[message.id] && (<>
+                                    {showVoteOptions[message._id] && (<>
                                         <h4 style={{textAlign:'center'}} onClick={() => {
-                                        message.allVotes = [...message.allVotes, {"Shoya":selectedOptions[message.id]}]
-                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
+                                        setShowVoteOptions(prev => ({...prev, [message._id]:false}))
+                                        sendingMessage('send-vote', message)
                                         }}>vote</h4>
                                     </>)}
                                 </>)}
@@ -1263,15 +1206,15 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
                                 <div style={{display:'flex', justifyContent:'flex-end'}}>
 
-                                {chat.type === 'channel' && (<><h5 style={{bottom:'6px', right:'68px'}}>
+                                {chat.type === 'Channel' && (<><h5 style={{bottom:'6px', right:'68px'}}>
                                 {message.from}, </h5></>)}
-                                {message.type === 'edited' && (<><h5>edited, </h5></>)}
+                                {message.edited === true && (<><h5>edited, </h5></>)}
                                 <h5> {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>
                                 </div>
 
-                                    {chat.type === 'channel' && (
+                                    {chat.type === 'Channel' && (
                                     <div style={{position:'relative', top:'-3px'}} 
                                     onClick={() => { setSelectedPost(message)
                                         setShowPostComments(true)}}>    
@@ -1347,7 +1290,11 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
     votePercentage}) => {
 
     const {setShowPinnedMessages} = useContext(pinnedMessagesContext)
+    
+    const {currentUser} = useContext(userContext)
 
+    console.log(pinnedMessages);
+    
     return (
 
         <>
@@ -1368,20 +1315,21 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
                         
                             <div className="messages-received">
 
-                            {message.type === 'forwarded' ? (
+                            {message.forwarded === true ? (
                                 <>
                                 <div className="forward-preview">
-                                    <h5>from: {message.sentFrom}</h5>
+                                    <h5>from: {message.origin.name}</h5>
                                 </div>
                                 </>) : (<></>)}
 
-                                {message.type === "files" || message.type === "edited-files" ? (
+                                {message.type === "Files" || 
+                                (message.type === "Files" && message.edited === true) ? (
                                     <>
                                     <ShowcaseFiles files={message} />                                        
                                     </>
                                 ) : (
                                     <>
-                                    {typeof message.phrase === "object" ? (
+                                    {typeof message.msg === "object" ? (
                                         <>
                                         <ShowcaseFiles files={message} />
                                         </>
@@ -1398,7 +1346,7 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
                                     const optionChecked = selectedOptions[message.id] === index + 1
                                     const selectedOption = selectedOptions[message.id] || false 
 
-                                    if(message.allVotes.some(vote => Object.keys(vote).includes("Shoya"))){
+                                    if(message.allVotes.some(vote => String(vote.voter) === String(currentUser._id))){
                                         return (<>
                                         <div className="vote-message-options"
                                         style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
@@ -1441,7 +1389,7 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
                                     </>)}
 
                                         </>) : (<>
-                                            <><h4>{message.phrase}</h4></>
+                                            <><h4>{message.msg}</h4></>
                                         </>)}
                                         </>
                                     )}
@@ -1450,7 +1398,7 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
 
 
                                 <h5 style={{textAlign:'right'}}>
-                                {message.type == "edited" || message.type == "edited-files" ? "Edited, " : ""}
+                                {message.edited == true ? "edited, " : ""}
                                     {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>
@@ -1550,14 +1498,14 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
                         
                         <div className="messages-sent">
 
-                            {message.type === 'forwarded' ? (
+                            {message.forwarded === true ? (
                                 <>
                                 <div className="forward-preview">
                                     <h5>from: {message.sentFrom}</h5>
                                 </div>
                                 </>) : (<></>)}
 
-                                {message.type === "files" || message.type === "edited-files" ? (
+                                {message.type === "Files" ? (
                                     <>
                                     <ShowcaseFiles files={message} />                                        
                                     </>
@@ -1580,7 +1528,7 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
                                     const optionChecked = selectedOptions[message.id] === index + 1
                                     const selectedOption = selectedOptions[message.id] || false 
 
-                                    if(message.allVotes.some(vote => Object.keys(vote).includes("Shoya"))){
+                                    if(message.allVotes.some(vote => String(vote.voter) === String(currentUser._id))){
                                         return (<>
                                         <div className="vote-message-options"
                                         style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
@@ -1642,7 +1590,7 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
 
 
                                 <h5 style={{textAlign:'right'}}>
-                                {message.type == "edited" || message.type == "edited-files" ? "Edited, " : ""}
+                                {message.edited == true ? "edited, " : ""}
                                     {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>

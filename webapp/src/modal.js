@@ -4,13 +4,13 @@ import { chatsContext } from './chats'
 import './css/modal.css'
 
 const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, selectedChatsId, setSelectedChatsId, sendingMessage,
-     onDeleteMessage, onDeleteComment, setupVote, editVote, editMessage ,leaveChat, pinMessage, modalType, setShowModal,
-     showcaseNavbar, setShowcaseNavbar}) => {
+     onDeleteMessage, onDeleteComment, voteTopic, setVoteTopic, setVoteOptions, voteOptions,  editVote, 
+     editMessage ,leaveChat, pinMessage, modalType, setShowModal, showcaseNavbar, setShowcaseNavbar}) => {
 
     const {chats, setChats} = useContext(chatsContext)
 
-    const [voteTopic, setVoteTopic] = useState(selectedModalMsg?.topic || '')
-    const [voteOptions, setVoteOptions] = useState( selectedModalMsg?.options || ['', ''])
+    // const [voteTopic, setVoteTopic] = useState(selectedModalMsg?.topic || '')
+    // const [voteOptions, setVoteOptions] = useState( selectedModalMsg?.options || ['', ''])
 
     const alterOptions = (value, index) => {
         console.log(value, index);
@@ -24,7 +24,7 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, selectedChatsId, s
     }
 
     const onVoteSubmit = () => {
-        setupVote(voteTopic, voteOptions)
+        sendingMessage('setup-vote')
     }
 
     const onVoteEdit = (id) => {
@@ -38,62 +38,38 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, selectedChatsId, s
         setVoteOptions(updatedOptions);
     }
 
-    // const forwardMessages = (selectedChats) => {
-        
-    //     setChats((prevChats) => {
-            
-    //         return prevChats.map((chat) => {
-                
-    //             if(selectedChats.includes(chat.id)){
 
-    //                 if(typeof selectedModalMsg.msg === "object" && selectedModalMsg.comment !== null){
-                    
-    //                 return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
-    //                  sentFrom:selectedModalMsg.from, from:"Shoya", msg: selectedModalMsg.msg, 
-    //                  createdAt: new Date().toISOString(), type:'forwarded', comment: selectedModalMsg.comment}],
-    //                  lastUpdatedAt: new Date().toISOString()}
-
-    //                 } else if(selectedModalMsg.type === 'vote') {
-                        
-    //                     return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
-    //                             sentFrom:selectedModalMsg.from, from:"Shoya", topic: selectedModalMsg.topic,
-    //                             options: selectedModalMsg.options, allVotes: selectedModalMsg.allVotes,
-    //                             createdAt: new Date().toISOString(), type:'forwarded'}],
-    //                             lastUpdatedAt: new Date().toISOString()}
-
-    //                 } else {
-                        
-    //                 return {...chat, messages:[...chat.messages, {id:chat.messages.length + 1 ,
-    //                     sentFrom:selectedModalMsg.from, from:"Shoya", msg: selectedModalMsg.msg, 
-    //                     createdAt: new Date().toISOString(), type:'forwarded', comment: selectedModalMsg.comment}],
-    //                     lastUpdatedAt: new Date().toISOString()}
-    //                 } 
-
-    //             } else {
-    //                 return chat
-    //             }
-
-    //         }) 
-    //     })
-
-    //     setSelectedModalMsg(null)
-    //     setShowModal(false)
-    // }
-
-
-    const createGroup = (groupName, bio) => {
+    const baseURL = 'http://localhost:8080/api/v1'
+    const token = localStorage.getItem('token')
+    const createGroup = async (groupName, bio) => {
         setShowModal(false)
-        setChats([...chats,{id: chats.length + 1, name: groupName, type:'group',messages:[],
-        users:[{id:1, name:"Shoya", type:'admin', 
-            img:'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg'},
-        ],
-        admins:["Shoya"],
-        pinnedMessages:[], bio:bio,
-            img: 'https://wallpapers.com/images/hd/aesthetic-computer-4k-c9qdhe02pr84wh3a.jpg',
-            lastUpdatedAt: new Date().toISOString()
 
-    }])
-    if(showcaseNavbar) setShowcaseNavbar(false)
+        try {
+            const response = await fetch(`${baseURL}/chats/group`,{
+                method: 'POST',
+                headers:{
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name:groupName,
+                    bio: bio
+                })
+            })
+
+            const groupData = await response.json()
+            
+            if(showcaseNavbar) setShowcaseNavbar(false)
+            
+            if(!response.ok){
+                throw new Error('Error occurred while making group')
+            }
+            console.log('Group has been made: ', groupData);
+            
+        } catch (error) {
+            console.log(error);
+        }
+
     }
 
     const createChannel = (channelName, bio) => {

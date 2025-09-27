@@ -314,17 +314,19 @@ const ChatPreview = () => {
                                 setChatID(chat._id)
                                 setUser(chat)
                                 }}>
-                                <img alt="" src={(() => {
+                                <img alt="" src={
+                                    chat.type === 'Normal' ? (() => {
                                     const otherUser = chat.users.find(user => user._id !== currentUser.id)
-                                    return otherUser ? otherUser.img 
-                    : "https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg"                 
-                                })()
+                                    return otherUser ? otherUser.img
+                    : "https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg"
+                                    })() 
+                                    : chat.img
+                                    
                                 } 
                                 
                                 className="profile-img"/>
                                 <div style={{position:'relative', display:'flex', flexDirection:'column', left:'20px'}}>
-                                    {/* <h3 className="name">{chat.name}</h3> */}
-                                    <h3 className="name">{chatName(chat.name)}</h3>
+                                    <h3 className="name">{chat.type === 'Normal' ? chatName(chat.name) : chat.name}</h3>
                                     
                                     <h5 className="chat-msg">
                                     {(chat.type === 'channel' && lastMessageOrigin) ? 
