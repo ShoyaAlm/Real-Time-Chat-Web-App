@@ -63,7 +63,7 @@ const GroupChatSchema = new mongoose.Schema({
     name:{
         type:String,
         required:[true, 'Please provide the name'],
-        minLength:3,
+        minLength:2,
         maxLength:30,
     },
 
@@ -92,7 +92,7 @@ const ChannelChatSchema = new mongoose.Schema({
     name:{
         type:String,
         required:[true, 'Please provide the name'],
-        minLength:3,
+        minLength:2,
         maxLength:30,
     },
 
@@ -109,6 +109,29 @@ const ChannelChatSchema = new mongoose.Schema({
         maxLength:20,
         unique:true
     },
+
+    msgComments:[{
+        from:{
+            type:mongoose.Types.ObjectId,
+            ref:'User',
+            required:true      
+        },
+        msg:{
+            type:mongoose.Types.ObjectId,
+            ref:'Message',
+            enum:['Text', 'Files', 'Reply'],
+            required:true
+        },
+        createdAt: {
+            type:Date,
+            default: Date.now()
+        },
+        replyTo:{
+            type:mongoose.Types.ObjectId,
+            ref:'Message',
+            default:null
+        }
+    }]
 
 })
 

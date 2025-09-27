@@ -49,6 +49,18 @@ const updateMessageCache = async (chatId, message, command) => {
                 return msg
             })
                 break;
+
+            case 'submit-vote':
+                parsedMessages = parsedMessages.map(msg => {
+                if(String(msg._id) === String(message._id)){
+                    return {
+                        ...msg,
+                        allVotes: message.allVotes 
+                    }
+                }
+                return msg
+            })
+
                 
             default:
                 break;

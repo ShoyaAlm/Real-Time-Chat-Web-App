@@ -6,7 +6,6 @@ const {updateMessageCache, updatePinnedMessageCache} = require('./cache')
 
 const client = require('../utils/redisClient')
 
-
 const getAllMessages = async (req, res) => {
     
     const {user:{userId}, params:{chatId}} = req
@@ -33,26 +32,70 @@ const getAllMessages = async (req, res) => {
 
 
 
-        const chat = await Chat.findById(chatId).populate({
+        const chat = await Chat.findById(chatId).populate([{
             path:"messages",
             populate:[
                 {path:"from",select:"name"},
-                {path:"origin", select:"name"}
+                {path:"origin", select:"name"},
+                {
+                    path:"ref", 
+                    select:"msg type",
+                    populate:{path:"from", select:"name"}
+                },
+                {
+                    path:"allVotes",
+                    populate:{path:"voter", select:"name"},
+                }
         ],
             options:{ sort: {createdAt: 1}, limit:20}
-        })
+        },
+    ]).lean()
         
-
         if(!chat){
             throw new NotFoundError('No chat was found')
         }
 
 
-        await client.set(cacheKey, JSON.stringify(chat.messages), {
+        const retrievedMessages = chat.messages.map(message => {
+            const baseMessage = {
+                _id: message._id,
+                from: message.from,
+                origin: message.origin,
+                createdAt: message.createdAt,
+                type: message.type,
+                edited: message.edited,
+                forwarded: message.forwarded,
+                seen: message.seen,
+                chat: message.chat
+            }
+
+
+            switch (message.type) {
+                case 'Text':
+                    return {...baseMessage, msg: message.msg}
+
+                case 'Reply':
+                    return {...baseMessage, msg: message.msg, ref:message.ref}
+
+                case 'Vote':
+                    return {...baseMessage, topic: message.topic, options: message.options, allVotes:message.allVotes}
+                
+                case 'Files':
+                    return {...baseMessage, msg: message.msg, comment: message.comment}
+
+                default:
+                    return baseMessage;
+            }
+
+
+        })
+
+
+        await client.set(cacheKey, JSON.stringify(retrievedMessages), {
             EX: 600
         })
 
-        res.status(200).json({msg:"non-cache output", nb:chat.messages.length, messages:chat.messages })
+        res.status(200).json({msg:"non-cache output", nb:retrievedMessages.length, messages:retrievedMessages })
 
 
     } catch (error) {
@@ -65,7 +108,10 @@ const getAllMessages = async (req, res) => {
 
 const sendMessage = async (req, res) => {
 
-    const {params:{chatId}, body:{message, type, messageReplyId}, user:{userId}} = req
+    const {
+        params:{chatId}, 
+        body:{message, type, messageToReplyId, topic, options, allVotes, comment}, 
+        user:{userId}} = req
 
     if(!chatId){
         throw new BadRequestError('Chat ID required!')
@@ -73,11 +119,10 @@ const sendMessage = async (req, res) => {
 
     try {
 
-        if(!message || !type){
-            throw new BadRequestError('Provide a message and the type!')
+        if(type !== 'Vote' && type !== 'Files'){
+            if(!message) throw new BadRequestError('Provide a message!')
         }
-
-
+        
         let newMessage
         
         switch(type){
@@ -90,13 +135,13 @@ const sendMessage = async (req, res) => {
                 break
 
             case 'Vote':
-                if(!message.topic || !Array.isArray(message.options) || !(message.options.length > 1)){
+                if(!topic || !Array.isArray(options) || !(options.length > 1)){
                     throw new BadRequestError('Enter valid information for making a voting message')
                 }
                 newMessage = new VoteMessage({
-                    topic:message.topic,
-                    options:message.options,
-                    allVotes:message.allVotes,
+                    topic:topic,
+                    options:options,
+                    allVotes:allVotes,
                     from:userId,
                     chat:chatId
                 })
@@ -114,7 +159,7 @@ const sendMessage = async (req, res) => {
             case 'Reply':
                 newMessage = new ReplyMessage({
                     msg:message,
-                    ref:messageReplyId,
+                    ref:messageToReplyId,
                     from:userId,
                     chat:chatId
                 })
@@ -127,7 +172,58 @@ const sendMessage = async (req, res) => {
 
         await newMessage.save()
 
-        await newMessage.populate({path:'from', select:'name'})
+        switch (type) {
+            
+            case 'Text':
+                await newMessage.populate([
+                    {path:'from', select:'name'},
+                ])
+
+                break
+
+            case 'Vote':
+                await newMessage.populate([
+                    {path:'from', select:'name'},
+                    // {path:'topic'},
+                    // {path:'options'},
+                    {path:'allVotes.voter', select:'name'}
+                ])
+
+                break
+
+            case 'Files':
+                // newMessage = new FileMessage({
+                //     msg:message.msg,
+                //     comment:message.comment,
+                //     from:userId,
+                //     chat:chatId
+                // })
+                break
+
+            case 'Reply':
+                await newMessage.populate([
+                    {path:'from', select:'name'},
+                    {
+                        path:'ref',
+                        select:'msg type from',
+                        populate:{path:'from', select:'name'}
+                    }
+                ])
+
+                break
+
+
+            default:
+                break;
+        }
+        // await newMessage.populate([
+        //     {path:'from', select:'name'},
+        //     {
+        //         path:'ref',
+        //         select:'msg type from',
+        //         populate:{path:'from', select:'name'}
+        //     }
+        // ])
 
         await Chat.findByIdAndUpdate(chatId,
             {$push:{messages: newMessage._id}},
@@ -369,7 +465,38 @@ const pinMessage = async (req, res) => {
 
 }
 
+const submitVote = async (req, res) => { 
+    const {params: {chatId, messageId}, user:{userId}, body:{selectedOption}} = req
+    
+    if(!chatId || !messageId){
+        throw new BadRequestError('Provide chatID & messageID')
+    }
+
+    if(!selectedOption){
+        throw new BadRequestError('An option must be selected')
+    }
+
+    try {
+        const voteMessage = await Message.findById(messageId)
+    
+        if(!voteMessage){
+            throw new NotFoundError('No such message was found!')
+        }
+
+        voteMessage.allVotes.push({voter:userId, selectedOption:selectedOption})
+    
+        await voteMessage.save()
+    
+        await updateMessageCache(chatId, voteMessage, 'submit-vote')
+    
+        res.status(200).json({msg:'Vote successfully submitted'})
+    } catch (error) {
+        console.log(error);
+    }
+
+}
 
 
 
-module.exports = { getAllMessages, sendMessage,  forwardMessage, editMessage, deleteMessage, pinMessage }
+
+module.exports = { getAllMessages, sendMessage,  forwardMessage, editMessage, deleteMessage, pinMessage, submitVote }

@@ -33,14 +33,19 @@ const getUserChats = async (req, res) => {
             })
         }
 
-        const chats = await Chat.find({users:userId})
-            .populate('users', 'name img')
-            .populate({
-                path:'messages',
-                options:{sort:{createdAt:-1}, limit:1},
+        const chats = await Chat.find({users:userId}).populate([
+            {
+            path:'users', select:'name img'
+            },
+            {
+                path:'messages', options:{sort:{createdAt:1}, limit:1},
                 populate:{path:'from', select:'name'}
-            })
-            
+            },
+            {
+                path:"pinnedMessages", select:"msg createdAt",
+                populate:{path:"from", select:"name"}
+            } 
+    ])            
 
         await client.set(cacheKey, JSON.stringify(chats), {
             EX: 600
@@ -175,7 +180,7 @@ const makeGroup = async (req, res) => {
             bio:bio
         })
 
-        await Promise.all([updateChatCache(userId, newChannel, 'add')])
+        await Promise.all([updateChatCache(userId, newGroup, 'add')])
 
 
         res.status(201).json({msg:"Group was successfully created", group:newGroup})
