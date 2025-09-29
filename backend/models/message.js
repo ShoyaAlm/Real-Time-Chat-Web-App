@@ -92,15 +92,26 @@ const VoteMessageSchema = new mongoose.Schema({
 
 const FileMessageSchema = new mongoose.Schema({
 
-  msg:{
-    type:[Object],
-    validate:{
-      validator: function(array){
-        return array.length <= 10;
-      },
-      message:'Up to 10 files are allowed'
+  files:[{
+    name:{
+      type:String,
+      required:true
     },
-  },
+    URL:{
+      type:String,
+      required:true
+    },
+    type:{
+      type:String,
+      required:true
+    },
+    size:{
+      type:Number,
+      required:false
+    }
+  }
+],
+
   comment:{
     type:String,
     maxLength:100

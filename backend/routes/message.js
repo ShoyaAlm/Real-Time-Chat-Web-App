@@ -1,10 +1,17 @@
 const express = require('express')
 const router = express.Router({mergeParams:true})
+const multer = require('multer')
 
-const { getAllMessages, sendMessage, forwardMessage, 
+const upload = multer({dest:'temporary_uploads/'})
+
+
+const { getAllMessages, sendMessage, sendFilesMessage, forwardMessage, 
     editMessage, deleteMessage, pinMessage, submitVote } = require('../controllers/message')
 
 router.route('/').get(getAllMessages).post(sendMessage)
+
+router.route('/files').post(upload.array('files', 10), sendFilesMessage)
+
 router.route('/:messageId').patch(editMessage).delete(deleteMessage)
 router.route('/:messageId/forward').post(forwardMessage)
 router.route('/:messageId/pin').post(pinMessage)

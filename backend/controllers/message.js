@@ -3,8 +3,12 @@ const {Message, TextMessage, VoteMessage, FileMessage, ReplyMessage} = require('
 const {Chat, GroupChat, Channel} = require('../models/chat')
 const {BadRequestError, NotFoundError, UnauthorizedError, ServerError} = require('../errors/index')
 const {updateMessageCache, updatePinnedMessageCache} = require('./cache')
-
+require('dotenv').config()
 const client = require('../utils/redisClient')
+
+const ftp = require('basic-ftp')
+const fs = require('fs')
+const path = require('path')
 
 const getAllMessages = async (req, res) => {
     
@@ -45,6 +49,10 @@ const getAllMessages = async (req, res) => {
                 {
                     path:"allVotes",
                     populate:{path:"voter", select:"name"},
+                },
+                {
+                    path:"files",
+                    
                 }
         ],
             options:{ sort: {createdAt: 1}, limit:20}
@@ -81,7 +89,7 @@ const getAllMessages = async (req, res) => {
                     return {...baseMessage, topic: message.topic, options: message.options, allVotes:message.allVotes}
                 
                 case 'Files':
-                    return {...baseMessage, msg: message.msg, comment: message.comment}
+                    return {...baseMessage, files: message.files, comment: message.comment}
 
                 default:
                     return baseMessage;
@@ -110,7 +118,7 @@ const sendMessage = async (req, res) => {
 
     const {
         params:{chatId}, 
-        body:{message, type, messageToReplyId, topic, options, allVotes, comment}, 
+        body:{message, type, messageToReplyId, topic, options, allVotes}, 
         user:{userId}} = req
 
     if(!chatId){
@@ -147,14 +155,14 @@ const sendMessage = async (req, res) => {
                 })
                 break
 
-            case 'Files':
-                newMessage = new FileMessage({
-                    msg:message.msg,
-                    comment:message.comment,
-                    from:userId,
-                    chat:chatId
-                })
-                break
+            // case 'Files':
+            //     newMessage = new FileMessage({
+            //         files:files,
+            //         comment:comment,
+            //         from:userId,
+            //         chat:chatId
+            //     })
+            //     break
 
             case 'Reply':
                 newMessage = new ReplyMessage({
@@ -191,14 +199,12 @@ const sendMessage = async (req, res) => {
 
                 break
 
-            case 'Files':
-                // newMessage = new FileMessage({
-                //     msg:message.msg,
-                //     comment:message.comment,
-                //     from:userId,
-                //     chat:chatId
-                // })
-                break
+            // case 'Files':
+            //     await newMessage.populate([
+            //         {path:'from', select:'name'},
+            //         {path:'files comment'}
+            //     ])
+            //     break
 
             case 'Reply':
                 await newMessage.populate([
@@ -216,14 +222,6 @@ const sendMessage = async (req, res) => {
             default:
                 break;
         }
-        // await newMessage.populate([
-        //     {path:'from', select:'name'},
-        //     {
-        //         path:'ref',
-        //         select:'msg type from',
-        //         populate:{path:'from', select:'name'}
-        //     }
-        // ])
 
         await Chat.findByIdAndUpdate(chatId,
             {$push:{messages: newMessage._id}},
@@ -239,6 +237,117 @@ const sendMessage = async (req, res) => {
         console.log(error);
         throw new ServerError(error)
     }
+}
+
+
+const uploadToFTP = async (localPath, chatId, remoteFilename) => {
+    const ftpClient = new ftp.Client()
+
+    try {
+        await ftpClient.access({
+            host:'ftpupload.net',
+            user:process.env.FTP_USERNAME,
+            password:process.env.FTP_PASSWORD,
+            secure:false
+        })
+
+
+        console.log('FTP initial directory:', await ftpClient.pwd());
+
+        const remoteDir = `/htdocs/uploads/${chatId}`
+
+        await ftpClient.ensureDir(remoteDir)
+        // try {
+        //     await ftpClient.send("SITE CHMOD 755 /htdocs/uploads/" + chatId);
+        //     console.log('permission is set to 755');
+            
+        // } catch (error) {
+        //     console.log(error);
+        // }
+
+        if (!fs.existsSync(localPath)) {
+            throw new Error(`Local file does not exist: ${localPath}`);
+        }
+
+        remoteFilename = path.basename(remoteFilename);
+
+        console.log(`Uploading local file "${localPath}" to remote path "${remoteDir}/${remoteFilename}"`);
+
+
+
+        await ftpClient.uploadFrom(localPath, `${remoteDir}/${remoteFilename}`)
+
+        return `https://${process.env.FTP_PUBLICDOMAIN}/uploads/${chatId}/${remoteFilename}`
+
+    } catch (error) {
+        console.log('FTP upload error: ', error);
+        throw error
+    } finally{
+        ftpClient.close()
+    }
+
+}
+
+const sendFilesMessage = async (req, res) => {
+
+
+    const {body, params:{chatId}, user:{userId}} = req
+
+    const comment = body.comment
+    const files = req.files
+
+    if (!chatId){
+        return res.status(400).json({ error: 'Chat ID is required' })
+    } 
+    
+    if (!req.files || req.files.length === 0){
+        return res.status(400).json({ error: 'No files uploaded' })
+    }
+
+    try {
+        
+        const uploadedFiles = []
+
+        for (const file of files){
+
+            console.log(file);
+            
+            const publicURL = await uploadToFTP(file.path, chatId, file.originalname)
+
+            uploadedFiles.push({
+                name:file.originalname,
+                URL:publicURL,
+                type:file.mimetype,
+                size:file.size
+            })
+
+            fs.unlinkSync(file.path)
+        }
+
+        const newMessage = await FileMessage({
+            files:uploadedFiles,
+            comment:comment,
+            from:userId,
+            chat:chatId,
+        })
+
+        await newMessage.save()
+        await Chat.findByIdAndUpdate(chatId, {
+            $push:{messages:newMessage._id}
+        })
+
+        await updateMessageCache(chatId, newMessage, 'add')
+
+        await newMessage.populate('files')
+
+        res.status(201).json({ msg: 'Files uploaded and message saved', message: newMessage })
+
+    } catch (error) {
+        console.log('File upload failed: ', error);
+        throw new ServerError('File upload failed')
+    }
+
+
 }
 
 const editMessage = async (req, res) => {
@@ -499,4 +608,5 @@ const submitVote = async (req, res) => {
 
 
 
-module.exports = { getAllMessages, sendMessage,  forwardMessage, editMessage, deleteMessage, pinMessage, submitVote }
+module.exports = { getAllMessages, sendMessage, sendFilesMessage, forwardMessage, editMessage,
+    deleteMessage, pinMessage, submitVote }
