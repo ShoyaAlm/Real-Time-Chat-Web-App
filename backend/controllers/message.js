@@ -10,6 +10,15 @@ const ftp = require('basic-ftp')
 const fs = require('fs')
 const path = require('path')
 
+
+const cloudinary = require('cloudinary').v2
+
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUD_API_KEY,
+    api_secret: process.env.CLOUD_API_SECRET,
+})
+
 const getAllMessages = async (req, res) => {
     
     const {user:{userId}, params:{chatId}} = req
@@ -239,55 +248,6 @@ const sendMessage = async (req, res) => {
     }
 }
 
-
-const uploadToFTP = async (localPath, chatId, remoteFilename) => {
-    const ftpClient = new ftp.Client()
-
-    try {
-        await ftpClient.access({
-            host:'ftpupload.net',
-            user:process.env.FTP_USERNAME,
-            password:process.env.FTP_PASSWORD,
-            secure:false
-        })
-
-
-        console.log('FTP initial directory:', await ftpClient.pwd());
-
-        const remoteDir = `/htdocs/uploads/${chatId}`
-
-        await ftpClient.ensureDir(remoteDir)
-        // try {
-        //     await ftpClient.send("SITE CHMOD 755 /htdocs/uploads/" + chatId);
-        //     console.log('permission is set to 755');
-            
-        // } catch (error) {
-        //     console.log(error);
-        // }
-
-        if (!fs.existsSync(localPath)) {
-            throw new Error(`Local file does not exist: ${localPath}`);
-        }
-
-        remoteFilename = path.basename(remoteFilename);
-
-        console.log(`Uploading local file "${localPath}" to remote path "${remoteDir}/${remoteFilename}"`);
-
-
-
-        await ftpClient.uploadFrom(localPath, `${remoteDir}/${remoteFilename}`)
-
-        return `https://${process.env.FTP_PUBLICDOMAIN}/uploads/${chatId}/${remoteFilename}`
-
-    } catch (error) {
-        console.log('FTP upload error: ', error);
-        throw error
-    } finally{
-        ftpClient.close()
-    }
-
-}
-
 const sendFilesMessage = async (req, res) => {
 
 
@@ -310,15 +270,17 @@ const sendFilesMessage = async (req, res) => {
 
         for (const file of files){
 
-            console.log(file);
-            
-            const publicURL = await uploadToFTP(file.path, chatId, file.originalname)
+
+            const result = await cloudinary.uploader.upload(file.path, {
+                folder:`chat-app/${chatId}`
+            })
 
             uploadedFiles.push({
                 name:file.originalname,
-                URL:publicURL,
+                URL:result.secure_url,
                 type:file.mimetype,
-                size:file.size
+                size:file.size,
+                public_id:result.public_id
             })
 
             fs.unlinkSync(file.path)
@@ -424,6 +386,16 @@ const deleteMessage = async (req, res) => {
         
         if(!message){
             throw new UnauthorizedError('Unauthorized error. You do not have the permission to delete the message')
+        }
+
+        if(message.type === 'Files' && Array.isArray(message.files)){
+            for (const file of message.files) {
+            try {
+               await cloudinary.uploader.destroy(file.public_id);
+            } catch (error) {
+                console.error(`Failed to delete ${file.name} from Cloudinary:`, error);
+            }
+        }
         }
 
         await updateMessageCache(chatId, message, 'delete')
