@@ -57,13 +57,27 @@ const ShowcaseFiles = ({ files }) => {
           return (
             <div key={index}>
               <img
-                src="webapp/src/img/pdf-icon.png"
+                src="/img/pdf-icon.png"
                 alt="PDF"
-                style={{ width: '80px', height: '70px' }}
+                style={{ width: '90px', height: '80px' }}
               />
               <h5>{file.name}</h5>
             </div>
           );
+        } else if(file.type === 'text/plain'){
+
+          return (
+            <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+              <img
+                src="/img/text-file.webp"
+                alt="Text File"
+                style={{ width: '75px', height: '75px', marginRight: '15px' }}
+              />
+              <a href={file.URL} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 'bold' }}>
+                {filenameTruncate(file.name)}
+              </a>
+            </div>
+          )
         } else {
           return (
             <div key={index}>

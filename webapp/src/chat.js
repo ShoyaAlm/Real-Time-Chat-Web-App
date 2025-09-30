@@ -778,7 +778,7 @@ const Chat = ({name}) => {
                         selectedFileMessageID={selectedFileMessageID} setSelectedFileMessageID={setSelectedFileMessageID}
                         sendStatus={sendStatus} setSendStatus={setSendStatus} attachedFilesComment={attachedFilesComment}
                         setAttachedFilesComment={setAttachedFilesComment} chatHistory={chatHistory}
-                        setChatHistory={setChatHistory} sendingMessage={sendingMessage}
+                        setChatHistory={setChatHistory} sendingMessage={sendingMessage} setShowModal={setShowModal}
                     />}
 
                     <button className="send" onClick={() => sendingMessage(sendStatus)}

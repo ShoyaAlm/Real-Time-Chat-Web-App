@@ -568,9 +568,7 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, selectedChatsId, s
 const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, selectedUser, fileInputRef, 
         resetFileInputKey, editingAttachedFiles, setEditingAttachedFiles, selectedFileMessageID, setSelectedFileMessageID,
         sendStatus, setSendStatus, attachedFilesComment, setAttachedFilesComment, chatHistory, setChatHistory,
-        sendingMessage }) => {
-
-    const {chats, setChats} = useContext(chatsContext)
+        sendingMessage, setShowModal }) => {
 
     const [avgSize, setAvgSize] = useState({width:'20%', height:'20%'})
     const [imgDimensions, setImgDimensions] = useState({})
@@ -686,15 +684,28 @@ const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, 
                 )
             } else if(file.type.startsWith('application/pdf')){
                 return (
-                    <div key={index}>
-                        <img
-                        src="webapp/src/img/pdf-icon.png"
-                        alt="PDF"
-                        style={{ width: '80px', height: '70px' }}
+                    <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px',
+                    position: 'relative', paddingLeft: '10px'}}>
+                        <img src="/img/pdf-icon.png" alt="PDF" style={{ width: '100px', height: '90px' }}
                         />
-                        <h5>{file.name}</h5>
-                    </div>
+                        <h4 style={{position:'relative'}}>{filenameTruncate(file.name)}</h4>
+                        <hr/>
+                        <h5 style={{position:'relative', textAlign:'left'}}>{fileSize(file.size)}</h5>                    
+                        
+                        </div>
+                    
                     );
+            } else if(file.type.startsWith('text/plain')){
+                return (
+                    <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px',
+                    position: 'relative',paddingLeft: '10px'}}>
+                    <img src="/img/text-file.webp" alt="Text file"
+                    style={{width: '90px', height: '90px', marginRight: '15px'}}/>
+                    <h4 style={{position:'relative'}}>{filenameTruncate(file.name)}</h4>
+                    <hr/>
+                    <h5 style={{position:'relative', textAlign:'left'}}>{fileSize(file.size)}</h5>
+                    </div>
+                )
             }
         })}
         </div>
@@ -725,8 +736,10 @@ const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, 
             ) : (
                 <></>
             )}
-                    <button onClick={() => 
-                    sendingMessage('send-files')
+                    <button onClick={() => {
+                        setShowModal(false)
+                        sendingMessage('send-files')
+                    }
                     } 
                     style={{position:'absolute', right:'10px'}}>Send</button>
                 </div>
