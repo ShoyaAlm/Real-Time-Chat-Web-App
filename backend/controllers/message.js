@@ -5,11 +5,7 @@ const {BadRequestError, NotFoundError, UnauthorizedError, ServerError} = require
 const {updateMessageCache, updatePinnedMessageCache} = require('./cache')
 require('dotenv').config()
 const client = require('../utils/redisClient')
-
-const ftp = require('basic-ftp')
 const fs = require('fs')
-const path = require('path')
-
 
 const cloudinary = require('cloudinary').v2
 
@@ -270,9 +266,9 @@ const sendFilesMessage = async (req, res) => {
 
         for (const file of files){
 
-
             const result = await cloudinary.uploader.upload(file.path, {
-                folder:`chat-app/${chatId}`
+                folder:`chat-app/${chatId}`,
+                resource_type:'auto'
             })
 
             uploadedFiles.push({
@@ -391,7 +387,15 @@ const deleteMessage = async (req, res) => {
         if(message.type === 'Files' && Array.isArray(message.files)){
             for (const file of message.files) {
             try {
-               await cloudinary.uploader.destroy(file.public_id);
+                if(file.public_id){
+                    try {
+                        await cloudinary.uploader.destroy(file.public_id);
+                    } catch (error) {
+                        console.log(error);
+                    }
+                } else {
+                    console.log(`file ${file.name} had no public_id`);
+                }
             } catch (error) {
                 console.error(`Failed to delete ${file.name} from Cloudinary:`, error);
             }
