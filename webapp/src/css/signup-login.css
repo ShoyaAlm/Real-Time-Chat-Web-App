@@ -1,0 +1,80 @@
+
+.welcome-message {
+  font-family: 'Inter', sans-serif; /* a nice cursive font */
+  font-size: 4rem;
+  font-weight: 700;
+  color: #bac3fb; /* warm golden color */
+  text-align: center;
+  margin-bottom: 30px;
+  position: relative;
+  top: -80px;
+  text-shadow: 2px 2px 4px rgba(36, 23, 23, 0.785);
+}
+
+.login-form-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #2d7b76 0%, #D1913C 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-form {
+  background: #fff3e0;
+  padding: 40px 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(209, 145, 60, 0.3);
+  width: 320px;
+  box-sizing: border-box;
+}
+
+.login-form h1 {
+  margin-bottom: 30px;
+  font-weight: 700;
+  color: #d1913c;
+  text-align: center;
+  font-size: 2rem;
+}
+
+.login-form label {
+  font-weight: 600;
+  color: #8c5c00;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+  width: 100%;
+  padding: 10px 15px;
+  margin-top: 6px;
+  border: 1.5px solid #d1913c;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.login-form input[type="text"]:focus,
+.login-form input[type="password"]:focus {
+  outline: none;
+  border-color: #ffa726;
+  box-shadow: 0 0 8px #ffb74d;
+}
+
+.login-form button {
+  width: 100%;
+  margin-top: 30px;
+  background-color: #d1913c;
+  border: none;
+  padding: 12px 0;
+  font-weight: 700;
+  color: white;
+  font-size: 1.1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login-form button:hover {
+  background-color: #372a1a;
+}
