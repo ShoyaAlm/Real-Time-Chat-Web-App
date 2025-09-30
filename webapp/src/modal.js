@@ -567,7 +567,8 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, selectedChatsId, s
 
 const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, selectedUser, fileInputRef, 
         resetFileInputKey, editingAttachedFiles, setEditingAttachedFiles, selectedFileMessageID, setSelectedFileMessageID,
-        sendStatus, setSendStatus, attachedFilesComment, setAttachedFilesComment, chatHistory, setChatHistory}) => {
+        sendStatus, setSendStatus, attachedFilesComment, setAttachedFilesComment, chatHistory, setChatHistory,
+        sendingMessage }) => {
 
     const {chats, setChats} = useContext(chatsContext)
 
@@ -634,78 +635,6 @@ const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, 
         })
     }, [attachedFiles])
 
-
-
-
-    const sendAttachedFiles = (attachedFiles) => {
-        
-        setChats((prevChats) => {
-
-            
-            if(!chatHistory) {
-
-            setChatHistory(true) 
-            return [...prevChats, {id:prevChats.length + 1, name: selectedUser.name, type: "chat", 
-                messages:[{id:1, from:"Shoya", msg: attachedFiles, createdAt: new Date().toISOString(),
-                    type: 'files', comment: attachedFilesComment ? attachedFilesComment : ''}],
-                    img: selectedUser.img, lastUpdatedAt: new Date().toISOString()}]
-        
-            }
-            
-            return (prevChats.map((chat) => {
-                
-                if(chat.id === selectedUser.id){
-                    
-                    
-                    if(editingAttachedFiles){
-
-                        chat.messages.map((message) => {
-                            
-                            if(message.id == selectedFileMessageID){
-                                message.msg = attachedFiles
-                                message.type = "edited-files"
-                                message.comment = attachedFilesComment ? attachedFilesComment : ''
-                            }
-                            return message
-                        })
-                        setAttachedFilesComment('')
-                        return {...chat, lastUpdatedAt: new Date().toISOString()}
-
-                    } else {
-                        setAttachedFilesComment('')
-                        return {...chat, messages:[...chat.messages, 
-                            {id:chat.messages.length + 1 ,from:"Shoya", msg: attachedFiles, 
-                                createdAt: new Date().toISOString(), type: 'files',
-                            comment: attachedFilesComment ? attachedFilesComment : ''
-                        }],
-                                lastUpdatedAt: new Date().toISOString()}
-                    }
-
-                } else {
-                    return chat
-                }
-
-
-            }))
-        })
-
-
-        
-        setTimeout(() => {
-            if(sendStatus === 'edit'){
-                setSendStatus('send')
-            }
-            if(editingAttachedFiles){
-                setEditingAttachedFiles(false)
-            }
-            if(fileInputRef.current) {
-                resetFileInputKey()
-            }
-            if(selectedFileMessageID !== 0){
-                setSelectedFileMessageID(0)
-            }
-            setAttachedFiles(null)}, 20)
-    }
 
     return (
         <Modal isOpen={true} onRequestClose={() => {
@@ -780,17 +709,25 @@ const AttachedFileModal = ({attachedFiles, setAttachedFiles, handleAttachFiles, 
             <button onClick={() => {
                 fileInputRef.current.value = null
                 resetFileInputKey()
+                setAttachedFilesComment('')
                 setAttachedFiles(null)}} style={{position:'relative', left:'10px'}}>Close</button>
             
             {attachedFiles.length <= 9 ? (
                 <>
-                    <input style={{position:'relative', left:'25%'}} ref={fileInputRef}
+                    <input style={{display:'none'}} ref={fileInputRef}
                     onChange={(e) => handleAttachFiles(e, fileToReplaceIndex)} type="file"/>
+
+                    <button
+                        onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                        style={{position:'relative', left:'32%'}}
+                    >add</button>
                 </>
             ) : (
                 <></>
             )}
-                    <button onClick={() => sendAttachedFiles(attachedFiles)} 
+                    <button onClick={() => 
+                    sendingMessage('send-files')
+                    } 
                     style={{position:'absolute', right:'10px'}}>Send</button>
                 </div>
         

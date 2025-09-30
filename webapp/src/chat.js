@@ -326,6 +326,43 @@ const Chat = ({name}) => {
 
                 break;
 
+            case 'send-files':
+
+                const formData = new FormData()
+                attachedFiles.forEach(file => {
+                    formData.append('files', file)
+                })
+
+                console.log(attachedFiles);
+                formData.append('comment', attachedFilesComment)
+
+                try {
+                    for (const pair of formData.entries()) {
+                    console.log(pair[0], pair[1])
+                    }
+                    const response = await fetch(`${baseURL}/chats/${chatID}/messages/files`,
+                        {
+                            method:'POST',
+                            headers:{
+                                'Authorization':`Bearer ${token}`
+                            },
+                            body: formData
+                        }
+                    )
+
+                    const messageData = await response.json()
+
+                    if(!response.ok){
+                        throw new Error('Error occurred while sending files', messageData.message)
+                    }
+
+                    console.log('files have been sent', messageData);
+                    
+                } catch (error) {
+                    console.log(error);
+                }
+
+                break;
 
             case 'reply':
                     try {
@@ -741,7 +778,7 @@ const Chat = ({name}) => {
                         selectedFileMessageID={selectedFileMessageID} setSelectedFileMessageID={setSelectedFileMessageID}
                         sendStatus={sendStatus} setSendStatus={setSendStatus} attachedFilesComment={attachedFilesComment}
                         setAttachedFilesComment={setAttachedFilesComment} chatHistory={chatHistory}
-                        setChatHistory={setChatHistory}
+                        setChatHistory={setChatHistory} sendingMessage={sendingMessage}
                     />}
 
                     <button className="send" onClick={() => sendingMessage(sendStatus)}
