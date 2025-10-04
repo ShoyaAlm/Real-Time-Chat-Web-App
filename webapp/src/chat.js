@@ -183,7 +183,7 @@ const Chat = ({name}) => {
 
     const leaveChat = (chosenChat) => {
         setShowChat(false)
-        const filteredChats = allChats.filter((chat) => chat.id !== chosenChat.id)
+        const filteredChats = allChats.filter((chat) => chat._id !== chosenChat._id)
         setChats(filteredChats)
     }
 
@@ -193,7 +193,7 @@ const Chat = ({name}) => {
 
     const editVote = (voteTopic, voteOptions, id) => {
         const newMessages = user.messages.map((message) => {
-            if(message.id === id){
+            if(message._id === id){
                 message.topic = voteTopic
                 message.options = voteOptions
                 return message
@@ -206,11 +206,11 @@ const Chat = ({name}) => {
 
 
     const getChatName = (chatType) => {
-        if(chatType === 'group' || chatType === 'channel'){
-            console.log('type is not chat');
+        if(chatType === 'Group' || chatType === 'Channel'){
+            return user.name
         } else if(chatType === "Normal"){
-            const secondUser = user.users.find(user => user.name !== currentUser.name)        
-            return secondUser.name
+            const secondUser = user.users.find(u => u.user.name !== currentUser.name)        
+            return secondUser.user.name
         }
     }
 
@@ -545,6 +545,16 @@ const Chat = ({name}) => {
 
     const {setSearchMod} = useContext(searchTermsContext)
     
+    const isUserAdmin = (channel) => {
+        
+        let isAdmin = false
+        isAdmin = channel.users.map(u => {
+            if(u.role === 'admin' && u.user === currentUser._id){
+                return true
+            }
+        })
+        return isAdmin
+    }
 
     return (
     <>
@@ -567,8 +577,8 @@ const Chat = ({name}) => {
 
                             <img alt="" src={(() => {
                                 if(user.type === 'Normal'){
-                                    const otherUser = user.users.find(user => user._id !== currentUser.id)
-                                    return otherUser ? otherUser.img 
+                                    const otherUser = user.users.find(u => u.user._id !== currentUser.id)
+                                    return otherUser ? otherUser.user.img 
                     : "https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg"
                                 } else {
                                     return user.img
@@ -758,7 +768,10 @@ const Chat = ({name}) => {
                             ) : (<></>)}
 
                 {!showPinnedMessages && ((user.type !== 'Channel' || showPostComments === true) ||
-                (user.type === 'Channel' && user.admins.includes("Shoya"))) && (<>
+                (user.type === 'Channel' && isUserAdmin(user))
+                
+                
+                ) && (<>
                 <div className="write-text">
 
                     
@@ -789,7 +802,7 @@ const Chat = ({name}) => {
                 </div>
                 </>)}
 
-                        {user.type === 'Channel' && !showPostComments && !user.admins.includes("Shoya") && (<>
+                        {user.type === 'Channel' && !showPostComments && !isUserAdmin(user) && (<>
                             <div style={{textAlign:'center'}}>
                                 <h3>JOIN</h3>
                             </div>
@@ -951,7 +964,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                         key={index}>
                                             <input type="radio" checked={optionChecked} 
                                             onClick={() => {
-                                                    if(selectedOptions[message.id] === index+1){
+                                                    if(selectedOptions[message._id] === index+1){
                                                         setSelectedOptions(prev => ({...prev, [message._id]:null}))
                                                         setShowVoteOptions(prev => ({...prev, [message._id]:false}))
                                                         setSelectedVoteOption('')
@@ -988,7 +1001,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                 <div style={{display:'flex', justifyContent:'flex-end' ,textAlign:'right'}}>
 
                                 {chat.type === 'Channel' && (<><h5 style={{bottom:'6px', right:'68px'}}>
-                                {message.from}, </h5></>)}
+                                {message.from.name}, </h5></>)}
                                 <h5> {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </h5>
@@ -1002,10 +1015,13 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                         }>    
                                     <hr />
                                     
-                                        {message.msgComments.length === 0 ? (<><h5>No comment...</h5></>)
-                                        : (<>{message.msgComments.length === 1 ? (<><h5>1 Comment</h5></>)
-                                        : (<> <h5>{message.msgComments.length} Comments</h5></>)}
+
+                                    {message.comments && (<>                                            
+                                        {message.comments.length === 0 ? (<><h5>No comment...</h5></>)
+                                        : (<>{message.comments.length === 1 ? (<><h5>1 Comment</h5></>)
+                                        : (<> <h5>{message.comments.length} Comments</h5></>)}
                                         </>)}
+                                    </>)}
                                         
                                     </div>
                                     )}
@@ -1060,7 +1076,9 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                         </div>
                     )
 
-                } else if(message.from.name === currentUser.name) {
+                } 
+                
+                else if(message.from.name === currentUser.name) {
                     
                     return (
                     <div className={`message-wrapper right ${highlightMsgId == `${index}` ? 'highlight' : ''} `} 
@@ -1121,7 +1139,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                         <div className="messages-sent">
                             {message.ref ? (
                                 <>
-                                    <div className="reply-preview" onClick={() => highlightMessage(message.ref.id)}>
+                                    <div className="reply-preview" onClick={() => highlightMessage(message.ref._id)}>
                                     <h5 style={{fontSize:"13px"}}>{message.ref.from.name}</h5>
                                         {message.ref.type === "Files" || 
                                         (message.ref.type === "Files" && message.edited === true) ? (
@@ -1206,7 +1224,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                         key={index}>
                                             <input type="radio" checked={optionChecked} 
                                             onClick={() => {
-                                                    if(selectedOptions[message.id] === index+1){
+                                                    if(selectedOptions[message._id] === index+1){
                                                         setSelectedOptions(prev => ({...prev, [message._id]:null}))
                                                         setShowVoteOptions(prev => ({...prev, [message._id]:false}))
                                                         setSelectedVoteOption('')
@@ -1244,7 +1262,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                 <div style={{display:'flex', justifyContent:'flex-end'}}>
 
                                 {chat.type === 'Channel' && (<><h5 style={{bottom:'6px', right:'68px'}}>
-                                {message.from}, </h5></>)}
+                                {message.from.name}, </h5></>)}
                                 {message.edited === true && (<><h5>edited, </h5></>)}
                                 <h5> {new Date(message.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1257,9 +1275,9 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                         setShowPostComments(true)}}>    
                                     <hr />
                                     
-                                        {message.msgComments.length === 0 ? (<><h5>No comment...</h5></>)
-                                        : (<>{message.msgComments.length === 1 ? (<><h5>1 Comment</h5></>)
-                                        : (<> <h5>{message.msgComments.length} Comments</h5></>)}
+                                        {!message.comments ? (<><h5>No comment...</h5></>)
+                                        : (<>{message.comments.length === 1 ? (<><h5>1 Comment</h5></>)
+                                        : (<> <h5>{message.comments.length} Comments</h5></>)}
                                         </>)}
                                         
                                     </div>
@@ -1380,8 +1398,8 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
                                     <h3 style={{marginTop:'5px'}}>{message.topic}</h3>
                                     {message.options.map((option, index) => {
                                     
-                                    const optionChecked = selectedOptions[message.id] === index + 1
-                                    const selectedOption = selectedOptions[message.id] || false 
+                                    const optionChecked = selectedOptions[message._id] === index + 1
+                                    const selectedOption = selectedOptions[message._id] || false 
 
                                     if(message.allVotes.some(vote => String(vote.voter) === String(currentUser._id))){
                                         return (<>
@@ -1402,12 +1420,12 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
                                         key={index}>
                                             <input type="radio" checked={optionChecked} 
                                             onClick={() => {
-                                                    if(selectedOptions[message.id] === index+1){
-                                                        setSelectedOptions(prev => ({...prev, [message.id]:null}))
-                                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
+                                                    if(selectedOptions[message._id] === index+1){
+                                                        setSelectedOptions(prev => ({...prev, [message._id]:null}))
+                                                        setShowVoteOptions(prev => ({...prev, [message._id]:false}))
                                                     } else {
-                                                        setSelectedOptions(prev => ({...prev, [message.id]:index+1}))
-                                                        setShowVoteOptions(prev => ({...prev, [message.id]:true}))
+                                                        setSelectedOptions(prev => ({...prev, [message._id]:index+1}))
+                                                        setShowVoteOptions(prev => ({...prev, [message._id]:true}))
                                                     }
                                             }
                                                 }/>
@@ -1418,12 +1436,12 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
                                     
 
                                     })}
-                                    {showVoteOptions[message.id] && (<>
-                                        <h4 style={{textAlign:'center'}} onClick={() => {
-                                        message.allVotes = [...message.allVotes, {"Shoya":selectedOptions[message.id]}]
-                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
-                                        }}>vote</h4>
-                                    </>)}
+                                {showVoteOptions[message._id] && (<>
+                                    <h4 style={{textAlign:'center'}} onClick={() => {
+                                    message.allVotes = [...message.allVotes, {"Shoya":selectedOptions[message._id]}]
+                                    setShowVoteOptions(prev => ({...prev, [message._id]:false}))
+                                }}>vote</h4>
+                                </>)}
 
                                         </>) : (<>
                                             <><h4>{message.msg}</h4></>
@@ -1562,8 +1580,8 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
                                     <h3 style={{marginTop:'5px'}}>{message.topic}</h3>
                                     {message.options.map((option, index) => {
                                     
-                                    const optionChecked = selectedOptions[message.id] === index + 1
-                                    const selectedOption = selectedOptions[message.id] || false 
+                                    const optionChecked = selectedOptions[message._id] === index + 1
+                                    const selectedOption = selectedOptions[message._id] || false 
 
                                     if(message.allVotes.some(vote => String(vote.voter) === String(currentUser._id))){
                                         return (<>
@@ -1584,12 +1602,12 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
                                         key={index}>
                                             <input type="radio" checked={optionChecked} 
                                             onClick={() => {
-                                                    if(selectedOptions[message.id] === index+1){
-                                                        setSelectedOptions(prev => ({...prev, [message.id]:null}))
-                                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
+                                                    if(selectedOptions[message._id] === index+1){
+                                                        setSelectedOptions(prev => ({...prev, [message._id]:null}))
+                                                        setShowVoteOptions(prev => ({...prev, [message._id]:false}))
                                                     } else {
-                                                        setSelectedOptions(prev => ({...prev, [message.id]:index+1}))
-                                                        setShowVoteOptions(prev => ({...prev, [message.id]:true}))
+                                                        setSelectedOptions(prev => ({...prev, [message._id]:index+1}))
+                                                        setShowVoteOptions(prev => ({...prev, [message._id]:true}))
                                                     }
                                             }
                                                 }/>
@@ -1600,10 +1618,10 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
                                     
 
                                     })}
-                                    {showVoteOptions[message.id] && (<>
+                                    {showVoteOptions[message._id] && (<>
                                         <h4 style={{textAlign:'center'}} onClick={() => {
-                                        message.allVotes = [...message.allVotes, {"Shoya":selectedOptions[message.id]}]
-                                        setShowVoteOptions(prev => ({...prev, [message.id]:false}))
+                                        message.allVotes = [...message.allVotes, {"Shoya":selectedOptions[message._id]}]
+                                        setShowVoteOptions(prev => ({...prev, [message._id]:false}))
                                         }}>vote</h4>
                                     </>)}
 
@@ -1658,13 +1676,15 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
 
     const {setShowPostComments} = useContext(postCommentsContext)
 
-
+    const {currentUser} = useContext(userContext)
 
     const onDeleteComment = (selectedMessage) => {
-        post.msgComments = post.msgComments.filter((comment) => comment.id !== selectedMessage.id)
+        // post.comments = post.comments.filter((comment) => comment._id !== selectedMessage._id)
     }
 
 
+    console.log(post);
+    
 
     return (
         <>
@@ -1674,10 +1694,11 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
 
             <div style={{display:'flex', flexDirection:'column'}}>
                 <h4>Discussion</h4>
-                {post.msgComments.length === 1 ? (<>
-                    <h5>1 comment</h5>
-                </>) : (<> {post.msgComments.length === 0 ? (<><h5>0 comments</h5></>) 
-                    : (<><h5>{post.msgComments.length} comments</h5></>)}
+                {post.comments && (<>
+                    {post.comments.length === 0 && <h5>no comment</h5> }
+                    {post.comments.length === 1 && <h5>1 comment</h5> }
+                    {post.comments.length > 1 && <h5>{post.comments.length} comments</h5> }
+                    
                 </>)}
             </div>
 
@@ -1703,12 +1724,12 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
                             </div>
 
 
-            {post.msgComments.length !== 0 ? (<>
+            {post.comments ? (<>
             <h5 style={{position:'relative', left:'45%', width:'120px'}}>Discussion started</h5>
             <br />
-            {post.msgComments.map((comment, index) => {
+            {post.comments.map((comment, index) => {
 
-                    if(comment.from !== "Shoya"){
+                    if(comment.from.name !== currentUser.name){
                         
                         return (
                             <div className={`message-wrapper left ${highlightMsgId == `${index}` ? 'highlight' : ''} `} 
@@ -1757,7 +1778,6 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
 
                                 {showModal && <OptionsModal {...(modalType === 'forward' ? {
                                     selectedModalMsg, setSelectedModalMsg} : {})}
-
                                 modalType={modalType} setShowModal={setShowModal}/>}                        
                             </div>
 
@@ -1817,9 +1837,9 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
                             <div className="messages-sent">
                                 {comment.ref ? (
                                     <>
-                                        <div className="reply-preview" onClick={() => highlightMessage(comment.ref.id)}>
-                                        <h5 style={{fontSize:"13px"}}>{comment.ref.from}</h5>
-                                            {comment.ref.type === "files" || comment.ref.type === "edited-files" ? (
+                                    <div className="reply-preview" onClick={() => highlightMessage(comment.ref._id)}>
+                                        <h5 style={{fontSize:"13px"}}>{comment.ref.from.name}</h5>
+                                            {comment.ref.type === "Files" ? (
                                                 <>
                                                     <h5>{comment.ref.msg.length > 1 ? (<>
                                                     {comment.ref.msg.length} files
@@ -1844,7 +1864,7 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
                                 ) : (<></>)}
                                     
 
-                                    {comment.type === "files" || comment.type === "edited-files" ? (
+                                    {comment.type === "Files"? (
                                         <>
                                         <ShowcaseFiles files={comment} />                                        
                                         </>
@@ -1862,7 +1882,7 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
                                     )}
 
                                     <h5>
-                                    {comment.type == "edited" || comment.type == "edited-files" ? "Edited, " : ""}
+                                    {comment.edited == true ? "edited, " : ""}
                                         {new Date(comment.createdAt)
                                         .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </h5>

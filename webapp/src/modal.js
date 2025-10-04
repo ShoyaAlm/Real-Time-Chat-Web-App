@@ -41,6 +41,12 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, selectedChatsId, s
 
     const baseURL = 'http://localhost:8080/api/v1'
     const token = localStorage.getItem('token')
+
+
+    const [groupOrChannelName, setGroupOrChannelName] = useState('')
+    const [groupOrChannelAbout, setGroupOrChannelAbout] = useState('')
+    const [channelLink, setChannelLink] = useState('')
+
     const createGroup = async (groupName, bio) => {
         setShowModal(false)
 
@@ -72,20 +78,36 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, selectedChatsId, s
 
     }
 
-    const createChannel = (channelName, bio) => {
+    const createChannel = async (channelName, bio) => {
+        
         setShowModal(false)
-        setChats([...chats,{id: chats.length + 1, name: channelName, type:'channel',
-        messages:[],
-        users:[{id:1, name:"Shoya", type:'admin', 
-            img:'https://thumbs.dreamstime.com/b/professional-business-man-center-tablet-computer-148434325.jpg'},
-        ],
-        admins:["Shoya"],
-        pinnedMessages:[], bio:bio,
-            img: 'https://wallpapers.com/images/hd/aesthetic-computer-4k-c9qdhe02pr84wh3a.jpg',
-            lastUpdatedAt: new Date().toISOString()
+        if(showcaseNavbar) setShowcaseNavbar(false)
+            
+        try {
+            const response = await fetch(`${baseURL}/chats/channel`,{
+                method: 'POST',
+                headers:{
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name:channelName,
+                    link: channelLink,
+                    bio: bio
+                })
+            })
 
-    }])
-    if(showcaseNavbar) setShowcaseNavbar(false)
+            const channelData = await response.json()
+            
+            if(!response.ok){
+                throw new Error('Error occurred while making channel')
+            }
+            console.log('Channel has been made: ', channelData);
+            
+        } catch (error) {
+            console.log(error);
+        }
+    
     }
     
 
@@ -93,9 +115,6 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, selectedChatsId, s
     const [username, setUsername] = useState("@shoya_alm")
     const [bio, setBio] = useState("this is my cool little bio")
     
-    const [groupOrChannelName, setGroupOrChannelName] = useState('')
-    const [groupOrChannelAbout, setGroupOrChannelAbout] = useState('')
-    const [channelLink, setChannelLink] = useState('')
     
     switch (modalType) {
         case 'forward':

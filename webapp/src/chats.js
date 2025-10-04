@@ -23,7 +23,6 @@ export const userContext = createContext(null)
 
 const ChatPage = () => {
     
-    // const [chats, setChats] = useState(allChats)
     const [chats, setChats] = useState([])
     return (
         <>
@@ -316,8 +315,8 @@ const ChatPreview = () => {
                                 }}>
                                 <img alt="" src={
                                     chat.type === 'Normal' ? (() => {
-                                    const otherUser = chat.users.find(user => user._id !== currentUser.id)
-                                    return otherUser ? otherUser.img
+                                    const otherUser = chat.users.find(u => u.user._id !== currentUser.id)
+                                    return otherUser ? otherUser.user.img
                     : "https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg"
                                     })() 
                                     : chat.img
@@ -489,7 +488,7 @@ const NavbarContent = ({showcaseNavbar,setShowcaseNavbar, setUser}) => {
         setShowModal(true)
         setModalType(type)
     }
-    // receive the current user's info after handling the backend(verifying the token, receiving user's info)
+
     return (
 
     <Modal isOpen={showcaseNavbar} onRequestClose={() => setShowcaseNavbar(false)}
