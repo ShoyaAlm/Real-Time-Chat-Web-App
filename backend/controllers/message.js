@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const {Message, TextMessage, VoteMessage, FileMessage, ReplyMessage} = require('../models/message')
-const {Chat, GroupChat, Channel} = require('../models/chat')
+const {Chat} = require('../models/chat')
+const Comment = require('../models/comment')
 const {BadRequestError, NotFoundError, UnauthorizedError, ServerError} = require('../errors/index')
 const {updateMessageCache, updatePinnedMessageCache} = require('./cache')
 require('dotenv').config()
@@ -43,6 +44,7 @@ const getAllMessages = async (req, res) => {
 
         const chat = await Chat.findById(chatId).populate([{
             path:"messages",
+            select:"comments",
             populate:[
                 {path:"from",select:"name"},
                 {path:"origin", select:"name"},
@@ -58,6 +60,15 @@ const getAllMessages = async (req, res) => {
                 {
                     path:"files",
                     
+                },
+                {
+                    path:"comments",
+                    // select:"msg createdAt",
+                    // populate:[
+                    //     {path:"from", select:"user.name"},
+                    //     {path:"message", select:"msg"},
+                    //     {path:"replyTo"}    
+                    // ],
                 }
         ],
             options:{ sort: {createdAt: 1}, limit:20}
@@ -79,7 +90,8 @@ const getAllMessages = async (req, res) => {
                 edited: message.edited,
                 forwarded: message.forwarded,
                 seen: message.seen,
-                chat: message.chat
+                chat: message.chat,
+                comments:message.comments
             }
 
 
@@ -160,15 +172,6 @@ const sendMessage = async (req, res) => {
                 })
                 break
 
-            // case 'Files':
-            //     newMessage = new FileMessage({
-            //         files:files,
-            //         comment:comment,
-            //         from:userId,
-            //         chat:chatId
-            //     })
-            //     break
-
             case 'Reply':
                 newMessage = new ReplyMessage({
                     msg:message,
@@ -177,7 +180,6 @@ const sendMessage = async (req, res) => {
                     chat:chatId
                 })
                 break
-
 
             default:
                 throw new BadRequestError(`Message type (${type}) is not supported`)
@@ -204,12 +206,6 @@ const sendMessage = async (req, res) => {
 
                 break
 
-            // case 'Files':
-            //     await newMessage.populate([
-            //         {path:'from', select:'name'},
-            //         {path:'files comment'}
-            //     ])
-            //     break
 
             case 'Reply':
                 await newMessage.populate([

@@ -33,9 +33,9 @@ const getUserChats = async (req, res) => {
             })
         }
 
-        const chats = await Chat.find({users:userId}).populate([
+        const chats = await Chat.find({'users.user':userId}).populate([
             {
-            path:'users', select:'name img'
+            path:'users.user', select:'name img'
             },
             {
                 path:'messages', options:{sort:{createdAt:1}, limit:1},
@@ -44,8 +44,8 @@ const getUserChats = async (req, res) => {
             {
                 path:"pinnedMessages", select:"msg createdAt",
                 populate:{path:"from", select:"name"}
-            } 
-    ])            
+            }
+    ])
 
         await client.set(cacheKey, JSON.stringify(chats), {
             EX: 600
@@ -126,7 +126,7 @@ const makeChat = async (req, res) => {
 
         const newChat = await NormalChat.create({
             name:[name, secondUser.name], // name is the current user's name
-            users:[userId, secondUserId],
+            users:[{user:userId, role:'normal'}, {user:secondUserId, role:'normal'}],
             messages:[]
         })
 
@@ -175,7 +175,7 @@ const makeGroup = async (req, res) => {
     
         const newGroup = await GroupChat.create({
             name:name,
-            users:[userId],
+            users:[{user:userId, role:'admin'}],
             messages:[],
             bio:bio
         })
@@ -205,7 +205,10 @@ const makeChannel = async (req, res) => {
         
         const newChannel = await ChannelChat.create({
             name:name,
-            users:[userId],
+            users:[{
+                user:userId,
+                role:'admin'
+            }],
             link:link,
             messages:[],
             bio:bio

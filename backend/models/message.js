@@ -44,7 +44,12 @@ const MessageSchema = new mongoose.Schema({
         type:mongoose.Types.ObjectId,
         ref:'Chat',
         required:true
-    }
+    },
+
+    comments:[{
+      type: mongoose.Types.ObjectId,
+      ref: 'Comment'
+    }]
 
 }, { discriminatorKey:'type'})
 

@@ -5,6 +5,22 @@ const User = require('./user')
 const {Message} = require('./message')
 
 
+
+const UsersInChatSchema = new mongoose.Schema({
+
+    user:{
+        type: mongoose.Types.ObjectId,
+        ref:'User',
+        required:true
+    },
+    role:{
+        type:String,
+        enum:['normal', 'admin'],
+        default:'normal'
+    }
+
+})
+
 const ChatSchema = new mongoose.Schema({
 
     
@@ -13,11 +29,7 @@ const ChatSchema = new mongoose.Schema({
         ref:'Message',
     }],
 
-
-    users:[{
-        type: mongoose.Types.ObjectId,
-        ref:'User',
-    }],
+    users:[UsersInChatSchema],
 
     pinnedMessages:[{
         type:mongoose.Types.ObjectId,
@@ -110,31 +122,7 @@ const ChannelChatSchema = new mongoose.Schema({
         unique:true
     },
 
-    msgComments:[{
-        from:{
-            type:mongoose.Types.ObjectId,
-            ref:'User',
-            required:true      
-        },
-        msg:{
-            type:mongoose.Types.ObjectId,
-            ref:'Message',
-            enum:['Text', 'Files', 'Reply'],
-            required:true
-        },
-        createdAt: {
-            type:Date,
-            default: Date.now()
-        },
-        replyTo:{
-            type:mongoose.Types.ObjectId,
-            ref:'Message',
-            default:null
-        }
-    }]
-
 })
-
 
 
 function inviteLinkGeneration() {

@@ -74,7 +74,6 @@ const updateMessageCache = async (chatId, message, command) => {
 
 }
 
-
 const updatePinnedMessageCache = async (chatId, message, command) => {
     const cacheKey = `chats:${chatId}:pinnedMessages`
     const cachedPinnedMessages = await client.get(cacheKey)
@@ -103,4 +102,51 @@ const updatePinnedMessageCache = async (chatId, message, command) => {
 
 }
 
-module.exports = {updateChatCache, updateMessageCache, updatePinnedMessageCache}
+const updateMessageCommentsCache = async (chatId, messageId, comment, command) => {
+
+    const cacheKey = `chats:${chatId}:messages:${messageId}:comments`
+    const cachedComments = await client.get(cacheKey)
+
+    let parsedComments = []
+
+    if(cachedComments){
+        parsedComments = JSON.parse(cachedComments)
+
+        switch (command) {
+            case 'add':
+                parsedComments.push(comment)
+                break;
+
+            case 'delete':
+                parsedComments = parsedComments.filter(msg => String(msg._id) !== String(comment._id))
+                break;
+            
+            case 'edit':
+                parsedComments = parsedComments.map(msg => {
+                if(String(msg._id) === String(comment._id)){
+                    return {
+                        ...msg,
+                        msg: comment.msg,
+                        edited: true 
+                    }
+                }
+                return msg
+            })
+                break;
+
+                
+            default:
+                break;
+        }
+
+
+        await client.set(cacheKey, JSON.stringify(parsedComments), {
+            EX: 600
+        })
+    }
+
+
+
+}
+
+module.exports = {updateChatCache, updateMessageCache, updatePinnedMessageCache, updateMessageCommentsCache}
