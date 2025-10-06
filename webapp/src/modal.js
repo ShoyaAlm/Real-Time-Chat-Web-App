@@ -230,7 +230,7 @@ const OptionsModal = ({selectedModalMsg, setSelectedModalMsg, selectedChatsId, s
                             <button style={{position:'absolute', right:'0px'}}
                                 onClick={() => {
                                     setShowModal(false)
-                                    onDeleteMessage(selectedModalMsg._id)
+                                    onDeleteMessage(selectedModalMsg)
                                     }}>Yes</button>
                             
                         </div>

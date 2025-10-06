@@ -22,10 +22,10 @@ const ChatParent = ({ name }) => {
 }
 
 
+const baseURL = 'http://localhost:8080/api/v1'
 
 const Chat = ({name}) => {
     
-    const baseURL = 'http://localhost:8080/api/v1'
 
     const {chats, setChats} = useContext(chatsContext)
     const {setShowChat} = useContext(showChatContext)
@@ -67,7 +67,10 @@ const Chat = ({name}) => {
         if(showPinnedMessages) setShowPinnedMessages(false)
         if(!canShowOtherChat) {
             setCanShowOtherChat(true)
-        } else setShowPostComments(false)
+        } else {
+            setSendStatus('send')
+            setShowPostComments(false)
+        }
 
         if(inputValue) setInputValue('')
 
@@ -251,7 +254,7 @@ const Chat = ({name}) => {
                 }
 
                 break;
-     
+
             case 'setup-vote':
                 try {
                     const response = await fetch(`${baseURL}/chats/${chatID}/messages`,
@@ -429,23 +432,6 @@ const Chat = ({name}) => {
                 }
 
                 break;
-                    // if(typeof theMessage.msg === "object"){
-                    //     if(theMessage.comment !== ''){
-                    //         setAttachedFilesComment(theMessage.comment)
-                    //     }
-                    //     setEditingAttachedFiles(true)
-                    //     setAttachedFiles(theMessage.msg)
-                    //     setSelectedFileMessageID(theMessage.id)
-                    // } else {
-                    //     if(theMessage.type === 'vote'  || theMessage.topic !== undefined){
-                    //         openModal('edit-vote', theMessage)
-                    //     } else {
-                    //         setInputValue(theMessage.msg)
-                    //         setMessageToEdit(theMessage)
-                    //     }
-                    // }
-
-       
 
             case 'forward':
                 try {
@@ -511,12 +497,115 @@ const Chat = ({name}) => {
                 }
                 break;
 
+            case 'comment':
+                
+                try {
+
+                const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost._id}/comments`,
+                        {
+                            method:'POST',
+                            headers:{
+                                'Authorization':`Bearer ${token}`,
+                                'Content-Type':'application/json'
+                            },
+                            body: JSON.stringify({
+                                comment:inputValue,
+                                type:"Text"
+                            })
+                        }
+                    )
+
+                    setInputValue('')
+
+                    const commentData = await response.json()
+
+                    if(!response.ok){
+                        throw new Error('Error occurred while commenting', commentData.message)
+                    }
+
+                    console.log('comment has been sent', commentData);
+                    
+                } catch (error) {
+                    console.log(error);
+                }
+
+                break;
+          
+            case 'edit-comment':
+                try {
+const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost._id}/comments/${selectedModalMsg._id}`,
+                        {
+                            method:'PATCH',
+                            headers:{
+                                'Authorization':`Bearer ${token}`,
+                                'Content-Type':'application/json'
+                            },
+                            body: JSON.stringify({
+                                userInput:inputValue,
+                            })
+                        }
+                    )
+
+                    const messageData = await response.json()
+
+                    if(!response.ok){
+                        throw new Error('Error occurred while editing comment', messageData.message)
+                    }
+
+                    setSendStatus('comment')
+                    console.log('comment has been edited', messageData);
+                    
+                } catch (error) {
+                    console.log(error);
+                } finally{
+                    setInputValue('')
+                }
+
+            case 'reply-comment':
+                
+                try {
+                    const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost._id}/comments`,
+                        {
+                            method:'POST',
+                            headers:{
+                                'Authorization':`Bearer ${token}`,
+                                'Content-Type':'application/json'
+                            },
+                            body: JSON.stringify({
+                                comment:inputValue,
+                                messageToReplyId:messageToReply._id,
+                                type:"Reply"
+                            })
+                        }
+                    )
+
+                    setInputValue('')
+
+                    const commentData = await response.json()
+
+                    if(!response.ok){
+                        throw new Error('Error occurred while commenting reply', commentData.message)
+                    }
+
+                    setSendStatus('comment')
+
+                    console.log('commenting the reply is done', commentData);
+                    
+                } catch (error) {
+                    console.log(error);
+                }
+
+                break;
+
+            
+            // then set the sendStatus to comment
+                
 
             default:
                 break;
         }
 
-        if(sendStatus !== 'send') setSendStatus('send')
+        if(sendStatus !== 'send' && sendStatus !== 'comment') setSendStatus('send')
 
     }
 
@@ -698,31 +787,32 @@ const Chat = ({name}) => {
 
 
                         
-                            {<ShowMessages chat={user} setChats={setChats} onDeleteMessage={onDeleteMessage}
-                                setMessageToEdit={setMessageToEdit} setMessageToReply={setMessageToReply}
-                                inputValue={inputValue} setInputValue={setInputValue} setSendStatus={setSendStatus} 
-                                setAttachedFiles={setAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
-                                setSelectedFileMessageID={setSelectedFileMessageID}
-                                setAttachedFilesComment={setAttachedFilesComment} highlightMsgId={highlightMsgId}
-                                highlightMessage={highlightMessage} selectedPost={selectedPost} 
-                                setSelectedPost={setSelectedPost} updatedMessages={updatedMessages} openModal={openModal}
-                                showModal={showModal} setShowModal={setShowModal} modalType={modalType} 
-                                setModalType={setModalType} selectedModalMsg={selectedModalMsg} 
-                                setSelectedModalMsg={setSelectedModalMsg} leaveChat={leaveChat}
-                                editVote={editVote} chatMessages={chatMessages} setChatMessages={setChatMessages}
-                                selectedChatsId={selectedChatsId} setSelectedChatsId={setSelectedChatsId}
-                                sendingMessage={sendingMessage} setSelectedVoteOption={setSelectedVoteOption}
-                            />}
+        {<ShowMessages chat={user} setChats={setChats} onDeleteMessage={onDeleteMessage}
+            setMessageToEdit={setMessageToEdit} setMessageToReply={setMessageToReply}
+            inputValue={inputValue} setInputValue={setInputValue} sendStatus={sendStatus} setSendStatus={setSendStatus} 
+            setAttachedFiles={setAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
+            setSelectedFileMessageID={setSelectedFileMessageID}
+            setAttachedFilesComment={setAttachedFilesComment} highlightMsgId={highlightMsgId}
+            highlightMessage={highlightMessage} selectedPost={selectedPost} 
+            setSelectedPost={setSelectedPost} updatedMessages={updatedMessages} openModal={openModal}
+            showModal={showModal} setShowModal={setShowModal} modalType={modalType} 
+            setModalType={setModalType} selectedModalMsg={selectedModalMsg} 
+            setSelectedModalMsg={setSelectedModalMsg} leaveChat={leaveChat}
+            editVote={editVote} chatMessages={chatMessages} setChatMessages={setChatMessages}
+            selectedChatsId={selectedChatsId} setSelectedChatsId={setSelectedChatsId}
+            sendingMessage={sendingMessage} setSelectedVoteOption={setSelectedVoteOption}
+        />}
                         
                     </div>
 
-                            {sendStatus === 'reply' || sendStatus === 'edit' ? (
+                            {sendStatus === 'reply' || sendStatus === 'edit' || 
+                            sendStatus === 'reply-comment' || sendStatus === 'reply-comment'? (
                                 <>
                                 <div className="typeof-message">
-                                    {sendStatus == 'reply' ? (
+                                    {sendStatus == 'reply' || sendStatus === 'reply-comment' ? (
                                         
                                         <div className="reply">
-                                        {messageToReply.type === "files" || messageToReply.type === "edited-files" ? (
+                                        {messageToReply.type === "Files" ? (
                                             <>
                                         <h5>Reply: {messageToReply.msg.length > 1 ? 'files ' : '1 file '} 
                                                 from {messageToReply.from}</h5>  
@@ -736,7 +826,7 @@ const Chat = ({name}) => {
                                                 </>
                                             ) : (
                                                 <>
-                                            {messageToReply.type === 'vote' ? (<>
+                                            {messageToReply.type === 'Vote' ? (<>
                                                 <h5>Reply: {messageToReply.topic.slice(0, 50)}
                                                 {messageToReply.topic.length > 50 ? '...' : ''}</h5>  
                                             </>) : (<>
@@ -798,6 +888,9 @@ const Chat = ({name}) => {
                     >{sendStatus === 'send' && <>Send</>}
                      {sendStatus === 'reply' && <>Reply</>}
                      {sendStatus === 'edit' && <>Edit</>}
+                     {sendStatus === 'comment' && <>Comment</>}
+                     {sendStatus === 'edit-comment' && <>Edit</>}
+                     {sendStatus === 'reply-comment' && <>Reply</>}
                     </button>
                 </div>
                 </>)}
@@ -819,7 +912,7 @@ const Chat = ({name}) => {
 
 
 const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMessageToReply, inputValue,
-    setInputValue, setSendStatus, setAttachedFiles, setEditingAttachedFiles, setSelectedFileMessageID,
+    setInputValue, sendStatus, setSendStatus, setAttachedFiles, setEditingAttachedFiles, setSelectedFileMessageID,
     setAttachedFilesComment, highlightMsgId, highlightMessage, selectedPost, setSelectedPost, openModal,
     showModal, setShowModal, modalType, setModalType, selectedModalMsg, setSelectedModalMsg, leaveChat,
     editVote, chatMessages, selectedChatsId, setSelectedChatsId, sendingMessage, voteTopic, setVoteTopic,
@@ -837,8 +930,11 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
             setInputValue('')
         }
         setShowThreeOptions(false)
-        setSendStatus('reply')
 
+        if(sendStatus !== 'comment' && sendStatus !== 'edit-comment' && sendStatus !== 'reply-comment'){
+            setSendStatus('reply')
+        }
+        else setSendStatus('reply-comment')
     }
 
     const editMessage = (theMessage) => {
@@ -858,6 +954,10 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
     const [selectedOptions, setSelectedOptions] = useState({})
     const [showVoteOptions, setShowVoteOptions] = useState({})
+
+
+    // const [showcaseComments, setShowcaseComments] = useState(false)
+
 
     const voteCounts = (message) => {
         return message.options.map((option, index) => 
@@ -1011,6 +1111,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                     <div style={{position:'relative', textAlign:'left', top:'-3px'}} 
                                     onClick={() => { 
                                         setSelectedPost(message)
+                                        setSendStatus('comment')
                                         setShowPostComments(true)}
                                         }>    
                                     <hr />
@@ -1219,22 +1320,22 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                     } else {
                                         return (<>
 
-                                        <div className="vote-message-options"
-                                        style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
-                                        key={index}>
-                                            <input type="radio" checked={optionChecked} 
-                                            onClick={() => {
-                                                    if(selectedOptions[message._id] === index+1){
-                                                        setSelectedOptions(prev => ({...prev, [message._id]:null}))
-                                                        setShowVoteOptions(prev => ({...prev, [message._id]:false}))
-                                                        setSelectedVoteOption('')
+                                <div className="vote-message-options"
+                                style={{display:'flex', flexDirection:'row', gap:'10px', marginBottom:'10px'}}
+                                key={index}>
+                                    <input type="radio" checked={optionChecked} 
+                                    onClick={() => {
+                                            if(selectedOptions[message._id] === index+1){
+                                                setSelectedOptions(prev => ({...prev, [message._id]:null}))
+                                                setShowVoteOptions(prev => ({...prev, [message._id]:false}))
+                                                setSelectedVoteOption('')
 
-                                                    } else {
-                                                        setSelectedOptions(prev => ({...prev, [message._id]:index+1}))
-                                                        setShowVoteOptions(prev => ({...prev, [message._id]:true}))
-                                                        setSelectedVoteOption(index+1)
-                                                    }
+                                            } else {
+                                                setSelectedOptions(prev => ({...prev, [message._id]:index+1}))
+                                                setShowVoteOptions(prev => ({...prev, [message._id]:true}))
+                                                setSelectedVoteOption(index+1)
                                             }
+                                    }
                                                 }/>
                                             <h5>{option}</h5>
                                         </div>
@@ -1272,6 +1373,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                     {chat.type === 'Channel' && (
                                     <div style={{position:'relative', top:'-3px'}} 
                                     onClick={() => { setSelectedPost(message)
+                                        setSendStatus('comment')
                                         setShowPostComments(true)}}>    
                                     <hr />
                                     
@@ -1317,13 +1419,14 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                 />
 
                 </>) : (<>
-                {/* alternatively, for the comments below a channel post */}
-                {showPostComments && <ShowPostComments post={selectedPost} highlightMessage={highlightMessage}
-                optionsIndex={optionsIndex} setOptionsIndex={setOptionsIndex} showThreeOptions={showThreeOptions} 
-                setShowThreeOptions={setShowThreeOptions} openModal={openModal}
-                replyMessage={replyMessage} showModal={showModal} setShowModal={setShowModal} editMessage={editMessage}
-                highlightMsgId={highlightMsgId} modalType={modalType} onDeleteMessage={onDeleteMessage}
-                selectedModalMsg={selectedModalMsg} setSelectedModalMsg={setSelectedModalMsg}
+            {/* alternatively, for the comments below a channel post */}
+            {showPostComments && <ShowPostComments post={selectedPost} highlightMessage={highlightMessage}
+            optionsIndex={optionsIndex} setOptionsIndex={setOptionsIndex} showThreeOptions={showThreeOptions} 
+            setShowThreeOptions={setShowThreeOptions} openModal={openModal}
+            replyMessage={replyMessage} showModal={showModal} setShowModal={setShowModal} editMessage={editMessage}
+            highlightMsgId={highlightMsgId} modalType={modalType} onDeleteMessage={onDeleteMessage}
+            selectedModalMsg={selectedModalMsg} setSelectedModalMsg={setSelectedModalMsg}
+            chatID={chat._id} messageID={selectedPost._id} setSendStatus={setSendStatus} setInputValue={setInputValue}
             />}
 
                 </>)}
@@ -1672,32 +1775,93 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
 
 const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex, showThreeOptions, 
     setShowThreeOptions, openModal, replyMessage, showModal, setShowModal, editMessage, highlightMsgId, modalType, 
-        selectedModalMsg, setSelectedModalMsg}) => {
+        selectedModalMsg, setSelectedModalMsg, chatID, messageID, setSendStatus, setInputValue}) => {
 
     const {setShowPostComments} = useContext(postCommentsContext)
 
-    const {currentUser} = useContext(userContext)
+    const {currentUser, token} = useContext(userContext)
+    
+    const [comments, setComments] = useState([])
+    
 
-    const onDeleteComment = (selectedMessage) => {
-        // post.comments = post.comments.filter((comment) => comment._id !== selectedMessage._id)
+    const onDeleteComment = async (selectedMessage) => {
+    
+    try {
+        
+    const response = await fetch(`${baseURL}/chats/${chatID}/messages/${messageID}/comments/${selectedMessage._id}`,{
+                method:'DELETE',
+                headers:{
+                    'Authorization':`Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+
+            const deletedData = await response.json()
+
+            if(!response.json){
+                throw new Error('Problem occurred while deleting the comment' || deletedData.message)
+            }
+            
+            console.log('Comment has been deleted');
+
+        } catch (error) {
+            console.log(error);
+        }
+
     }
 
+    const [loadingComments, setLoadingComments] = useState(true)
 
-    console.log(post);
+    useEffect(() => {
+
+        const fetchComments = async () => {
+            
+            try {
+    
+                const response = await fetch(`${baseURL}/chats/${chatID}/messages/${messageID}/comments`,
+                    {
+                        method:'GET',
+                        headers:{
+                            'Authorization':`Bearer ${token}`,
+                            'Content-Type':'application/json'
+                        },
+                    }
+                )
+    
+                const commentData = await response.json()
+    
+                if(!response.ok){
+                    throw new Error('Error occurred while receiving message', commentData.message)
+                }
+
+                setComments(commentData.comments)
+    
+                setLoadingComments(false)
+                    
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        fetchComments()
+
+    }, [])
     
 
     return (
         <>
 
         <div style={{backgroundColor:'#93a5ffff', display:'flex', flexDirection:'row'}}>
-        <button onClick={() => setShowPostComments(false)}>Back</button>
+        <button onClick={() => {
+            setSendStatus('send')
+            setShowPostComments(false)}}>Back</button>
 
             <div style={{display:'flex', flexDirection:'column'}}>
                 <h4>Discussion</h4>
-                {post.comments && (<>
-                    {post.comments.length === 0 && <h5>no comment</h5> }
-                    {post.comments.length === 1 && <h5>1 comment</h5> }
-                    {post.comments.length > 1 && <h5>{post.comments.length} comments</h5> }
+                {comments && (<>
+                    {comments.length === 0 && <h5>no comment</h5> }
+                    {comments.length === 1 && <h5>1 comment</h5> }
+                    {comments.length > 1 && <h5>{comments.length} comments</h5> }
                     
                 </>)}
             </div>
@@ -1713,7 +1877,7 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
 
                                 <div style={{display:'flex', justifyContent:'flex-end'}}>
 
-                                <h5 style={{bottom:'6px', right:'68px'}}>{post.from}, </h5>
+                                <h5 style={{bottom:'6px', right:'68px'}}>{post.from.name}, </h5>
 
                                 <h5> {new Date(post.createdAt)
                                     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1723,16 +1887,20 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
 
                             </div>
 
+            {loadingComments ? (<>
+            <h4>Loading comments...</h4>
+            </>) 
+            : (<>
 
-            {post.comments ? (<>
+            {comments ? (<>
             <h5 style={{position:'relative', left:'45%', width:'120px'}}>Discussion started</h5>
             <br />
-            {post.comments.map((comment, index) => {
+            {comments.map((comment, index) => {
 
                     if(comment.from.name !== currentUser.name){
                         
-                        return (
-                            <div className={`message-wrapper left ${highlightMsgId == `${index}` ? 'highlight' : ''} `} 
+                    return (
+                        <div className={`message-wrapper left ${highlightMsgId == `${index}` ? 'highlight' : ''} `} 
                             key={index} id={`msg-${index}`}>
 
                                 
@@ -1766,7 +1934,6 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
                                 ? "show" : ""}`}>
 
                                 <h5 onClick={() => replyMessage(comment)}>Reply</h5>
-                                
                                 <h5 onClick={() => {
                                     openModal('forward', comment)
                                     setShowThreeOptions(false)
@@ -1786,7 +1953,9 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
                             </div>
                         )
 
-                    } else {
+                    }
+                    
+                    if(comment.from.name === currentUser.name){
                         
                         return (
                         <div className={`message-wrapper right ${highlightMsgId == `${index}` ? 'highlight' : ''} `} 
@@ -1820,10 +1989,15 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
                                 {showModal && <OptionsModal {...(modalType === 'forward' ? { 
                                     selectedModalMsg, setSelectedModalMsg } : {})}
 
-                                    {...(modalType === "delete-comment" ? {onDeleteComment, selectedModalMsg} : {})}                             
+                                    {...(modalType === "delete-comment" ? {onDeleteComment, selectedModalMsg} : {})}
                                 modalType={modalType} setShowModal={setShowModal}/>}
 
-                                <h5 onClick={() => editMessage(comment)}>Edit</h5>
+                                <h5 onClick={() => {
+                                    setShowThreeOptions(false)
+                                    setInputValue(comment.msg)
+                                    setSelectedModalMsg(comment)
+                                    setSendStatus('edit-comment')
+                                }}>Edit</h5>
                                 <h5 onClick={() => {
                                     openModal('delete-comment', comment)                                
                                     setShowThreeOptions(false)}}>Delete</h5>
@@ -1835,38 +2009,38 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
                             </div>
                             
                             <div className="messages-sent">
-                                {comment.ref ? (
-                                    <>
-                                    <div className="reply-preview" onClick={() => highlightMessage(comment.ref._id)}>
-                                        <h5 style={{fontSize:"13px"}}>{comment.ref.from.name}</h5>
-                                            {comment.ref.type === "Files" ? (
-                                                <>
-                                                    <h5>{comment.ref.msg.length > 1 ? (<>
-                                                    {comment.ref.msg.length} files
-                                                    </>) : (<>{comment.ref.msg.length} file</>)}</h5>
-                                                </>
-                                            ) : (
-                                                <>
-                                                {typeof comment.ref.msg !== "object" ? (
-                                                    <>
-                                                    <h5>{comment.ref.msg.slice(0, 30)}
-                                                    {comment.ref.msg.length > 30 ? '...' : ''}</h5>
-                                                    </>
-                                                ) : (
-                                                    <></>
-                                                )}
-                                                </>
-                                            )}
+                        {comment.replyTo ? (
+                            <>
+                            <div className="reply-preview" onClick={() => highlightMessage(comment.replyTo._id)}>
+                                <h5 style={{fontSize:"13px"}}>{comment.replyTo.from.name}</h5>
+                                    {comment.replyTo.message.type === "Files" ? (
+                                        <>
+                                            <h5>{comment.replyTo.msg.length > 1 ? (<>
+                                            {comment.replyTo.msg.length} files
+                                            </>) : (<>{comment.replyTo.msg.length} file</>)}</h5>
+                                        </>
+                                    ) : (
+                                        <>
+                                        {typeof comment.replyTo.msg !== "object" ? (
+                                            <>
+                                            <h5>{comment.replyTo.msg.slice(0, 30)}
+                                            {comment.replyTo.msg.length > 30 ? '...' : ''}</h5>
+                                            </>
+                                        ) : (
+                                            <></>
+                                        )}
+                                        </>
+                                    )}
 
-                                            
-                                        </div>
-                                    </>
-                                ) : (<></>)}
+                                    
+                                </div>
+                            </>
+                        ) : (<></>)}
                                     
 
                                     {comment.type === "Files"? (
                                         <>
-                                        <ShowcaseFiles files={comment} />                                        
+                                        <ShowcaseFiles files={comment} />
                                         </>
                                     ) : (
                                         <>
@@ -1896,6 +2070,10 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
 
             })}
         </>) : (<><h5 style={{position:'relative', left:'45%', width:'135px'}}>No comments here...</h5></>)}
+
+            </>)}
+
+
         </>
     )
 }
