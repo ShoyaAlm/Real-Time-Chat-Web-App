@@ -1,10 +1,10 @@
 const express = require('express')
 const router = express.Router({mergeParams:true})
 
-const {getAllComments, sendComment, deleteComment} = require('../controllers/comment')
+const {getAllComments, sendComment, editComment, deleteComment} = require('../controllers/comment')
 
 router.route('/').get(getAllComments).post(sendComment)
-router.route('/:commentId').delete(deleteComment)
+router.route('/:commentId').patch(editComment).delete(deleteComment)
 
 
 module.exports = router

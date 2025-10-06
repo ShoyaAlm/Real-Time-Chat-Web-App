@@ -61,6 +61,28 @@ const updateMessageCache = async (chatId, message, command) => {
                 return msg
             })
 
+            case 'comment-added':
+                parsedMessages = parsedMessages.map(msg => {
+                if(String(msg._id) === String(message._id)){
+                    return {
+                        ...msg,
+                        comments: message.comments 
+                    }
+                }
+                return msg
+            })
+
+            case 'comment-removed':
+                parsedMessages = parsedMessages.map(msg => {
+                if(String(msg._id) === String(message._id)){
+                    return {
+                        ...msg,
+                        comments: message.comments 
+                    }
+                }
+                return msg
+            })  
+
                 
             default:
                 break;
@@ -101,7 +123,6 @@ const updatePinnedMessageCache = async (chatId, message, command) => {
     }
 
 }
-
 const updateMessageCommentsCache = async (chatId, messageId, comment, command) => {
 
     const cacheKey = `chats:${chatId}:messages:${messageId}:comments`
@@ -122,15 +143,15 @@ const updateMessageCommentsCache = async (chatId, messageId, comment, command) =
                 break;
             
             case 'edit':
-                parsedComments = parsedComments.map(msg => {
-                if(String(msg._id) === String(comment._id)){
+                parsedComments = parsedComments.map(parsedComment => {
+                if(String(parsedComment._id) === String(comment._id)){
                     return {
-                        ...msg,
+                        ...parsedComment,
                         msg: comment.msg,
                         edited: true 
                     }
                 }
-                return msg
+                return parsedComment
             })
                 break;
 

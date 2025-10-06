@@ -20,6 +20,10 @@ const ChannelCommentSchema = new mongoose.Schema({
             ref:'Comment',
             default:null
         },
+        edited:{
+            type:Boolean,
+            default:false
+        },
         createdAt: {
             type:Date,
             default: Date.now()

@@ -3,8 +3,9 @@ const {BadRequestError, NotFoundError, ServerError, UnauthorizedError} = require
 const {Message, TextMessage, ReplyMessage} = require('../models/message')
 const {Chat} = require('../models/chat')
 const Comment = require('../models/comment')
-const {updateMessageCommentsCache} = require('./cache')
+const {updateMessageCommentsCache, updateMessageCache} = require('./cache')
 const client = require('../utils/redisClient')
+const { ObjectId } = require('mongoose').Types;
 
 
 const getAllComments = async (req, res) => {
@@ -29,20 +30,28 @@ const getAllComments = async (req, res) => {
                 nb: parsedCachedComments.length,
                 comments: parsedCachedComments
             })
-        }
+        }    
 
-    const comments = await Message.findById(messageId)
-    .populate([{
+    const message = await Message.findById(messageId)
+    .populate({
         path:'comments',
-        select: 'msg createdAt',
+        select: 'msg edited createdAt',
         populate:[
             {path:'from', select:'name'},
-            {path:'message', select:'msg'},
-            {path:'replyTo', select:'msg'},
-            
+            {path:'message', select:'_id'},
+            {
+                path:'replyTo', select:'msg',
+                populate:[
+                    {path:'message', select:'_id type'},
+                    {path:'from', select:'name'}
+                ]
+                
+            },
         ]
-    }])
-    
+    })
+
+
+    const comments = message.comments || []
 
     if(!comments){
         throw new NotFoundError('Comments are not found')
@@ -148,7 +157,15 @@ const sendComment = async (req, res) => {
         ).exec()
         .catch( err => console.log("Updating channel's comments failed: ", err))
 
-        await updateMessageCommentsCache(chatId, messageId ,newMessage, 'add')
+        const userComment = await Comment.findById(newComment._id).populate({
+            path:'from', select:'name'
+        })
+
+        await updateMessageCommentsCache(chatId, messageId ,userComment, 'add')
+
+
+        const message = await Message.findById(messageId)
+        await updateMessageCache(chatId, message, 'comment-added')
 
         res.status(201).json({msg:"new comment created", comment:newComment})
 
@@ -159,17 +176,75 @@ const sendComment = async (req, res) => {
 
 }
 
+const editComment = async (req, res) => {
 
-const deleteComment = async () => {
+    const {params:{chatId, messageId, commentId}, body:{userInput}, user:{userId}} = req
+
+    if(!messageId || !chatId || !commentId){
+        throw new BadRequestError('Must provide chat ID, message ID and comment ID')
+    }
+
+    try {
+
+        const chat = await Chat.findById(chatId)
+
+        if(!chat){
+            throw new NotFoundError('Invalid chat ID')
+        }
+
+        console.log(chatId, messageId, commentId);
+        
+        const message = await Message.findOne({
+            _id:messageId,
+            chat:chatId,
+            from:userId
+        })
+        
+        if(!message){
+            throw new UnauthorizedError('Could not find the post')
+        }        
+
+        const comment = await Comment.findOne({
+            _id:commentId,
+            message:messageId
+        }).populate({path:'from', select:'_id'})
+
+        if(!comment){
+            throw new NotFoundError('No comment is found')
+        }
+
+        console.log(comment);
+        
+
+        if(!comment.from._id.equals(new ObjectId(userId))){
+            throw new UnauthorizedError('Unauthorized access. you cannot edit the comment')
+        }
+
+        await Comment.findByIdAndUpdate(commentId, {
+            msg:userInput,
+            edited:true
+        })
+
+
+        await updateMessageCommentsCache(chatId, messageId, comment, 'edit')
+
+
+        res.status(200).json({msg:"comment successfully edited"})
+
+    } catch (error) {
+        console.log(error);
+        throw new ServerError(error)
+    }
+
+}
+
+const deleteComment = async (req, res) => {
 
     const {params:{chatId, messageId, commentId}, user:{userId}} = req
 
     if(!messageId || !chatId || !commentId){
         throw new BadRequestError('Must provide chat ID, message ID and comment ID')
     }
-
-    console.log(chatId, messageId, commentId);
-    
 
     try {
 
@@ -189,15 +264,25 @@ const deleteComment = async () => {
             throw new UnauthorizedError('Could not find the post')
         }
 
+        console.log(messageId, commentId);
+        
+
         const comment = await Comment.findOne({
-            from:userId,
-            message:messageId,
-        })
+            _id:commentId,
+            message:messageId
+        }).populate(
+            {path:'from', select:'_id'})
 
         if(!comment){
-            throw new UnauthorizedError('Unauthorized access. you cannot delete the comment')
+            throw new NotFoundError('No comment is found')
         }
 
+        console.log(comment);
+        
+
+        if(!comment.from._id.equals(new ObjectId(userId))){
+            throw new UnauthorizedError('Unauthorized access. you cannot delete the comment')
+        }
 
         await updateMessageCommentsCache(chatId, messageId, comment, 'delete')
 
@@ -211,6 +296,9 @@ const deleteComment = async () => {
             console.log('failed to update post: ', error);
         }
 
+        await updateMessageCache(chatId, message, 'comment-removed')
+
+
         res.status(200).json({msg:"comment successfully deleted"})
     } catch (error) {
         console.log(error);
@@ -219,4 +307,4 @@ const deleteComment = async () => {
 
 }
 
-module.exports = {getAllComments, sendComment, deleteComment}
+module.exports = {getAllComments, sendComment, editComment, deleteComment}

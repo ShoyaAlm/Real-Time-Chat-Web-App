@@ -44,10 +44,11 @@ const getAllMessages = async (req, res) => {
 
         const chat = await Chat.findById(chatId).populate([{
             path:"messages",
-            select:"comments",
+            select:"msg type edited forwarded seen createdAt topic options",
             populate:[
                 {path:"from",select:"name"},
                 {path:"origin", select:"name"},
+                {path:"chat", select:"_id"},
                 {
                     path:"ref", 
                     select:"msg type",
@@ -63,17 +64,12 @@ const getAllMessages = async (req, res) => {
                 },
                 {
                     path:"comments",
-                    // select:"msg createdAt",
-                    // populate:[
-                    //     {path:"from", select:"user.name"},
-                    //     {path:"message", select:"msg"},
-                    //     {path:"replyTo"}    
-                    // ],
+                    select:"_id"
                 }
         ],
             options:{ sort: {createdAt: 1}, limit:20}
         },
-    ]).lean()
+    ]).lean().exec()
         
         if(!chat){
             throw new NotFoundError('No chat was found')
