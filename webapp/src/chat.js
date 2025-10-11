@@ -9,8 +9,11 @@ import { chatsContext, showChatContext, pinnedMessagesContext, postCommentsConte
 import {OptionsModal, AttachedFileModal} from './modal'
 import { UserInfo, GroupInfo, ChannelInfo } from "./chat-info"
 
+import io from 'socket.io-client'
 
 import ShowcaseFiles from "./files"
+
+const SOCKET_SERVER_URL = 'http://localhost:8080'
 
 const ChatParent = ({ name }) => {
 
@@ -25,7 +28,8 @@ const ChatParent = ({ name }) => {
 const baseURL = 'http://localhost:8080/api/v1'
 
 const Chat = ({name}) => {
-    
+
+    const socketRef = useRef()
 
     const {chats, setChats} = useContext(chatsContext)
     const {setShowChat} = useContext(showChatContext)
@@ -59,9 +63,30 @@ const Chat = ({name}) => {
 
     const {currentUser, token, chatID} = useContext(userContext)
     const [chatMessages, setChatMessages] = useState([])
-    
+     
 
-    useEffect(() => {   
+    const fetchChat = async () => {
+        
+        try {
+            
+            const response = await fetch(`${baseURL}/chats/${chatID}/messages`,{
+                headers:{
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type':'application/json'
+                }
+            })
+            if(!response.ok){
+                throw new Error('Failed retrieving messages from chat')
+            }
+
+            const chatMessagesData = await response.json()
+            setChatMessages(chatMessagesData.messages)
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    useEffect(() => {
         setChatHistory(chats.find((chat) => chat.name === name) ? true : false)
 
         if(showPinnedMessages) setShowPinnedMessages(false)
@@ -70,33 +95,41 @@ const Chat = ({name}) => {
         } else {
             setSendStatus('send')
             setShowPostComments(false)
+            setSelectedPost(null)
         }
 
         if(inputValue) setInputValue('')
 
-        // here's where we receive messages 
-        const fetchChat = async () => {
-            
-            try {
-                
-                const response = await fetch(`${baseURL}/chats/${chatID}/messages`,{
-                    headers:{
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type':'application/json'
-                    }
-                })
-                if(!response.ok){
-                    throw new Error('Failed retrieving messages from chat')
-                }
+        fetchChat()
 
-                const chatMessagesData = await response.json()
-                setChatMessages(chatMessagesData.messages)
-            } catch (error) {
-                console.log(error);
+
+        socketRef.current = io(SOCKET_SERVER_URL, {
+            query:{
+                chat: chatID
+            }
+        })
+
+        socketRef.current.emit('joinChat', chatID)
+
+        socketRef.current.on('newMessage', (newMessage) => {
+            setChatMessages((prevMessages) => [...prevMessages, newMessage])
+        })
+
+        socketRef.current.on('deleteMessage', message => {
+            setChatMessages((prevMessages) => prevMessages.filter(msg => msg._id !== message._id))
+        })
+
+        socketRef.current.on('editMessage', editedMessage => {
+            setChatMessages((prevMessages) => 
+                prevMessages.map(msg => msg._id === editedMessage._id ? editedMessage : msg))
+        })
+
+
+        return () => {
+            if(socketRef.current){
+                socketRef.current.disconnect()
             }
         }
-
-        fetchChat()
 
         }, [user/*, chats*/])
 
@@ -166,7 +199,7 @@ const Chat = ({name}) => {
     const [showGroupInfo, setShowGroupInfo] = useState(false)
     const [showChannelInfo, setShowChannelInfo] = useState(false)
 
-    const [selectedPost, setSelectedPost] = useState(null) // for when we click on comment-section of a post
+    const [selectedPost, setSelectedPost] = useState(null)
     const [canShowOtherChat, setCanShowOtherChat] = useState(true)
 
     const [showChatOptions, setShowChatOptions] = useState(false)
@@ -247,6 +280,10 @@ const Chat = ({name}) => {
 
                     console.log('message has been sent', messageData);
                     
+                    if(socketRef.current){
+                        socketRef.current.emit('sendMessage', messageData)
+                    }
+
                 } catch (error) {
                     console.log(error);
                 } finally{
@@ -280,6 +317,10 @@ const Chat = ({name}) => {
                     
                     if(!response.ok){
                         throw new Error('Error occurred while submitting the vote', messageData.message)
+                    }
+                    
+                    if(socketRef.current){
+                        socketRef.current.emit('sendMessage', messageData)
                     }
 
                     console.log('Vote has been sent', messageData);
@@ -358,6 +399,10 @@ const Chat = ({name}) => {
                     if(!response.ok){
                         throw new Error('Error occurred while sending files', messageData.message)
                     }
+                    
+                    if(socketRef.current){
+                        socketRef.current.emit('sendMessage', messageData)
+                    }
 
                     console.log('files have been sent', messageData);
                     
@@ -391,6 +436,10 @@ const Chat = ({name}) => {
                             throw new Error('Error occurred while replying the message', messageData.message)
                         }
 
+                        if(socketRef.current){
+                            socketRef.current.emit('sendMessage', messageData)
+                        }
+
                         console.log('reply has been sent', messageData);
                         
                     } catch (error) {
@@ -422,6 +471,11 @@ const Chat = ({name}) => {
                     if(!response.ok){
                         throw new Error('Problem occurred while editing the message' || editedData.message)
                     }
+
+                    if(socketRef.current){
+                        socketRef.current.emit('editMessage', selectedModalMsg, inputValue, chatID)
+                    }
+
                     setInputValue('')
                     setSelectedModalMsg('')
 
@@ -523,6 +577,14 @@ const Chat = ({name}) => {
                         throw new Error('Error occurred while commenting', commentData.message)
                     }
 
+                    // if(socketRef.current){
+                    //     socketRef.current.emit('newComment', {
+                    //         comment:commentData,
+                    //         message:selectedPost, 
+                    //         messageID:selectedPost._id
+                    //     })
+                    // }
+
                     console.log('comment has been sent', commentData);
                     
                 } catch (error) {
@@ -561,6 +623,8 @@ const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost
                     setInputValue('')
                 }
 
+                break;
+
             case 'reply-comment':
                 
                 try {
@@ -597,10 +661,6 @@ const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost
 
                 break;
 
-            
-            // then set the sendStatus to comment
-                
-
             default:
                 break;
         }
@@ -609,9 +669,10 @@ const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost
 
     }
 
-    const onDeleteMessage = async (messageId) => {
+    const onDeleteMessage = async (selectedModalMsg) => {
         try {
-            const response = await fetch(`${baseURL}/chats/${chatID}/messages/${messageId}`,{
+            
+            const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedModalMsg._id}`,{
                 method:'DELETE',
                 headers:{
                     'Authorization':`Bearer ${token}`,
@@ -623,6 +684,12 @@ const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost
 
             if(!response.json){
                 throw new Error('Problem occurred while deleting the message' || deletedData.message)
+            }
+
+            setSelectedModalMsg('')
+            
+            if(socketRef.current){
+                socketRef.current.emit('deleteMessage', selectedModalMsg, chatID)
             }
 
         } catch (error) {
@@ -788,8 +855,8 @@ const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost
 
                         
         {<ShowMessages chat={user} setChats={setChats} onDeleteMessage={onDeleteMessage}
-            setMessageToEdit={setMessageToEdit} setMessageToReply={setMessageToReply}
-            inputValue={inputValue} setInputValue={setInputValue} sendStatus={sendStatus} setSendStatus={setSendStatus} 
+            setMessageToEdit={setMessageToEdit} setMessageToReply={setMessageToReply} inputValue={inputValue}
+            setInputValue={setInputValue} sendStatus={sendStatus} setSendStatus={setSendStatus} 
             setAttachedFiles={setAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
             setSelectedFileMessageID={setSelectedFileMessageID}
             setAttachedFilesComment={setAttachedFilesComment} highlightMsgId={highlightMsgId}
@@ -800,7 +867,7 @@ const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost
             setSelectedModalMsg={setSelectedModalMsg} leaveChat={leaveChat}
             editVote={editVote} chatMessages={chatMessages} setChatMessages={setChatMessages}
             selectedChatsId={selectedChatsId} setSelectedChatsId={setSelectedChatsId}
-            sendingMessage={sendingMessage} setSelectedVoteOption={setSelectedVoteOption}
+            sendingMessage={sendingMessage} setSelectedVoteOption={setSelectedVoteOption} socketRef={socketRef}
         />}
                         
                     </div>
@@ -822,7 +889,7 @@ const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost
                                             {typeof messageToReply.msg === "object" ? (
                                                 <>
                                                 <h5>Reply: {messageToReply.msg.length > 1 ? 'files ' : '1 file '} 
-                                                from {messageToReply.from}</h5>                                                
+                                                from {messageToReply.from}</h5>
                                                 </>
                                             ) : (
                                                 <>
@@ -874,15 +941,15 @@ const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost
                         onChange={(e) => setInputValue(e.target.value)}
                     />
                     
-                    {attachedFiles && <AttachedFileModal attachedFiles={attachedFiles}
-                    setAttachedFiles={setAttachedFiles} handleAttachFiles={handleAttachFiles}
-                        selectedUser={user} fileInputRef={fileInputRef} resetFileInputKey={resetFileInputKey}
-                        editingAttachedFiles={editingAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
-                        selectedFileMessageID={selectedFileMessageID} setSelectedFileMessageID={setSelectedFileMessageID}
-                        sendStatus={sendStatus} setSendStatus={setSendStatus} attachedFilesComment={attachedFilesComment}
-                        setAttachedFilesComment={setAttachedFilesComment} chatHistory={chatHistory}
-                        setChatHistory={setChatHistory} sendingMessage={sendingMessage} setShowModal={setShowModal}
-                    />}
+                {attachedFiles && <AttachedFileModal attachedFiles={attachedFiles}
+                setAttachedFiles={setAttachedFiles} handleAttachFiles={handleAttachFiles}
+                    selectedUser={user} fileInputRef={fileInputRef} resetFileInputKey={resetFileInputKey}
+                    editingAttachedFiles={editingAttachedFiles} setEditingAttachedFiles={setEditingAttachedFiles}
+                    selectedFileMessageID={selectedFileMessageID} setSelectedFileMessageID={setSelectedFileMessageID}
+                    sendStatus={sendStatus} setSendStatus={setSendStatus} attachedFilesComment={attachedFilesComment}
+                    setAttachedFilesComment={setAttachedFilesComment} chatHistory={chatHistory}
+                    setChatHistory={setChatHistory} sendingMessage={sendingMessage} setShowModal={setShowModal}
+                />}
 
                     <button className="send" onClick={() => sendingMessage(sendStatus)}
                     >{sendStatus === 'send' && <>Send</>}
@@ -915,8 +982,8 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     setInputValue, sendStatus, setSendStatus, setAttachedFiles, setEditingAttachedFiles, setSelectedFileMessageID,
     setAttachedFilesComment, highlightMsgId, highlightMessage, selectedPost, setSelectedPost, openModal,
     showModal, setShowModal, modalType, setModalType, selectedModalMsg, setSelectedModalMsg, leaveChat,
-    editVote, chatMessages, selectedChatsId, setSelectedChatsId, sendingMessage, voteTopic, setVoteTopic,
-    voteOptions, setVoteOptions, setSelectedVoteOption }) => {
+    editVote, chatMessages, setChatMessages, selectedChatsId, setSelectedChatsId, sendingMessage, voteTopic, 
+    setVoteTopic, voteOptions, setVoteOptions, setSelectedVoteOption, socketRef }) => {
     
     const {currentUser} = useContext(userContext)
     
@@ -1002,34 +1069,34 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                             <div className="messages-received">
                             {message.ref ? (
                                 <>
-                                    <div className="reply-preview" onClick={() => highlightMessage(message.ref._id)}>
-                                    <h5 style={{fontSize:"13px"}}>{message.ref.from.name}</h5>
-                                        {message.ref.type === "Files" || 
-                                        (message.ref.type === "Files" && message.edited === true) ? (
+                                <div className="reply-preview" onClick={() => highlightMessage(message.ref._id)}>
+                                <h5 style={{fontSize:"13px"}}>{message.ref.from.name}</h5>
+                                    {message.ref.type === "Files" || 
+                                    (message.ref.type === "Files" && message.edited === true) ? (
+                                        <>
+                                            <h5>{message.ref.msg.length > 1 ? (<>
+                                            {message.ref.msg.length} files
+                                            </>) : (<>{message.ref.msg.length} file</>)}</h5>
+                                        </>
+                                    ) : (
+                                        <>
+                                        {typeof message.ref.msg !== "object" ? (
                                             <>
-                                                <h5>{message.ref.msg.length > 1 ? (<>
-                                                {message.ref.msg.length} files
-                                                </>) : (<>{message.ref.msg.length} file</>)}</h5>
+                                            {message.type === 'Vote' ? (<>
+                                                <h5>{message.ref.topic.slice(0, 30)}
+                                                {message.ref.topic.length > 30 ? '...' : ''}</h5>
+                                            </>) : (<>
+                                                <h5>{message.ref.msg.slice(0, 30)}
+                                                {message.ref.msg.length > 30 ? '...' : ''}</h5>
+                                            </>)}
                                             </>
                                         ) : (
-                                            <>
-                                            {typeof message.ref.msg !== "object" ? (
-                                                <>
-                                                {message.type === 'Vote' ? (<>
-                                                    <h5>{message.ref.topic.slice(0, 30)}
-                                                    {message.ref.topic.length > 30 ? '...' : ''}</h5>
-                                                </>) : (<>
-                                                    <h5>{message.ref.msg.slice(0, 30)}
-                                                    {message.ref.msg.length > 30 ? '...' : ''}</h5>
-                                                </>)}
-                                                </>
-                                            ) : (
-                                                <></>
-                                            )}
-                                            </>
+                                            <></>
                                         )}
+                                        </>
+                                    )}
 
-                                    </div>
+                                </div>
                                 </>
                             ) : (<></>)}
 
@@ -1229,6 +1296,7 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                             <h5 onClick={() => editMessage(message)}>Edit</h5>
                             <h5 onClick={() => {
                                 openModal('delete', message)
+                                setSelectedModalMsg(message)
                                 setShowThreeOptions(false)}}>Delete</h5>
                         
                         
@@ -1374,7 +1442,11 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
                                     <div style={{position:'relative', top:'-3px'}} 
                                     onClick={() => { setSelectedPost(message)
                                         setSendStatus('comment')
-                                        setShowPostComments(true)}}>    
+                                        setShowPostComments(true)
+                                        if(socketRef.current){
+                                            socketRef.current.emit('joinMessageRoom', message._id)
+                                        }
+                                        }}>    
                                     <hr />
                                     
                                         {!message.comments ? (<><h5>No comment...</h5></>)
@@ -1422,11 +1494,12 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
             {/* alternatively, for the comments below a channel post */}
             {showPostComments && <ShowPostComments post={selectedPost} highlightMessage={highlightMessage}
             optionsIndex={optionsIndex} setOptionsIndex={setOptionsIndex} showThreeOptions={showThreeOptions} 
-            setShowThreeOptions={setShowThreeOptions} openModal={openModal}
+            setShowThreeOptions={setShowThreeOptions} openModal={openModal} setSelectedPost={setSelectedPost}
             replyMessage={replyMessage} showModal={showModal} setShowModal={setShowModal} editMessage={editMessage}
             highlightMsgId={highlightMsgId} modalType={modalType} onDeleteMessage={onDeleteMessage}
             selectedModalMsg={selectedModalMsg} setSelectedModalMsg={setSelectedModalMsg}
             chatID={chat._id} messageID={selectedPost._id} setSendStatus={setSendStatus} setInputValue={setInputValue}
+            socketRef={socketRef} setChatMessages={setChatMessages}
             />}
 
                 </>)}
@@ -1774,15 +1847,16 @@ const ShowPinnedMessages = ({pinnedMessages, showThreeOptions, setShowThreeOptio
 }
 
 const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex, showThreeOptions, 
-    setShowThreeOptions, openModal, replyMessage, showModal, setShowModal, editMessage, highlightMsgId, modalType, 
-        selectedModalMsg, setSelectedModalMsg, chatID, messageID, setSendStatus, setInputValue}) => {
+    setShowThreeOptions, openModal, setSelectedPost, replyMessage, showModal, setShowModal, editMessage, 
+    highlightMsgId, modalType, selectedModalMsg, setSelectedModalMsg, chatID, messageID,
+    setSendStatus, setInputValue, socketRef, setChatMessages }) => {
 
     const {setShowPostComments} = useContext(postCommentsContext)
 
     const {currentUser, token} = useContext(userContext)
     
     const [comments, setComments] = useState([])
-    
+
 
     const onDeleteComment = async (selectedMessage) => {
     
@@ -1811,41 +1885,105 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
     }
 
     const [loadingComments, setLoadingComments] = useState(true)
+    
+    const fetchComments = async () => {
+        
+        try {
+
+            const response = await fetch(`${baseURL}/chats/${chatID}/messages/${messageID}/comments`,
+                {
+                    method:'GET',
+                    headers:{
+                        'Authorization':`Bearer ${token}`,
+                        'Content-Type':'application/json'
+                    },
+                }
+            )
+
+            const commentData = await response.json()
+
+            if(!response.ok){
+                throw new Error('Error occurred while receiving message', commentData.message)
+            }
+
+            setComments(commentData.comments)
+
+            setLoadingComments(false)
+                
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
     useEffect(() => {
 
-        const fetchComments = async () => {
-            
-            try {
-    
-                const response = await fetch(`${baseURL}/chats/${chatID}/messages/${messageID}/comments`,
-                    {
-                        method:'GET',
-                        headers:{
-                            'Authorization':`Bearer ${token}`,
-                            'Content-Type':'application/json'
-                        },
-                    }
-                )
-    
-                const commentData = await response.json()
-    
-                if(!response.ok){
-                    throw new Error('Error occurred while receiving message', commentData.message)
-                }
-
-                setComments(commentData.comments)
-    
-                setLoadingComments(false)
-                    
-            } catch (error) {
-                console.log(error);
-            }
+        if(socketRef.current && post){
+            socketRef.current.emit('joinMessageRoom', post._id)
         }
+
+        socketRef.current.on('newComment', (newComment, message) => {
+            console.log(newComment);
+            setComments(prevComments => [...prevComments, newComment])
+            setChatMessages((prevMessages) => 
+                prevMessages.map((msg) => msg._id === message._id 
+                    ? {...msg, comments:[...msg.comments, newComment]}
+                    : msg))
+        })
+        
+        socketRef.current.on('deleteComment', (comment, messageId) => {
+            setChatMessages((prevMessages) => 
+                prevMessages.map((msg) => {
+                    if(msg._id === messageId){
+                        return {
+                            ...msg,
+                            comments: msg.comments.filter(cmnt => cmnt._id !== comment._id)
+                        }
+                    }
+                    return msg
+                }
+            ))
+            setComments(prevComments => prevComments.filter(cmnt => cmnt._id !== comment._id))
+        })
+
+
+        socketRef.current.on('editComment', (editedComment, messageId) => {
+            
+            setComments(prevComments => prevComments.map(cmnt => cmnt._id === editedComment._id 
+                ? editedComment
+                : cmnt
+            ))
+            
+            setChatMessages((prevMessages) => 
+                
+                prevMessages.map(msg => msg._id === messageId 
+                    ? {
+                        ...msg,
+                        comments: msg.comments.map(cmnt => cmnt._id === editedComment._id 
+                            ? {
+                                ...cmnt,
+                                ...editedComment
+                              }
+                            : cmnt
+                        )
+                      }
+                    : msg )            
+            )
+        })
+
 
         fetchComments()
 
-    }, [])
+        return () => {
+            if(socketRef.current && post){
+                socketRef.current.emit('leaveMessageRoom', post._id)
+            }
+
+            socketRef.current.off('newComment')
+            socketRef.current.off('deleteComment')
+            socketRef.current.off('editComment')
+        }
+
+    }, [post._id])
     
 
     return (
@@ -1854,7 +1992,9 @@ const ShowPostComments = ({post, highlightMessage, optionsIndex, setOptionsIndex
         <div style={{backgroundColor:'#93a5ffff', display:'flex', flexDirection:'row'}}>
         <button onClick={() => {
             setSendStatus('send')
-            setShowPostComments(false)}}>Back</button>
+            setShowPostComments(false)
+            setSelectedPost(null)
+            }}>Back</button>
 
             <div style={{display:'flex', flexDirection:'column'}}>
                 <h4>Discussion</h4>
