@@ -7,6 +7,9 @@ const {updateMessageCommentsCache, updateMessageCache} = require('./cache')
 const client = require('../utils/redisClient')
 const { ObjectId } = require('mongoose').Types;
 
+const {getIo} = require('../utils/socket')
+
+const io = getIo()
 
 const getAllComments = async (req, res) => {
 
@@ -161,11 +164,14 @@ const sendComment = async (req, res) => {
             path:'from', select:'name'
         })
 
+        
         await updateMessageCommentsCache(chatId, messageId ,userComment, 'add')
-
-
+        
         const message = await Message.findById(messageId)
         await updateMessageCache(chatId, message, 'comment-added')
+        
+        io.to(`message_${messageId}`).emit('newComment', userComment, message)
+        
 
         res.status(201).json({msg:"new comment created", comment:newComment})
 
@@ -191,8 +197,6 @@ const editComment = async (req, res) => {
         if(!chat){
             throw new NotFoundError('Invalid chat ID')
         }
-
-        console.log(chatId, messageId, commentId);
         
         const message = await Message.findOne({
             _id:messageId,
@@ -213,21 +217,21 @@ const editComment = async (req, res) => {
             throw new NotFoundError('No comment is found')
         }
 
-        console.log(comment);
-        
-
         if(!comment.from._id.equals(new ObjectId(userId))){
             throw new UnauthorizedError('Unauthorized access. you cannot edit the comment')
         }
 
-        await Comment.findByIdAndUpdate(commentId, {
+        const editedComment = await Comment.findByIdAndUpdate(commentId, {
             msg:userInput,
             edited:true
-        })
+        },
+        {new:true}
+    ).populate({path:'from', select:'name'})
+
+        io.to(`message_${messageId}`).emit('editComment', editedComment, messageId)
 
 
-        await updateMessageCommentsCache(chatId, messageId, comment, 'edit')
-
+        await updateMessageCommentsCache(chatId, messageId, editedComment, 'edit')
 
         res.status(200).json({msg:"comment successfully edited"})
 
@@ -295,6 +299,9 @@ const deleteComment = async (req, res) => {
         } catch (error) {
             console.log('failed to update post: ', error);
         }
+
+        io.to(`message_${messageId}`).emit('deleteComment', comment, messageId)
+
 
         await updateMessageCache(chatId, message, 'comment-removed')
 

@@ -7,6 +7,7 @@ const {updateMessageCache, updatePinnedMessageCache} = require('./cache')
 require('dotenv').config()
 const client = require('../utils/redisClient')
 const fs = require('fs')
+const {getIo} = require('../utils/socket')
 
 const cloudinary = require('cloudinary').v2
 
@@ -228,6 +229,9 @@ const sendMessage = async (req, res) => {
 
         await updateMessageCache(chatId, newMessage, 'add')
 
+        const io = getIo()
+        io.to(chatId).emit('newMessage', newMessage)
+
         res.status(201).json({msg:"new message created", message:newMessage})
 
     } catch (error) {
@@ -360,6 +364,9 @@ const deleteMessage = async (req, res) => {
 
     try {
 
+        console.log(messageId);
+        
+
         const chat = await Chat.findById(chatId)
 
         if(!chat){
@@ -368,7 +375,7 @@ const deleteMessage = async (req, res) => {
 
         const message = await Message.findOne({
             _id:messageId,
-            chat:chatId,            
+            chat:chatId,
             from:userId
         })
         

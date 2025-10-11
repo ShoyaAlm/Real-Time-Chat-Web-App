@@ -2,8 +2,17 @@ const express = require('express');
 const app = express();
 require('dotenv').config()
 const cors = require('cors')
-
 const connectDB = require('./db/connect')
+const {initSocket} = require('./utils/socket')
+
+const http = require('http')
+const socketIo = require('socket.io')
+
+const server = http.createServer(app);
+
+const io = socketIo(server)
+
+initSocket(server)
 
 const userRouter = require('./routes/user')
 const chatRouter = require('./routes/chat')
@@ -28,7 +37,6 @@ app.use('/api/v1/chats/:chatId/messages/:messageId/comments', authenticationMidd
 
 app.use(errorHandlerMiddleware)
 
-
 const port = 8080
 
 const start = async () => {
@@ -36,9 +44,14 @@ const start = async () => {
     try {
         // await connectDB(process.env.MONGO_URI)
         await connectDB(process.env.LOCALDBURI)
-        app.listen(port, () => {
+        
+        server.listen(port, () => {
             console.log(`Server running on port ${port}`);
         })
+        // app.listen(port, () => {
+        //     console.log(`Server running on port ${port}`);
+        //     console.log(io);
+        // })
     
     } catch (error) {
         console.log(error);
