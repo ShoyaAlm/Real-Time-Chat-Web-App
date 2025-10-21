@@ -124,7 +124,7 @@ const ChatPreview = () => {
 
                 // setToken()
                 // const token = localStorage.getItem('token')
-
+                
                 if(!token){
                     throw new Error("No auth token was found")
                 }
@@ -140,7 +140,7 @@ const ChatPreview = () => {
                 }
                 
                 const chatData = await response.json()
-                console.log(chatData);
+                // console.log(chatData);
                 setCurrentUser(chatData.currentUser)
                 setChats(chatData.chats || [])
 
@@ -168,7 +168,7 @@ const ChatPreview = () => {
 
 
     const [showcaseNavbar, setShowcaseNavbar] = useState(false)
-    const [showModal, setShowModal] = useState(false)
+    const [showModal, setShowModal] = useState(false)    
 
     return (
 
@@ -177,12 +177,10 @@ const ChatPreview = () => {
                 <postCommentsContext.Provider value={{showPostComments, setShowPostComments}}>
                     <searchTermsContext.Provider value={{filteredResults, setFilteredResults, setSearchMod}}>
                         <modalContext.Provider value={{modalType, setModalType, showModal, setShowModal}}>
-                            <userContext.Provider value={{currentUser, token, chatID}}>
+                            <userContext.Provider value={{currentUser, token, chatID, setChatID, user, setUser}}>
 
         <div className="front-end" style={{display:'flex', flexDirection:'row'}}>
-            
-        {/* Navbar code here */}
-
+        
         {showcaseNavbar && <NavbarContent showcaseNavbar={showcaseNavbar} setShowcaseNavbar={setShowcaseNavbar} 
             setUser={setUser}
         />}

@@ -83,7 +83,39 @@ const getChat = async (req, res) => {
 
         const chat = await Chat.findById(chatId)
         
-        res.status(200).json({chat: chat})
+        if(!chat){
+            throw new NotFoundError('No chat was found')
+        }
+        return res.status(200).json({chat: chat})
+
+    } catch (error) {
+        console.log(error);
+        throw new ServerError(error)
+    }
+
+
+}
+
+const switchChat = async (req, res) => {
+
+    const {params:{link}} = req
+
+    console.log(link);
+    
+    
+    if(!link) {
+        throw new BadRequestError('Must provide link')
+    }
+
+    try {
+
+        const chat = await Chat.findById(link)
+        
+        if(!chat){
+            throw new NotFoundError('No chat was found')
+        }
+
+        return res.status(200).json({chat: chat})
 
     } catch (error) {
         console.log(error);
@@ -260,5 +292,5 @@ const deleteChat = async (req, res) => {
 }
 
 
-module.exports = {getUserChats, allChats, getChat, makeChat, makeGroup, makeChannel, deleteChat}
+module.exports = {getUserChats, allChats, getChat, switchChat, makeChat, makeGroup, makeChannel, deleteChat}
 

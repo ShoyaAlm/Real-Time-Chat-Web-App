@@ -33,6 +33,7 @@ const Chat = ({name}) => {
 
     const {chats, setChats} = useContext(chatsContext)
     const {setShowChat} = useContext(showChatContext)
+    
 
     const [inputValue, setInputValue] = useState('')
 
@@ -57,18 +58,15 @@ const Chat = ({name}) => {
             }
         }
     
+    const {currentUser, token, chatID, user} = useContext(userContext)
 
-    var user = chats.find((chat) => chat.name === name) ?? people.find((person) => person.name === name)
-    
-
-    const {currentUser, token, chatID} = useContext(userContext)
     const [chatMessages, setChatMessages] = useState([])
      
 
     const fetchChat = async () => {
         
         try {
-            
+            setChatMessages([])
             const response = await fetch(`${baseURL}/chats/${chatID}/messages`,{
                 headers:{
                     'Authorization': `Bearer ${token}`,
@@ -76,11 +74,17 @@ const Chat = ({name}) => {
                 }
             })
             if(!response.ok){
-                throw new Error('Failed retrieving messages from chat')
+                // throw new Error('Failed retrieving messages from chat')
             }
 
             const chatMessagesData = await response.json()
-            setChatMessages(chatMessagesData.messages)
+            console.log(chatMessagesData);
+            
+            if(chatMessagesData.messages == []){
+                // we let the chatMessages be empty, 
+            } else {
+                setChatMessages(chatMessagesData.messages)
+            }
         } catch (error) {
             console.log(error);
         }
@@ -98,9 +102,13 @@ const Chat = ({name}) => {
             setSelectedPost(null)
         }
 
+        
+        
         if(inputValue) setInputValue('')
 
-        fetchChat()
+        if(chatID !== 0){ // for instances when we open up a new chat with no history with it(no prior messages)
+            fetchChat()
+        }
 
 
         socketRef.current = io(SOCKET_SERVER_URL, {
@@ -131,9 +139,7 @@ const Chat = ({name}) => {
             }
         }
 
-        }, [user/*, chats*/])
-
-
+        }, [user, chatID])        
     
     const handleAttachFiles = (event, replaceIndex = null) => {
         
@@ -733,6 +739,7 @@ const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost
 
                             <img alt="" src={(() => {
                                 if(user.type === 'Normal'){
+                                    console.log(user.users)
                                     const otherUser = user.users.find(u => u.user._id !== currentUser.id)
                                     return otherUser ? otherUser.user.img 
                     : "https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg"
@@ -767,12 +774,12 @@ const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost
                             
                             {showChatOptions && (<>
                                 <div className={`chat-options-menu ${showChatOptions ? 'show' : ''}`}>
-                                        {(user.type === 'Channel' || user.type === 'Group') && (
-                                            <><h5 onClick={() => openModal('setup-vote', user)}>Setup Vote</h5></>
-                                        )}
-                                        {chatHistory && (<><h5 style={{color:'#ae1212ff'}}
-                                        onClick={() => openModal('leave-chat', user)} //deleting the chat from our list
-                                        >Leave</h5></>)}
+                                    {(user.type === 'Channel' || user.type === 'Group') && (
+                                        <><h5 onClick={() => openModal('setup-vote', user)}>Setup Vote</h5></>
+                                    )}
+                                    {chatHistory && (<><h5 style={{color:'#ae1212ff'}}
+                                    onClick={() => openModal('leave-chat', user)} //deleting the chat from our list
+                                    >Leave</h5></>)}
                         
                         
                     {showModal && <OptionsModal 
@@ -838,7 +845,7 @@ const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost
                                 : `${user.pinnedMessages[user.pinnedMessages.length - currentLine].msg}`}
                                     </h5>
                             </div>
-                            <button style={{position:'relative', width:'60px', height:'20px', top:'20px', left:'100px'}}
+                        <button style={{position:'relative', width:'60px', height:'20px', top:'20px', left:'100px'}}
                             onClick={() => setShowPinnedMessages(true)}>Pinned Messages</button>
                             </div>
                             </>)}
@@ -985,10 +992,10 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     editVote, chatMessages, setChatMessages, selectedChatsId, setSelectedChatsId, sendingMessage, voteTopic, 
     setVoteTopic, voteOptions, setVoteOptions, setSelectedVoteOption, socketRef }) => {
     
-    const {currentUser} = useContext(userContext)
+    const {currentUser, token, chatID, setChatID, user, setUser} = useContext(userContext)
     
     const [showThreeOptions, setShowThreeOptions] = useState(false)
-
+    
     const replyMessage = (theMessage) => {
         
         setMessageToReply(theMessage)
@@ -1020,11 +1027,102 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     const {showPostComments, setShowPostComments} = useContext(postCommentsContext)
 
     const [selectedOptions, setSelectedOptions] = useState({})
-    const [showVoteOptions, setShowVoteOptions] = useState({})
-
+    const [showVoteOptions, setShowVoteOptions] = useState({})    
 
     // const [showcaseComments, setShowcaseComments] = useState(false)
 
+    const showMessage = (message) => {
+        const mentionRegex = /^@(\w+)/
+        const isMatch = message.match(mentionRegex)
+        let mention = null
+        let restOfMessage = message
+        if(isMatch){
+            mention = isMatch[0]
+            restOfMessage = message.slice(mention.length)
+        }
+
+        const linkExist = async (link) => {
+            
+            try {
+                const response = await fetch(`${baseURL}/links/${link}`, 
+                        {
+                            method:'GET',
+                            headers:{
+                                'Authorization':`Bearer ${token}`,
+                                'Content-Type':'application/json'
+                            }
+                        })
+
+                    const linkData = await response.json()
+
+                    if(!response.ok){
+                        alert('invalid link!')
+                        throw new Error('error in link data', linkData.message)
+                    }
+
+                    console.log(linkData);
+
+                    if(linkData.type === 'user'){
+
+            try {
+                            
+            const chatResponse = await fetch(`${baseURL}/links/normalChat/${currentUser.name}/${linkData.data.name}`,
+                                {
+                                    method:'GET',
+                                    headers:{
+                                        'Authorization':`Bearer ${token}`,
+                                        'Content-Type':'application/json'
+                                    }
+                                })
+                            
+                            const chatData = await chatResponse.json()
+
+                            if(chatData.msg === 'No chat with the given names was found'){                                
+                                setChatID(0)
+                                setUser({
+                                    name:[currentUser.name, linkData.data.name], messages:[], 
+                                users:[
+                                    {user:{_id:currentUser.id, name:currentUser.name, img: ''}}, 
+                                    {user:{_id:linkData.data._id, name:linkData.data.name, img: linkData.data.img}}],
+                                    pinnedMessages:[], type:'Normal', 
+                                    createdAt: new Date(), lastUpdatedAt: new Date() 
+                                })
+                                setChatMessages([])
+
+                            } else {
+                                console.log(chatData);
+                                setChatMessages(chatData.chat.messages)
+                                setChatID(chatData.chat._id)
+                                setUser(chatData.chat)
+                            }
+
+                        } catch (error) {
+                            console.log(error);
+                        }
+
+                    } else if(linkData.type === 'channel'){
+                        setChatID(linkData.data._id)
+                        setUser(linkData.data)
+                    }
+
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        return (
+            <>
+            {isMatch 
+            ? <>
+                <a onClick={() => linkExist(mention.slice(1))}
+                 style={{ color: 'purple', cursor: 'pointer' }}>{mention}</a> 
+            </> 
+            : <>{restOfMessage}</>
+            }
+            </>
+        )
+
+    }
 
     const voteCounts = (message) => {
         return message.options.map((option, index) => 
@@ -1424,7 +1522,8 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
 
                                 {typeof message.msg === 'string' && (<>
                                     <h4 style={{marginTop:'4px'}}>
-                                        {message.msg}
+                                        {showMessage(message.msg)}
+                                        {/* {message.msg} */}
                                     </h4>
                                 </>)}
 

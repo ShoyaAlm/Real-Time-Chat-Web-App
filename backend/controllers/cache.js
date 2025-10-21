@@ -123,6 +123,7 @@ const updatePinnedMessageCache = async (chatId, message, command) => {
     }
 
 }
+
 const updateMessageCommentsCache = async (chatId, messageId, comment, command) => {
 
     const cacheKey = `chats:${chatId}:messages:${messageId}:comments`
@@ -169,5 +170,6 @@ const updateMessageCommentsCache = async (chatId, messageId, comment, command) =
 
 
 }
+
 
 module.exports = {updateChatCache, updateMessageCache, updatePinnedMessageCache, updateMessageCommentsCache}
