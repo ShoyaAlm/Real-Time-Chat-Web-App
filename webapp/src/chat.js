@@ -58,9 +58,8 @@ const Chat = ({name}) => {
             }
         }
     
-    const {currentUser, token, chatID, user} = useContext(userContext)
+    const {currentUser, token, chatID, user, chatMessages, setChatMessages} = useContext(userContext)
 
-    const [chatMessages, setChatMessages] = useState([])
      
 
     const fetchChat = async () => {
@@ -78,7 +77,6 @@ const Chat = ({name}) => {
             }
 
             const chatMessagesData = await response.json()
-            console.log(chatMessagesData);
             
             if(chatMessagesData.messages == []){
                 // we let the chatMessages be empty, 
@@ -739,7 +737,6 @@ const response = await fetch(`${baseURL}/chats/${chatID}/messages/${selectedPost
 
                             <img alt="" src={(() => {
                                 if(user.type === 'Normal'){
-                                    console.log(user.users)
                                     const otherUser = user.users.find(u => u.user._id !== currentUser.id)
                                     return otherUser ? otherUser.user.img 
                     : "https://t4.ftcdn.net/jpg/05/31/37/89/360_F_531378938_xwRjN9e5ramdPj2coDwHrwk9QHckVa5Y.jpg"
@@ -1032,16 +1029,13 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
     // const [showcaseComments, setShowcaseComments] = useState(false)
 
     const showMessage = (message) => {
-        const mentionRegex = /^@(\w+)/
-        const isMatch = message.match(mentionRegex)
-        let mention = null
-        let restOfMessage = message
-        if(isMatch){
-            mention = isMatch[0]
-            restOfMessage = message.slice(mention.length)
-        }
+        const mentionRegex = /@(\w+)/g;
+    let parts = [];
+    let lastIndex = 0;
 
-        const linkExist = async (link) => {
+    let match;
+
+    const linkExist = async (link) => {
             
             try {
                 const response = await fetch(`${baseURL}/links/${link}`, 
@@ -1110,17 +1104,33 @@ const ShowMessages = ({chat, setChats, onDeleteMessage, setMessageToEdit, setMes
             }
         }
 
-        return (
-            <>
-            {isMatch 
-            ? <>
-                <a onClick={() => linkExist(mention.slice(1))}
-                 style={{ color: 'purple', cursor: 'pointer' }}>{mention}</a> 
-            </> 
-            : <>{restOfMessage}</>
-            }
-            </>
-        )
+    while ((match = mentionRegex.exec(message)) !== null) {
+        const mention = match[0];
+        const mentionName = match[1];
+
+        if (match.index > lastIndex) {
+            parts.push(message.slice(lastIndex, match.index));
+        }
+
+        parts.push(
+            <a
+                key={match.index}
+                onClick={() => linkExist(mentionName)}
+                style={{ color: 'purple', cursor: 'pointer' }}
+            >
+                {mention}
+            </a>
+        );
+
+        lastIndex = mentionRegex.lastIndex;
+    }
+
+    if (lastIndex < message.length) {
+        parts.push(message.slice(lastIndex));
+    }
+
+    return <>{parts}</>;
+
 
     }
 

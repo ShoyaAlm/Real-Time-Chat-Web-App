@@ -19,6 +19,7 @@ const chatRouter = require('./routes/chat')
 const messageRouter = require('./routes/message')
 const commentRouter = require('./routes/comment')
 const linkRouter = require('./routes/link')
+const searchRouter = require('./routes/people')
 
 const errorHandlerMiddleware = require('./middleware/error-handler')
 const authenticationMiddleware = require('./middleware/authentication')
@@ -35,6 +36,8 @@ app.use('/api/v1/chats', authenticationMiddleware, chatRouter)
 app.use('/api/v1/chats/:chatId/messages', authenticationMiddleware, messageRouter)
 app.use('/api/v1/chats/:chatId/messages/:messageId/comments', authenticationMiddleware, commentRouter)
 app.use('/api/v1/links', authenticationMiddleware, linkRouter)
+app.use('/api/v1/search', authenticationMiddleware, searchRouter)
+
 
 app.use(errorHandlerMiddleware)
 

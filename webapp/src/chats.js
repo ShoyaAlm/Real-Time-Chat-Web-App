@@ -59,63 +59,88 @@ const ChatPreview = () => {
     const [token, setToken] = useState(localStorage.getItem('token'))
     const [chatID, setChatID] = useState('')
 
+    const [chatMessages, setChatMessages] = useState([])
+
 
     var lastMessageOrigin = ''
 
-    useEffect(() => {
-
-        if(searchMod === 'people'){
-            const users = people.filter((person) => {
-            
-                const personLCName = person.name.toLowerCase()
-                return personLCName.startsWith(searchInputValue)
-            
-            })
-            setSearchedUsers(users)
-        }
+    const fetchUsers = async () => {
         
+        setSearchedUsers('loading')
+        try {
+            const response = await fetch(`${baseURL}/search/${searchInputValue}`,{
+                method:'GET',
+                headers:{
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type':'application/json'
+                }
+            })
+
+            const userData = await response.json()
+
+            if(!response.ok){
+                throw new Error('Failed searching users')
+            }
+
+            console.log(userData);
+            
+            if(userData != []){
+                setSearchedUsers(userData)
+            } else {
+                setSearchedUsers([])
+            }
+
+            // console.log(userData);
+            
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    useEffect(() => {
+        fetchUsers()
     }, [searchInputValue])
 
-    useEffect(() => {
+    // useEffect(() => {
 
-        if(searchMod === 'terms' && user.messages && searchInputValue !== ''){
+    //     if(searchMod === 'terms' && user.messages && searchInputValue !== ''){
             
-            const foundTerms = user.messages.filter((message) => {
+    //         const foundTerms = user.messages.filter((message) => {
 
-                if(message.type === 'file' || typeof message.msg === 'object'){
-                    return message.comment.includes(searchInputValue)
-                }
-                else if(message.type === 'vote' || message.topic !== undefined){
-                    return message.topic.includes(searchInputValue)                
-                }
-                else {
-                    return message.msg.includes(searchInputValue)
-                }
+    //             if(message.type === 'file' || typeof message.msg === 'object'){
+    //                 return message.comment.includes(searchInputValue)
+    //             }
+    //             else if(message.type === 'vote' || message.topic !== undefined){
+    //                 return message.topic.includes(searchInputValue)                
+    //             }
+    //             else {
+    //                 return message.msg.includes(searchInputValue)
+    //             }
 
 
 
-            }).map((message) => {
+    //         }).map((message) => {
                 
-                if(message.type === 'file' || typeof message.msg === 'object'){
-                    return {id: message.id, from: message.from, msg: message.msg, createdAt: message.createdAt, 
-                        type: message.type}
-                }
-                else if(message.type === 'vote' || message.topic !== undefined){
-                    return {id: message.id, from: message.from, topic: message.topic, options:message.options,
-                        allVotes: message.allVotes, createdAt: message.createdAt, type: message.type}                
-                }
-                else {
-                    return {id: message.id, from: message.from, msg: message.msg, createdAt: message.createdAt, 
-                        type: message.type}
-                }
-            })
-            setFilteredResults(foundTerms)
-        } else {
-            setFilteredResults([])
-        }
+    //             if(message.type === 'file' || typeof message.msg === 'object'){
+    //                 return {id: message.id, from: message.from, msg: message.msg, createdAt: message.createdAt, 
+    //                     type: message.type}
+    //             }
+    //             else if(message.type === 'vote' || message.topic !== undefined){
+    //                 return {id: message.id, from: message.from, topic: message.topic, options:message.options,
+    //                     allVotes: message.allVotes, createdAt: message.createdAt, type: message.type}                
+    //             }
+    //             else {
+    //                 return {id: message.id, from: message.from, msg: message.msg, createdAt: message.createdAt, 
+    //                     type: message.type}
+    //             }
+    //         })
+    //         setFilteredResults(foundTerms)
+    //     } else {
+    //         setFilteredResults([])
+    //     }
 
 
-    }, [searchInputValue, user])
+    // }, [searchInputValue, user])
     
     useEffect(() => {
 
@@ -170,6 +195,54 @@ const ChatPreview = () => {
     const [showcaseNavbar, setShowcaseNavbar] = useState(false)
     const [showModal, setShowModal] = useState(false)    
 
+    const findChat = async (secondUserName, secondUserId, image) => {
+
+        if(secondUserName === currentUser.name) {
+            setShowChat(false)
+            console.log(secondUserName, currentUser.name);
+            
+            setUser('')
+            return
+        }
+            try {
+                            
+            const chatResponse = await fetch(`${baseURL}/links/normalChat/${currentUser.name}/${secondUserName}`,
+                                {
+                                    method:'GET',
+                                    headers:{
+                                        'Authorization':`Bearer ${token}`,
+                                        'Content-Type':'application/json'
+                                    }
+                                })
+                            
+                            const chatData = await chatResponse.json()
+
+                            if(chatData.msg === 'No chat with the given names was found'){                                
+                                setChatID(0)
+                                setUser({
+                                    name:[currentUser.name, secondUserName], messages:[], 
+                                users:[
+                                    {user:{_id:currentUser.id, name:currentUser.name, img: ''}}, 
+                                    {user:{_id:secondUserId, name:secondUserName, img: image}}],
+                                    pinnedMessages:[], type:'Normal', 
+                                    createdAt: new Date(), lastUpdatedAt: new Date() 
+                                })
+                                setChatMessages([])
+
+                            } else {
+                                console.log(chatData);
+                                setChatMessages(chatData.chat.messages)
+                                setChatID(chatData.chat._id)
+                                setUser(chatData.chat)
+                            }
+
+                        } catch (error) {
+                            console.log(error);
+                        }
+
+
+    }
+
     return (
 
         <showChatContext.Provider value={{showChat, setShowChat}}>
@@ -177,7 +250,8 @@ const ChatPreview = () => {
                 <postCommentsContext.Provider value={{showPostComments, setShowPostComments}}>
                     <searchTermsContext.Provider value={{filteredResults, setFilteredResults, setSearchMod}}>
                         <modalContext.Provider value={{modalType, setModalType, showModal, setShowModal}}>
-                            <userContext.Provider value={{currentUser, token, chatID, setChatID, user, setUser}}>
+                            <userContext.Provider value={{currentUser, token, chatID, 
+                                setChatID, user, setUser, chatMessages, setChatMessages}}>
 
         <div className="front-end" style={{display:'flex', flexDirection:'row'}}>
         
@@ -353,48 +427,70 @@ const ChatPreview = () => {
                 {(searchInputValue !== '' && searchMod === 'people') && (<>
                     <div className="searched-users-container">
 
-                    {searchedUsers.length !== 0 ? 
-                    (
-                        <>
-                        
-                        {searchedUsers.map((user) => {
+                    {searchedUsers !== 'loading' ? (<>
 
-                        
-                            return (
-                                <div key={user.id} className="searched-user" onClick={() => {
-                                    setShowChat(true)
-                                    setUser(user)
-                                    setSearchInputValue('')
-                                }}>
-                                <div style={{position:'relative', display:'flex', flexDirection:'row'}}>
+                        {searchedUsers.length !== 0 ? 
+                        (
+                            <>
+                            
+                            {searchedUsers.result.map((user) => {
 
-                                    <img src={user.img} className="searched-user-profile"/>
+                            
+                                return (
+                                    <div key={user.id} className="searched-user" onClick={() => {
 
-                                    <div style={{position:'relative', display:'flex', flexDirection:'column', 
-                                    textAlign:'center', left:'90%'}}>
-                                    
-                                    <h3 className="searched-user-name">{user.name}</h3>
-                                    
-                                    {user.type === 'chat' && (<><h5>Last seen recently</h5></>)} 
-                                    {user.type === 'group' && (<><h5>Group</h5></>)} 
-                                    {user.type === 'channel' && (<><h5>Channel</h5></>)} 
-                                                                                                            
-                                    
-                                    
+                                        if(user.type !== 'undefined' && user.type === 'Channel'){
+                                            // we switch to channel
+                                            setChatID(user._id)
+                                            setUser(user)
+                                        } else {
+                                            // switch to the chat with another user
+                                            // first we check if it exists
+                                            // if not, we make one up
+                                            findChat(user.name, user._id, user.img)
+                                        }
+
+                                        setShowChat(true)
+                                        setSearchInputValue('')
+                                    }}>
+                                    <div style={{position:'relative', display:'flex', flexDirection:'row'}}>
+
+                                        <img src={user.img} className="searched-user-profile"/>
+
+                                        <div style={{position:'relative', display:'flex', flexDirection:'column', 
+                                        textAlign:'center', left:'90%'}}>
+                                        
+                                        <h3 className="searched-user-name">{user.name}</h3>
+                                        
+                                        {user.type === 'chat' && (<><h5>Last seen recently</h5></>)} 
+                                        {user.type === 'group' && (<><h5>Group</h5></>)} 
+                                        {user.type === 'channel' && (<><h5>Channel</h5></>)} 
+                                                                                                                
+                                        
+                                        
+                                        </div>
+                                        
                                     </div>
                                     
-                                </div>
-                                
-                                </div>
-                            )
+                                    </div>
+                                )
 
-                        })}
-                        </>
-                    ) : (
-                        <>
-                            <h2 style={{textAlign:'center'}}>No users were found...</h2>
-                        </>
-                    )}
+                            })}
+                            </>
+                        ) : (
+                            <>
+                                <h2 style={{textAlign:'center'}}>No users were found...</h2>
+                            </>
+                        )}
+
+                    </>) 
+                    
+                    : (<>
+
+                        <h4>Loading users...</h4>
+
+                    </>)}
+
                         
 
 
